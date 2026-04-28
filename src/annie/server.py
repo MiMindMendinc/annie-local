@@ -14,6 +14,7 @@ from annie import __version__
 from annie.core.config import AnnieConfig
 from annie.core.llm import ChatMessage, LLMBackendError, OllamaBackend
 from annie.core.memory import LocalMemory
+from annie.core.speed_kernel import SpeedKernelAdapter
 from annie.core.vision import get_vision_status
 from annie.core.voice import get_voice_status
 
@@ -31,6 +32,7 @@ def create_app(config: AnnieConfig) -> FastAPI:
     app = FastAPI(title="Annie Local", version=__version__)
     memory = LocalMemory(config.resolved_memory_path)
     llm = OllamaBackend(config.ollama_url, config.model)
+    speed_kernel = SpeedKernelAdapter(enabled=config.speed_kernel, backend=config.speed_kernel_backend)
 
     ui_path = files("annie").joinpath("ui")
     app.mount("/static", StaticFiles(directory=str(ui_path)), name="static")
@@ -47,6 +49,7 @@ def create_app(config: AnnieConfig) -> FastAPI:
             "app": "annie-local",
             "version": __version__,
             "backend": backend_health,
+            "speed_kernel": speed_kernel.metadata(),
             "voice": asdict(get_voice_status()),
             "vision": asdict(get_vision_status()),
         }
@@ -71,7 +74,11 @@ def create_app(config: AnnieConfig) -> FastAPI:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
 
         memory.append("assistant", reply)
-        return {"reply": reply, "model": config.model}
+        return {
+            "reply": reply,
+            "model": config.model,
+            "speed_kernel": speed_kernel.metadata(),
+        }
 
     @app.post("/api/memory/search")
     async def memory_search(request: MemorySearchRequest) -> dict[str, object]:
