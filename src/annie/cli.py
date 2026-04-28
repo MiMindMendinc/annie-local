@@ -23,6 +23,13 @@ def build_parser() -> argparse.ArgumentParser:
     launch.add_argument("--model", default="llama3.2", help="Ollama model name.")
     launch.add_argument("--ollama-url", default="http://127.0.0.1:11434", help="Ollama base URL.")
     launch.add_argument("--memory-path", default="~/.annie/memory.jsonl", help="Local JSONL memory path.")
+    launch.add_argument("--speed-kernel", action="store_true", help="Enable experimental speed-kernel lab detection.")
+    launch.add_argument(
+        "--speed-kernel-backend",
+        default="dominus-ultra",
+        choices=["dominus-ultra"],
+        help="Experimental speed-kernel backend label.",
+    )
     launch.add_argument("--no-browser", action="store_true", help="Do not open a browser automatically.")
 
     subparsers.add_parser("doctor", help="Print local setup guidance.")
@@ -33,9 +40,11 @@ def run_doctor() -> int:
     print("Annie Local doctor")
     print(f"Version: {__version__}")
     print("Required local backend: Ollama")
+    print("Optional lab backend: DominusUltra on PYTHONPATH for speed-kernel experiments")
     print("Try:")
     print("  ollama pull llama3.2")
     print("  annie launch --model llama3.2")
+    print("  annie launch --model llama3.2 --speed-kernel")
     return 0
 
 
@@ -46,6 +55,8 @@ def run_launch(args: argparse.Namespace) -> int:
         model=args.model,
         ollama_url=args.ollama_url,
         memory_path=args.memory_path,
+        speed_kernel=args.speed_kernel,
+        speed_kernel_backend=args.speed_kernel_backend,
     )
     validate_config(config)
     app = create_app(config)
@@ -53,6 +64,8 @@ def run_launch(args: argparse.Namespace) -> int:
     print(f"Starting Annie Local on {url}")
     print(f"Model: {config.model}")
     print(f"Memory: {config.resolved_memory_path}")
+    if config.speed_kernel:
+        print(f"Speed kernel lab: enabled ({config.speed_kernel_backend})")
     if not args.no_browser:
         try:
             webbrowser.open(url)

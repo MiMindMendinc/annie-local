@@ -14,6 +14,8 @@ class AnnieConfig:
     model: str = "llama3.2"
     ollama_url: str = "http://127.0.0.1:11434"
     memory_path: str = "~/.annie/memory.jsonl"
+    speed_kernel: bool = False
+    speed_kernel_backend: str = "dominus-ultra"
     system_prompt: str = (
         "You are Annie Local, a warm, practical, privacy-first local AI companion. "
         "Be helpful, honest, concise, and clear. Keep user data local."
@@ -39,3 +41,5 @@ def validate_config(config: AnnieConfig) -> None:
         raise ValueError("model cannot be empty")
     if not config.ollama_url.startswith(("http://", "https://")):
         raise ValueError("ollama_url must start with http:// or https://")
+    if config.speed_kernel_backend not in {"dominus-ultra"}:
+        raise ValueError("speed_kernel_backend must be 'dominus-ultra'")
