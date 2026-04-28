@@ -1,8 +1,10 @@
 # Speed Kernel Lab
 
+DominusUltra is an experimental custom kernel layer using Triton-oriented GPU work to explore fused attention, RoPE, and related inference operations. Goal: higher tokens-per-second on supported NVIDIA GPUs while keeping numerical stability and benchmark honesty.
+
 This branch experiments with connecting Annie Local to the broader Michigan MindMend speed-kernel work.
 
-The first target is **DominusUltra**, an educational Triton attention-kernel project focused on fused RoPE, causal attention, and GQA-style head mapping.
+The first target is **DominusUltra**, an educational attention-kernel project focused on fused RoPE, causal attention, and GQA-style head mapping.
 
 ## What this branch does
 
@@ -11,6 +13,7 @@ The first target is **DominusUltra**, an educational Triton attention-kernel pro
 - Adds `--speed-kernel-backend dominus-ultra`
 - Reports speed-kernel status from `/api/health`
 - Reports speed-kernel metadata from `/api/chat`
+- Adds `benchmarks/run_speed_kernel.py`
 
 ## What this branch does not claim
 
@@ -19,8 +22,8 @@ This branch does **not** claim that Annie Local chat inference is accelerated ye
 It does not claim:
 
 - production-grade acceleration
-- faster-than-FlashAttention performance
-- verified Triton kernel speedups
+- faster-than-baseline performance without benchmark proof
+- verified speedups across hardware
 - real-time LLM backend replacement
 - GPU support on machines without CUDA/Triton/PyTorch
 
@@ -61,6 +64,12 @@ Launch with experimental speed-kernel detection:
 annie launch --model llama3.2 --speed-kernel
 ```
 
+Run the benchmark harness:
+
+```bash
+python -m benchmarks.run_speed_kernel --model llama3.2 --runs 5
+```
+
 Check status:
 
 ```bash
@@ -72,10 +81,9 @@ If `dominus_ultra` is importable on your `PYTHONPATH`, the adapter will report i
 ## Next engineering steps
 
 1. Convert DominusUltra into an installable Python package.
-2. Add a small non-runtime benchmark command such as `annie kernel-bench`.
-3. Run GPU-only benchmarks outside normal Annie chat flow.
-4. Record hardware, CUDA, PyTorch, Triton, shape, dtype, baseline, and max error.
-5. Only then wire a real acceleration path into model-serving experiments.
+2. Run GPU-only benchmarks outside normal Annie chat flow.
+3. Record hardware, CUDA, PyTorch, Triton, shape, dtype, baseline, and max error.
+4. Only then wire a real acceleration path into model-serving experiments.
 
 ## Credibility rule
 
