@@ -28,6 +28,12 @@ htmlcov/
 annie_memory.jsonl
 *.log
 
+# Benchmark outputs
+benchmark-results/
+benchmarks/results/
+*.bench.json
+*.bench.md
+
 # OS and editor
 .DS_Store
 Thumbs.db
