@@ -15,6 +15,14 @@ def test_public_config_hides_system_prompt():
     assert "system_prompt" not in data
 
 
+def test_speed_kernel_config_is_publicly_visible():
+    config = AnnieConfig(speed_kernel=True, speed_kernel_backend="dominus-ultra")
+    data = config.to_public_dict()
+
+    assert data["speed_kernel"] is True
+    assert data["speed_kernel_backend"] == "dominus-ultra"
+
+
 def test_invalid_port_rejected():
     with pytest.raises(ValueError):
         validate_config(AnnieConfig(port=70000))
@@ -23,3 +31,8 @@ def test_invalid_port_rejected():
 def test_invalid_ollama_url_rejected():
     with pytest.raises(ValueError):
         validate_config(AnnieConfig(ollama_url="localhost:11434"))
+
+
+def test_invalid_speed_kernel_backend_rejected():
+    with pytest.raises(ValueError):
+        validate_config(AnnieConfig(speed_kernel_backend="unknown"))
