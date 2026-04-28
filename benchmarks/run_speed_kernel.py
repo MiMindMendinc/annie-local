@@ -1,3 +1,5 @@
+# NOTE: This is a baseline benchmark only.
+# DominusUltra kernel integration is still experimental.
 from __future__ import annotations
 
 import argparse
@@ -6,7 +8,6 @@ import statistics
 import sys
 import time
 from dataclasses import dataclass
-from importlib.util import find_spec
 from typing import Any
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -25,17 +26,13 @@ class RunResult:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Benchmark Annie Local model throughput.")
+    parser = argparse.ArgumentParser(description="Benchmark the baseline Ollama generation path.")
     parser.add_argument("--model", default="llama3.2", help="Ollama model name.")
     parser.add_argument("--runs", type=int, default=5, help="Number of measured runs.")
     parser.add_argument("--ollama-url", default="http://127.0.0.1:11434", help="Ollama base URL.")
     parser.add_argument("--prompt", default=DEFAULT_PROMPT, help="Prompt to use for every run.")
-    parser.add_argument("--speed-kernel", action="store_true", help="Enable speed-kernel lab mode if available.")
+    parser.add_argument("--speed-kernel", action="store_true", help="Accepted for compatibility; benchmark still runs base mode only.")
     return parser.parse_args()
-
-
-def speed_kernel_available() -> bool:
-    return find_spec("dominus_ultra") is not None
 
 
 def post_json(url: str, payload: dict[str, Any]):
@@ -51,7 +48,7 @@ def count_tokens_from_response(raw: dict[str, Any], text: str) -> int:
     return max(1, len(text.split()))
 
 
-def run_once(run_id: int, model: str, ollama_url: str, prompt: str, mode: str) -> RunResult:
+def run_once(run_id: int, model: str, ollama_url: str, prompt: str) -> RunResult:
     payload = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
@@ -85,7 +82,7 @@ def run_once(run_id: int, model: str, ollama_url: str, prompt: str, mode: str) -
     ttft_s = (first_token_time - start) if first_token_time is not None else total_s
     tokens = count_tokens_from_response(final_raw, text)
     tok_per_s = tokens / total_s
-    return RunResult(run=run_id, mode=mode, ttft_s=ttft_s, total_s=total_s, tokens_generated=tokens, tok_per_s=tok_per_s)
+    return RunResult(run=run_id, mode="base", ttft_s=ttft_s, total_s=total_s, tokens_generated=tokens, tok_per_s=tok_per_s)
 
 
 def markdown_table(results: list[RunResult]) -> str:
@@ -121,14 +118,12 @@ def main() -> int:
         print("--runs must be greater than zero", file=sys.stderr)
         return 2
 
-    available = speed_kernel_available()
-    mode = "speed-kernel" if args.speed_kernel and available else "base"
-    print("# Annie Local Speed Benchmark\n")
-    print("Run this on the speed-kernel-lab branch to validate DominusUltra claims.\n")
-    if args.speed_kernel and not available:
-        print("> speed-kernel requested, but dominus_ultra is not importable. Falling back to base mode.\n")
+    print("# Annie Local Baseline Benchmark\n")
+    print("This benchmark measures the standard Ollama generation path only.\n")
+    if args.speed_kernel:
+        print("DominusUltra kernel path not yet implemented in this benchmark harness — running base mode only.\n")
 
-    results = [run_once(index + 1, args.model, args.ollama_url, args.prompt, mode) for index in range(args.runs)]
+    results = [run_once(index + 1, args.model, args.ollama_url, args.prompt) for index in range(args.runs)]
     print(markdown_table(results))
     print_summary(results)
     return 0
