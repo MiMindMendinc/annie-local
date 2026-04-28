@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Annie Local</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Annie Local</p>
+        <h1>Private local voice AI with a glowing reactive orb.</h1>
+        <p class="subhead">Talk to a local model, keep memory on your machine, and get a polished interface built for offline-first AI.</p>
+      </section>
+
+      <section class="orb-panel" aria-label="Annie orb status">
+        <div id="orb" class="orb idle" role="img" aria-label="Reactive glowing orb">
+          <div class="orb-core"></div>
+          <div class="orb-ring ring-one"></div>
+          <div class="orb-ring ring-two"></div>
+          <div class="orb-glow"></div>
+        </div>
+        <p id="status" class="status">Idle</p>
+      </section>
+
+      <section class="chat-panel">
+        <div id="messages" class="messages" aria-live="polite">
+          <div class="message assistant">Hey, I’m Annie Local. Start Ollama, pick a model, and talk to me privately on your machine.</div>
+        </div>
+        <form id="chat-form" class="chat-form">
+          <input id="message-input" type="text" autocomplete="off" placeholder="Ask Annie something local..." />
+          <button type="submit">Send</button>
+        </form>
+      </section>
+
+      <section class="meta-panel">
+        <button id="health-button" type="button">Check local backend</button>
+        <pre id="health-output">Backend status will appear here.</pre>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
