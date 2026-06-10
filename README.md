@@ -1,29 +1,34 @@
 # annie-local
 
-**Fully Local Voice AI Companion with Reactive Glowing Orb**
+**A fully local voice AI companion — FastAPI + Ollama, zero cloud dependencies.**
 
-**100% offline • Private memory • Real-time reactive UI • Beautiful product-grade experience**
+Annie runs entirely on your machine: local LLM inference via Ollama, private
+long-term memory stored as JSONL on your own disk, and a reactive orb UI that
+visualizes the assistant's state in real time. Nothing leaves your computer.
 
-> The AI companion that feels alive — running entirely on your machine with zero cloud dependencies.
+## Why this exists
 
----
+Most "local AI" projects stop at a command line. Annie demonstrates that a
+local-first system can have a polished, consumer-grade interface without
+giving up the privacy guarantees that make local-first worth doing.
 
-## ✨ What Annie Is
+## Features
 
-Annie Local is a complete, production-ready local AI companion system featuring a stunning reactive glowing orb interface, private long-term memory, and seamless integration with local LLMs (Ollama).
+- **Reactive orb UI** — real-time state visualization (listening, thinking,
+  speaking) in a self-contained HTML/JS frontend
+- **Fully offline** — Ollama backend (llama3.2, phi3, or any local model)
+- **Private memory** — JSONL long-term memory with semantic search; your
+  data stays in a folder you control
+- **Voice demo** — browser-mic voice loop with no cloud STT/TTS required
+- **FastAPI backend** — documented REST API, MIT licensed
 
-It’s designed to feel like a real companion — not just another chatbot — while keeping every piece of data 100% private and offline.
+## Status
 
-## 🚀 Key Features
+Working prototype, actively developed. See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)
+and [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md) for the privacy
+design and its limits.
 
-- **Stunning Reactive Orb UI** — Real-time glowing, pulsing, and emotional state visualization
-- **Fully Local** — Runs 100% offline with Ollama (llama3.2, phi3, etc.)
-- **Private Memory System** — JSONL-based long-term memory with semantic search
-- **Voice Control** — Offline voice demo with browser mic (no cloud STT/TTS required for core experience)
-- **FastAPI Backend** — Clean, documented REST API
-- **Beautiful Demo** — Self-contained HTML/JS orb that feels like a $10M consumer product
-
-## 📦 Quick Start
+## Quick start
 
 ```bash
 pip install -e .
@@ -32,54 +37,3 @@ annie launch --model llama3.2
 ```
 
 Then open: **http://127.0.0.1:8787**
-
-## 🧠 Architecture
-
-```
-Browser (Reactive Orb UI)
-    ↓
-FastAPI Server (Python)
-    ↓
-Local Ollama Model
-    ↓
-Private JSONL Memory + Semantic Search
-```
-
-## 🎯 Why This Stands Out
-
-Most "local AI" projects are ugly command-line tools. Annie Local proves you can build **beautiful, delightful, consumer-grade experiences** while staying 100% private and offline.
-
-This repo demonstrates:
-- Full-stack local AI product development
-- Attention to UX and visual polish (rare in AI engineering portfolios)
-- Real memory architecture for long-term companions
-- Production-ready API design
-
-## 🛠️ Tech Stack
-
-Python • FastAPI • Ollama • HTML/JS • JSONL Memory • WebSockets (for live orb state)
-
-## 📁 What's Included
-
-- Complete working orb UI
-- Local memory system with search
-- Voice-controlled orb demo (`examples/voicestate-offline.html`)
-- Full API documentation
-- Performance benchmarking harness
-
-## 🗺️ Roadmap
-
-- [x] Core orb + chat experience
-- [x] Private memory system
-- [ ] Full voice loop (STT + local TTS)
-- [ ] Vision/multimodal support
-- [ ] Integration with DominusUltra speed kernel
-
----
-
-**Built by Lyle Perrien**  
-Founder, Michigan MindMend Inc.
-
-*Privacy-first AI that actually feels human.*
-
-MIT License
