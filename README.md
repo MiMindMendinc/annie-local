@@ -37,3 +37,15 @@ annie launch --model llama3.2
 ```
 
 Then open: **http://127.0.0.1:8787**
+
+## Verify the build
+
+Install the development dependencies and run the test suite:
+
+```bash
+pip install -e ".[dev]"
+python -m pytest -q
+```
+
+The current suite contains ten tests covering the API, memory, safety helpers,
+and package behavior. Ollama is not required for the unit tests.
