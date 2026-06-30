@@ -38,23 +38,14 @@ const el = {
 
 const store = {
   get(key, fallback) {
-    try {
-      const value = localStorage.getItem(`annie5.${key}`);
-      return value ? JSON.parse(value) : fallback;
-    } catch {
-      return fallback;
-    }
+    return window.AnnieState ? AnnieState.get(key) ?? fallback : fallback;
   },
   set(key, value) {
-    try {
-      localStorage.setItem(`annie5.${key}`, JSON.stringify(value));
-    } catch {
-      /* ignore */
-    }
+    if (window.AnnieState) AnnieState.set(key, value);
   },
 };
 
-let ui = store.get("ui", { speak: false, memory: true });
+let ui = (window.AnnieState?.get("ui")) || { speak: false, memory: true };
 let settings = {
   model: null,
   ollama_url: "http://127.0.0.1:11434",
@@ -174,20 +165,12 @@ async function typeOut(bubble, text) {
 }
 
 async function loadSettings() {
-  const response = await fetch("/api/settings");
-  if (!response.ok) {
-    throw new Error("settings unavailable");
-  }
-  settings = await response.json();
+  settings = await AnnieApi.getSettings();
 }
 
 async function refreshEngine() {
   try {
-    const response = await fetch("/api/health", { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error("health failed");
-    }
-    const data = await response.json();
+    const data = await AnnieApi.health();
     const backendOk = data.backend?.ok;
     const names = data.backend?.model_names || [];
     el.engineDot.className = backendOk ? "dot on" : "dot off";
@@ -316,17 +299,7 @@ async function send() {
   abortController = new AbortController();
 
   try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text }),
-      signal: abortController.signal,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `HTTP ${response.status}`);
-    }
-    const data = await response.json();
+    const data = await AnnieApi.chat(text, abortController.signal);
     for (const event of data.tool_events || []) {
       toolLine(bubble, event, true);
     }
@@ -337,7 +310,7 @@ async function send() {
 
     if (data.restart) {
       await new Promise((resolve) => window.setTimeout(resolve, 1400));
-      await fetch("/api/session/restart", { method: "POST" });
+      await AnnieApi.restartSession();
       showHerald();
     }
   } catch (error) {
@@ -363,8 +336,7 @@ function autosize() {
 }
 
 async function renderMem() {
-  const response = await fetch("/api/knowledge");
-  const mem = await response.json();
+  const mem = await AnnieApi.getKnowledge();
   const group = (title, items, render) => {
     let html = `<div class="memgroup"><h3>${title}</h3>`;
     if (!items.length) {
@@ -395,17 +367,9 @@ async function renderMem() {
   el.memBody.querySelectorAll(".x").forEach((button) => {
     button.onclick = async () => {
       if (button.dataset.clr === "profile") {
-        await fetch("/api/knowledge/delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ kind: "profile" }),
-        });
+        await AnnieApi.deleteKnowledgeItem("profile");
       } else {
-        await fetch("/api/knowledge/delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ kind: button.dataset.kind, item_id: button.dataset.id }),
-        });
+        await AnnieApi.deleteKnowledgeItem(button.dataset.kind, button.dataset.id);
       }
       renderMem();
     };
@@ -420,7 +384,7 @@ async function renderMem() {
   };
   $("#memWipe").onclick = async () => {
     if (confirm("Wipe everything Annie remembers? This cannot be undone.")) {
-      await fetch("/api/knowledge", { method: "DELETE" });
+      await AnnieApi.deleteKnowledge();
       renderMem();
     }
   };
@@ -454,12 +418,12 @@ async function saveCfg() {
     tools_enabled: el.swMem.classList.contains("on"),
     system_prompt: el.sys.value.trim(),
   };
-  const response = await fetch("/api/settings", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  settings = await response.json();
+  const errors = AnnieValidators.validateSettings(payload);
+  if (errors.length) {
+    showError("settings invalid", errors.join("; "));
+    return;
+  }
+  settings = await AnnieApi.updateSettings(payload);
   ui.speak = el.swVoice.classList.contains("on");
   ui.memory = el.swMem.classList.contains("on");
   store.set("ui", ui);
@@ -484,7 +448,7 @@ el.clearBtn.addEventListener("click", async () => {
   if (busy) {
     stop();
   }
-  await fetch("/api/session/restart", { method: "POST" });
+  await AnnieApi.restartSession();
   showHerald();
 });
 el.voiceBtn.addEventListener("click", () => {
@@ -502,17 +466,12 @@ el.temp.addEventListener("input", () => {
 el.swVoice.addEventListener("click", () => el.swVoice.classList.toggle("on"));
 el.swMem.addEventListener("click", () => el.swMem.classList.toggle("on"));
 el.resetSys.addEventListener("click", async () => {
-  const response = await fetch("/api/settings/reset-doctrine", { method: "POST" });
-  settings = await response.json();
+  settings = await AnnieApi.resetDoctrine();
   el.sys.value = settings.default_doctrine || "";
 });
 el.saveCfg.addEventListener("click", saveCfg);
 el.model.addEventListener("change", async () => {
-  await fetch("/api/settings", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: el.model.value }),
-  });
+  await AnnieApi.updateSettings({ model: el.model.value });
 });
 el.memBtn.addEventListener("click", async () => {
   await renderMem();

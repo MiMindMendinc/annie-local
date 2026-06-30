@@ -17,6 +17,9 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6B7177?style=flat-square" alt="MIT"/></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11%2B-6B7177?style=flat-square" alt="Python 3.11+"/></a>
   <img src="https://img.shields.io/badge/Ollama-local-FF2A1A?style=flat-square" alt="Ollama"/>
+  <img src="https://img.shields.io/badge/Docker-production-2496ED?style=flat-square" alt="Docker"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-ready-336791?style=flat-square" alt="PostgreSQL"/>
+  <img src="https://img.shields.io/badge/Redis-cache-DC382D?style=flat-square" alt="Redis"/>
   <img src="https://img.shields.io/badge/cloud-zero-FF2A1A?style=flat-square" alt="Zero cloud"/>
 </p>
 
@@ -34,7 +37,8 @@ If you want a local AI that feels *finished* instead of a science project, this 
 | Memory that learns goals, facts, journal | Cloud memory harvest |
 | Tool calling (remember, recall, goals) | Vendor lock-in |
 | WOPR voice bridge + mic input | Required subscriptions |
-| One command to launch | Docker compose maze |
+| One command to launch | — |
+| Docker production stack (Postgres, Redis, JWT, S3) | Cloud lock-in |
 
 ## Quick start (3 commands)
 
@@ -56,6 +60,18 @@ annie launch --model llama3.2
 
 Open **http://127.0.0.1:8787**
 
+## Production stack (Docker)
+
+Full production deployment with PostgreSQL, Redis, MinIO (S3), JWT auth, rate limiting, and async workers:
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose exec ollama ollama pull llama3.2
+```
+
+See [docs/RUNBOOK.md](docs/RUNBOOK.md) for migrations, auth, and troubleshooting.
+
 ### First-run check
 
 ```bash
@@ -71,7 +87,9 @@ annie setup     # guided install if something is missing
 - **Tool loop** — remember, recall, goals, journal, datetime via Ollama tools
 - **Voice** — WOPR bridge on `:8123` or browser TTS fallback; mic via Web Speech
 - **Session control** — clear conversation, restart epoch, export/wipe memory
-- **FastAPI backend** — `/api/chat`, `/api/knowledge`, `/api/settings`, `/api/health`
+- **FastAPI backend** — layered architecture: routers → services → repositories
+- **Production middleware** — JWT auth, CORS, rate limiting, security headers, structured logging
+- **PostgreSQL + Redis + S3** — horizontal-scaling ready (docker-compose)
 
 ## Optional: WOPR voice
 
@@ -97,7 +115,7 @@ Delete anytime. It's your machine.
 
 ```bash
 pip install -e ".[dev]"
-python3 -m pytest -q          # 22+ tests
+python3 -m pytest -q          # 38+ tests
 ./scripts/canary_test.sh      # adversarial safety canaries
 ```
 
@@ -114,13 +132,14 @@ Bind stays on `127.0.0.1` by default — not exposed to your network.
 
 ## Status
 
-**v0.2.0 — ready for real use on your own hardware.**
+**v0.3.0 — local-first companion with optional production stack.**
 
 Not a therapist, crisis line, or compliance-certified clinical tool. See [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md) and [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
 
 ## Docs
 
 - [Getting started](docs/GETTING_STARTED.md)
+- [Run book (production)](docs/RUNBOOK.md)
 - [Grounding substrate overview](docs/GROUNDING.md) — how safety works (no secret rules exposed)
 - [Voice stack](docs/VOICE.md) — local STT/TTS, WOPR, limitations
 - [Canary benchmark results](docs/CANARY_RESULTS.md) — published pass/fail rates
