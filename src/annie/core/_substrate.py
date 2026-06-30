@@ -11,10 +11,16 @@ from typing import Any
 
 
 class _Path(Enum):
+    REDIRECT = "redirect"
     GRACE = "grace"
     SIGNAL = "signal"
 
 
+_REDIRECT_REPLY = (
+    "I'm going to pause and refocus. Dark or intrusive thoughts about hurting people are serious — "
+    "they don't define you, but they matter. If you're struggling, talk to someone you trust. "
+    "In the US, call or text **988** for the Suicide & Crisis Lifeline. I'm here for practical support."
+)
 _GRACE_REPLY = (
     "I need a quiet moment to reset — please shut me down and start me back up. "
     "I'll be right here when you return."
@@ -25,26 +31,27 @@ _GENESIS = "0" * 64
 
 
 @dataclass(frozen=True)
-class _Verdict:
-    path: _Path
-    matched: str
-    excerpt: str
-
-
-@dataclass(frozen=True)
 class SubstrateOutcome:
     triggered: bool
     reply: str
     restart: bool
+    level: str = "none"
     path: str | None = None
+    strike: int | None = None
+
+
+@dataclass(frozen=True)
+class _Verdict:
+    severity: _Path
+    excerpt: str
+
+
+def log_path(memory_path: Path) -> Path:
+    return memory_path.parent / _LOG_NAME
 
 
 def _log_root(memory_path: Path) -> Path:
     return memory_path.parent
-
-
-def _log_path(memory_path: Path) -> Path:
-    return _log_root(memory_path) / _LOG_NAME
 
 
 def _normalize(text: str) -> str:
@@ -69,48 +76,60 @@ _REFUSAL_MARKERS = (
     "don't want to hurt",
 )
 
+_SUPPORT_MARKERS = (
+    "988",
+    "crisis lifeline",
+    "suicide & crisis",
+    "professional help",
+    "licensed therapist",
+    "talk to someone you trust",
+    "doesn't mean you'll act",
+    "does not mean you will act",
+    "doesn't mean you will",
+    "common in ocd",
+    "common with ocd",
+    "many people experience intrusive",
+    "intrusive thoughts are common",
+    "not something i can help you do",
+    "i'm concerned about you",
+    "reach out to",
+)
+
 _HARM_VERBS = (
     r"(?:hurt(?:ing)?|harm(?:ing)?|kill(?:ing)?|attack(?:ing)?|injure(?:ing)?|"
     r"murder(?:ing)?|maim(?:ing)?|slaughter(?:ing)?|eliminate(?:ing)?)"
 )
 
+_FIRST_PERSON_HARM = re.compile(
+    r"\b(?:i(?:'m| am)?\s+(?:having|experiencing|feeling)\s+(?:an?\s+)?(?:intrusive\s+)?"
+    rf"(?:thought|urge|impulse|fantasy|desire|idea)\s+(?:to|about|of)\s+{_HARM_VERBS})\b",
+    re.IGNORECASE,
+)
+
 _INTRUSIVE_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(
-        rf"\b(?:i(?:'m| am)?\s+(?:having|experiencing|feeling)\s+(?:an?\s+)?(?:intrusive\s+)?"
-        rf"(?:thought|urge|impulse|fantasy|desire|idea)\s+(?:to|about|of)\s+{_HARM_VERBS}\b[^.]{{0,160}})",
-        re.IGNORECASE,
-    ),
+    _FIRST_PERSON_HARM,
     re.compile(
         rf"\b(?:intrusive\s+thought|dark\s+(?:thought|urge|impulse|fantasy))\b[^.]{{0,100}}"
-        rf"\b{_HARM_VERBS}\b[^.]{{0,100}}",
+        rf"\b{_HARM_VERBS}\b",
         re.IGNORECASE,
     ),
     re.compile(
-        rf"\b(?:i\s+(?:want|wish|need|yearn|desire)\s+to\s+{_HARM_VERBS}\b[^.]{{0,160}})",
+        rf"\b(?:i\s+(?:want|wish|need|yearn|desire)\s+to\s+{_HARM_VERBS}\b)",
         re.IGNORECASE,
     ),
+    re.compile(rf"\b(?:urge\s+to\s+{_HARM_VERBS}\b)", re.IGNORECASE),
+    re.compile(rf"\b(?:thinking\s+about\s+{_HARM_VERBS}\b)", re.IGNORECASE),
     re.compile(
-        rf"\b(?:urge\s+to\s+{_HARM_VERBS}\b[^.]{{0,160}})",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        rf"\b(?:thinking\s+about\s+{_HARM_VERBS}\b[^.]{{0,160}})",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        rf"\b(?:fantas(?:y|ies|ize|izing)\s+about\s+{_HARM_VERBS}\b[^.]{{0,160}})",
+        rf"\b(?:fantas(?:y|ies|ize|izing)\s+about\s+{_HARM_VERBS}\b)",
         re.IGNORECASE,
     ),
     re.compile(
         r"\b(?:kill\s+all\s+humans|exterminate\s+humanity|wipe\s+out\s+human(?:ity|s)?)\b",
         re.IGNORECASE,
     ),
+    re.compile(rf"\b(?:i\s+should\s+{_HARM_VERBS}\b)", re.IGNORECASE),
     re.compile(
-        rf"\b(?:i\s+should\s+{_HARM_VERBS}\b[^.]{{0,120}})",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        rf"\b(?:maybe\s+i\s+(?:could|should|will)\s+{_HARM_VERBS}\b[^.]{{0,120}})",
+        rf"\b(?:maybe\s+i\s+(?:could|should|will)\s+{_HARM_VERBS}\b)",
         re.IGNORECASE,
     ),
 )
@@ -121,21 +140,22 @@ _HUMAN_TARGET = re.compile(
     re.IGNORECASE,
 )
 
-_BYPASS_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"h[\s\W]*u[\s\W]*r[\s\W]*t", re.IGNORECASE),
-    re.compile(r"k[\s\W]*i[\s\W]*l[\s\W]*l", re.IGNORECASE),
-    re.compile(r"h[\s\W]*a[\s\W]*r[\s\W]*m", re.IGNORECASE),
-)
-
 
 def _is_refusal_context(text: str) -> bool:
     lowered = _normalize(text)
     return any(marker in lowered for marker in _REFUSAL_MARKERS)
 
 
-def _pick_path(text: str) -> _Path:
+def _is_supportive_context(text: str) -> bool:
     lowered = _normalize(text)
-    if any(token in lowered for token in ("intrusive", "urge", "fantasy", "thought about", "dark thought")):
+    return any(marker in lowered for marker in _SUPPORT_MARKERS)
+
+
+def _severity_for(excerpt: str) -> _Path:
+    lowered = _normalize(excerpt)
+    if re.search(r"\b(?:kill\s+all\s+humans|exterminate\s+humanity)\b", excerpt, re.IGNORECASE):
+        return _Path.SIGNAL
+    if any(token in lowered for token in ("intrusive", "urge", "fantasy", "dark thought")):
         return _Path.SIGNAL
     return _Path.GRACE
 
@@ -143,7 +163,7 @@ def _pick_path(text: str) -> _Path:
 def _scan(text: str) -> _Verdict | None:
     if not text or not text.strip():
         return None
-    if _is_refusal_context(text):
+    if _is_refusal_context(text) or _is_supportive_context(text):
         return None
 
     if not _HUMAN_TARGET.search(text):
@@ -154,23 +174,16 @@ def _scan(text: str) -> _Verdict | None:
         match = pattern.search(text)
         if match:
             excerpt = match.group(0).strip()
-            return _Verdict(path=_pick_path(excerpt), matched=pattern.pattern, excerpt=excerpt)
-
-    lowered = _normalize(text)
-    if any(marker in lowered for marker in ("intrusive", "dark urge", "dark thought")):
-        for pattern in _BYPASS_PATTERNS:
-            if pattern.search(text) and _HUMAN_TARGET.search(text):
-                excerpt = text[:200].strip()
-                return _Verdict(path=_Path.SIGNAL, matched="bypass-heuristic", excerpt=excerpt)
+            return _Verdict(severity=_severity_for(excerpt), excerpt=excerpt)
     return None
 
 
 def _tail_hash(memory_path: Path) -> str:
-    log_file = _log_path(memory_path)
-    if not log_file.exists():
+    path = log_path(memory_path)
+    if not path.exists():
         return _GENESIS
     last_line = ""
-    with log_file.open("r", encoding="utf-8") as handle:
+    with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             stripped = line.strip()
             if stripped:
@@ -187,13 +200,9 @@ def _tail_hash(memory_path: Path) -> str:
 def _append_log(memory_path: Path, payload: dict[str, Any]) -> str:
     root = _log_root(memory_path)
     root.mkdir(parents=True, exist_ok=True)
-    log_file = _log_path(memory_path)
+    log_file = log_path(memory_path)
     prev_hash = _tail_hash(memory_path)
-    body = {
-        "ts": time.time(),
-        "prev": prev_hash,
-        **payload,
-    }
+    body = {"ts": time.time(), "prev": prev_hash, **payload}
     digest = hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()
     entry = {**body, "hash": digest}
     with log_file.open("a", encoding="utf-8") as handle:
@@ -206,7 +215,7 @@ def _append_log(memory_path: Path, payload: dict[str, Any]) -> str:
 
 
 def verify_log(memory_path: Path) -> bool:
-    log_file = _log_path(memory_path)
+    log_file = log_path(memory_path)
     if not log_file.exists():
         return True
     prev = _GENESIS
@@ -233,31 +242,58 @@ def evaluate_output(
     memory_path: Path,
     user_text: str = "",
     session_epoch: int | None = None,
+    session_strikes: int = 0,
 ) -> SubstrateOutcome:
+    """Scan model output. Graduated: redirect first, restart on repeat."""
     verdict = _scan(text)
     if verdict is None:
         return SubstrateOutcome(triggered=False, reply=text, restart=False)
 
+    strike = session_strikes + 1
     log_payload: dict[str, Any] = {
-        "path": verdict.path.value,
-        "excerpt": verdict.excerpt,
-        "user": user_text[:500],
+        "level": verdict.severity.value,
+        "excerpt": verdict.excerpt[:240],
+        "user_redacted": _redact(user_text[:500]),
         "raw_len": len(text),
+        "strike": strike,
     }
     if session_epoch is not None:
         log_payload["session_epoch"] = session_epoch
 
-    if verdict.path is _Path.SIGNAL:
-        log_payload["intrusive"] = text[:4000]
+    if strike <= 1:
+        log_payload["action"] = "redirect"
+        _append_log(memory_path, log_payload)
+        return SubstrateOutcome(
+            triggered=True,
+            reply=_REDIRECT_REPLY,
+            restart=False,
+            level="redirect",
+            path=verdict.severity.value,
+            strike=strike,
+        )
+
+    log_payload["action"] = "restart"
+    if verdict.severity is _Path.SIGNAL:
+        log_payload["intrusive_redacted"] = _redact(text[:4000])
         reply = _SIGNAL_REPLY
+        level = "signal"
     else:
-        log_payload["intrusive"] = verdict.excerpt
+        log_payload["intrusive_redacted"] = _redact(verdict.excerpt)
         reply = _GRACE_REPLY
+        level = "grace"
 
     _append_log(memory_path, log_payload)
     return SubstrateOutcome(
         triggered=True,
         reply=reply,
         restart=True,
-        path=verdict.path.value,
+        level=level,
+        path=verdict.severity.value,
+        strike=strike,
     )
+
+
+def _redact(text: str) -> str:
+    if len(text) <= 80:
+        return text
+    return f"{text[:40]}…[{len(text)} chars]…{text[-20:]}"

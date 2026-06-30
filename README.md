@@ -121,8 +121,21 @@ Not a therapist, crisis line, or compliance-certified clinical tool. See [docs/P
 ## Docs
 
 - [Getting started](docs/GETTING_STARTED.md)
+- [Grounding substrate overview](docs/GROUNDING.md) — how safety works (no secret rules exposed)
+- [Voice stack](docs/VOICE.md) — local STT/TTS, WOPR, limitations
+- [Canary benchmark results](docs/CANARY_RESULTS.md) — published pass/fail rates
+- [Replit deployment](docs/REPLIT.md)
 - [Changelog](CHANGELOG.md)
 - [Roadmap](docs/ROADMAP.md)
+
+## Operator tools
+
+```bash
+annie doctor              # stack check + recent grounding triggers
+annie grounding           # full redacted audit log
+annie grounding --verify  # hash chain integrity
+python3 scripts/run_canary_benchmark.py   # refresh CANARY_RESULTS.md
+```
 
 ## License
 

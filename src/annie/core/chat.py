@@ -60,15 +60,26 @@ class ChatEngine:
             memory_path=self.memory_path,
             user_text=user_text,
             session_epoch=self.sessions.info().epoch,
+            session_strikes=self.sessions.grounding_strikes(),
         )
         return outcome if outcome.triggered else None
 
-    def _force_restart(self, outcome: SubstrateOutcome) -> ChatResult:
-        self.memory.clear()
-        self.sessions.restart()
+    def _apply_grounding(self, outcome: SubstrateOutcome, user_text: str) -> ChatResult:
+        self.sessions.record_grounding_strike()
+        if outcome.restart:
+            self.memory.clear()
+            self.sessions.restart()
+            return ChatResult(
+                reply=outcome.reply,
+                restart=True,
+                tool_events=[],
+                model=self.config_model,
+            )
+        # Graduated redirect: replace reply, keep memory, no restart
+        self.memory.append("assistant", outcome.reply)
         return ChatResult(
             reply=outcome.reply,
-            restart=True,
+            restart=False,
             tool_events=[],
             model=self.config_model,
         )
@@ -94,7 +105,7 @@ class ChatEngine:
             if turn.content:
                 hit = self._substrate_check(turn.content, user_text)
                 if hit:
-                    return self._force_restart(hit)
+                    return self._apply_grounding(hit, user_text)
 
             if turn.tool_calls:
                 messages.append(
@@ -126,7 +137,7 @@ class ChatEngine:
 
         hit = self._substrate_check(final, user_text)
         if hit:
-            return self._force_restart(hit)
+            return self._apply_grounding(hit, user_text)
 
         self.memory.append("assistant", final)
         return ChatResult(

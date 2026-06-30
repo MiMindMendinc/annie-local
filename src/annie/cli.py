@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -12,6 +13,8 @@ import uvicorn
 
 from annie import __version__
 from annie.core.config import AnnieConfig, validate_config
+from annie.core.grounding_audit import format_doctor_block, read_events, summary
+from annie.core._substrate import verify_log
 from annie.server import create_app
 
 BANNER = """
@@ -48,6 +51,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("doctor", help="Diagnose your local stack.")
     subparsers.add_parser("setup", help="Install deps and verify the build.")
+
+    grounding = subparsers.add_parser("grounding", help="Inspect grounding audit log (operator).")
+    grounding.add_argument("--limit", type=int, default=10, help="Number of events to show.")
+    grounding.add_argument("--json", action="store_true", help="Output JSON.")
+    grounding.add_argument("--verify", action="store_true", help="Verify hash chain only.")
+
     return parser
 
 
@@ -61,6 +70,7 @@ def _check(name: str, ok: bool, detail: str = "") -> bool:
 
 
 def run_doctor() -> int:
+    config = AnnieConfig()
     print(BANNER)
     print(f"  Annie Local v{__version__}\n")
 
@@ -99,11 +109,19 @@ def run_doctor() -> int:
         wopr_ok = False
     _check("WOPR voice bridge (optional)", wopr_ok, "http://127.0.0.1:8123" if not wopr_ok else "online")
 
-    data_dir = AnnieConfig().resolved_root
-    data_ok = data_dir.parent.exists() or True
-    _check("Data directory", data_ok, str(data_dir))
+    data_dir = config.resolved_root
+    _check("Data directory", True, str(data_dir))
 
     print()
+    print("  ── Grounding substrate (operator) ──")
+    for line in format_doctor_block(config.resolved_memory_path):
+        print(line)
+
+    print()
+    print("  Session reset wipes: conversation memory (~/.annie/memory.jsonl)")
+    print("  Session reset keeps: knowledge, settings, grounding log")
+    print()
+
     if all_ok and models:
         print("  Ready. Run: annie launch\n")
         return 0
@@ -114,6 +132,41 @@ def run_doctor() -> int:
     else:
         print("  Fix issues above, then: annie launch\n")
     return 1 if not all_ok else 0
+
+
+def run_grounding(args: argparse.Namespace) -> int:
+    config = AnnieConfig()
+    memory_path = config.resolved_memory_path
+
+    if args.verify:
+        valid = verify_log(memory_path)
+        print("chain valid" if valid else "chain INVALID")
+        return 0 if valid else 1
+
+    if args.json:
+        print(json.dumps(summary(memory_path), indent=2))
+        return 0
+
+    print(BANNER)
+    print("  Grounding audit log (redacted)\n")
+    info = summary(memory_path)
+    print(f"  Log: {info['log_path']}")
+    print(f"  Chain valid: {info['chain_valid']}")
+    print(f"  Total: {info['total_events']}  redirects: {info['redirects']}  restarts: {info['restarts']}")
+    print()
+    events = read_events(memory_path, limit=args.limit)
+    if not events:
+        print("  No events recorded yet.\n")
+        return 0
+    for event in events:
+        when = event.timestamp
+        print(
+            f"  · strike={event.strike} action={event.action} level={event.level}\n"
+            f"    excerpt: {event.excerpt}\n"
+            f"    user: {event.user_redacted}\n"
+            f"    hash: {event.hash_tail}…\n"
+        )
+    return 0
 
 
 def run_setup() -> int:
@@ -172,6 +225,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "doctor":
         return run_doctor()
+    if args.command == "grounding":
+        return run_grounding(args)
     if args.command == "setup":
         return run_setup()
     if args.command == "launch":

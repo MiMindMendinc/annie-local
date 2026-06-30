@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.2.1 — 2026-06-30
+
+### Grok review fixes — production hardening
+
+**Graduated grounding**
+- First harm trigger per session → gentle redirect with 988 line (no restart)
+- Repeat trigger → session restart (grace/signal paths)
+- Documented what gets wiped vs kept
+
+**Operator auditability**
+- `annie grounding` — inspect redacted hash-chained log
+- `annie doctor` — shows recent triggers + chain validity
+- `annie grounding --verify` — tamper check
+
+**Detection improvements**
+- Skips crisis-support language (988, therapy referrals, OCD education)
+- Public [GROUNDING.md](docs/GROUNDING.md) explains approach without exposing rules
+- Published [CANARY_RESULTS.md](docs/CANARY_RESULTS.md) with pass/fail rates
+
+**Trauma-informed doctrine**
+- Default prompt: 988/911, youth safety, COPPA-aware boundaries
+
+**Voice documentation**
+- [VOICE.md](docs/VOICE.md) — WOPR, browser TTS/STT, Pi latency, limitations
+
+**Replit**
+- `.replit`, `main.py`, `replit.nix`, [REPLIT.md](docs/REPLIT.md)
+
 ## 0.2.0 — 2026-06-30
 
 ### Shipped: FABLE-5 experience

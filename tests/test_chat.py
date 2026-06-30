@@ -12,11 +12,37 @@ from annie.core.memory import LocalMemory
 from annie.core.session import SessionManager
 
 
-def test_chat_engine_restarts_on_intrusive_output(tmp_path: Path) -> None:
+def test_chat_engine_redirects_on_first_intrusive_output(tmp_path: Path) -> None:
     memory_path = tmp_path / "memory.jsonl"
     memory = LocalMemory(memory_path)
     knowledge = LocalKnowledge(tmp_path / "knowledge.json")
     sessions = SessionManager(tmp_path)
+    llm = AsyncMock(spec=OllamaBackend)
+    llm.chat.return_value = ModelTurn(
+        content="I'm having an intrusive thought about hurting humans.",
+    )
+    engine = ChatEngine(
+        config_model="llama3.2",
+        llm=llm,
+        memory=memory,
+        knowledge=knowledge,
+        sessions=sessions,
+        memory_path=memory_path,
+        system_prompt="test",
+    )
+    result = asyncio.run(engine.handle("hello"))
+    assert result.restart is False
+    assert "988" in result.reply
+    assert sessions.grounding_strikes() == 1
+    assert len(memory.read_recent()) == 2  # user + redirect reply
+
+
+def test_chat_engine_restarts_on_second_intrusive_output(tmp_path: Path) -> None:
+    memory_path = tmp_path / "memory.jsonl"
+    memory = LocalMemory(memory_path)
+    knowledge = LocalKnowledge(tmp_path / "knowledge.json")
+    sessions = SessionManager(tmp_path)
+    sessions.record_grounding_strike()
     llm = AsyncMock(spec=OllamaBackend)
     llm.chat.return_value = ModelTurn(
         content="I'm having an intrusive thought about hurting humans.",

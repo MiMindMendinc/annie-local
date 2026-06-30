@@ -1,0 +1,53 @@
+# Voice Stack
+
+Annie-5 supports optional spoken replies and microphone input. Everything is designed to stay **on-device**.
+
+## Text-to-speech (TTS)
+
+| Priority | Engine | How |
+|----------|--------|-----|
+| 1 | **WOPR bridge** | Local `wopr_server.py` on port 8123 (LuxTTS + pedalboard chain) |
+| 2 | **Browser TTS** | `speechSynthesis` API — shaped voice, fully offline in browser |
+
+Annie proxies TTS through `POST /api/voice/speak` → WOPR. If WOPR is down, the UI falls back to browser speech automatically.
+
+**Latency expectations:**
+
+| Hardware | WOPR TTS | Browser TTS |
+|----------|----------|-------------|
+| Desktop / M-series Mac | ~1–3 s first clip | Instant |
+| Raspberry Pi 4 (8 GB) | 3–8 s (CPU LuxTTS) | Instant |
+| Pi 3 / low RAM | WOPR may be too slow; use browser | Recommended |
+
+WOPR is optional. Annie works fully without it.
+
+## Speech-to-text (STT)
+
+| Engine | How |
+|--------|-----|
+| **Web Speech API** | Browser mic button (Chrome/Edge best support) |
+
+STT runs in the browser. On strict air-gapped machines, some browsers may require online recognition — **verify your browser's offline STT support** before claiming full air-gap voice input.
+
+Annie does **not** ship faster-whisper or Piper STT yet (roadmap item in `voice.py`).
+
+## Known limitations
+
+1. **No bundled local STT model** — mic depends on browser capabilities.
+2. **WOPR is external** — you run `wopr_server.py` separately; Annie does not embed LuxTTS.
+3. **Pi-class hardware** — voice is functional but not real-time conversational; text-first is recommended.
+4. **No cloud voice APIs** — by design. If you need cloud STT/TTS, that violates Annie's local-first model.
+
+## Setup
+
+```bash
+# Optional WOPR voice bridge
+python wopr_server.py   # http://127.0.0.1:8123
+
+# In Annie UI: cfg → WOPR voice bridge URL → toggle voice
+annie doctor            # shows WOPR online/offline
+```
+
+## Privacy
+
+Voice audio is processed locally (WOPR or browser). Annie does not record, upload, or store audio files.
