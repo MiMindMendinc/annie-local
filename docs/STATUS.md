@@ -2,55 +2,47 @@
 
 ## Current Status
 
-**Active prototype / local AI interface demo.**
+**v0.2.0 — shippable local assistant. Ready for daily use on your own hardware.**
 
-Annie Local demonstrates a private local AI companion-style interface with a browser UI, local FastAPI server, Ollama model routing, local JSONL memory, and a reactive orb demo experience.
-
-It is not a finished product, therapist, clinician, crisis service, or compliance-certified system.
+Annie-5 is a complete FABLE-5-class interface: phosphor terminal UI, Ollama chat, structured memory, tool calling, voice bridge, and session control. Designed for builders who want local-first AI that feels finished.
 
 ## What Works Today
 
-- browser-based local UI
-- reactive glowing orb interface
-- local FastAPI server direction
-- Ollama-backed local model chat direction
-- local JSONL memory direction
-- health/config/chat/memory API endpoints direction
-- offline voice-state demo path
-- Python package and CLI direction
-
-## What Must Be Verified Before Real Use
-
-- whether the configured model endpoint is local
-- where local memory is stored
-- whether logs include sensitive prompts or responses
-- whether any browser assets load remotely
-- whether microphone/STT/TTS paths stay local
-- whether the system behaves safely around emotional or crisis content
-- whether data retention and deletion are documented
-
-## Not Claimed
-
-Annie Local does not currently claim:
-
-- clinical validation
-- therapy capability
-- emergency response capability
-- HIPAA compliance
-- COPPA compliance
-- guaranteed fully offline operation in every deployment
-- safe handling of regulated records without review
+- [x] FABLE-5 browser UI (scanner, herald, settings, memory drawers)
+- [x] Local FastAPI server on `127.0.0.1:8787`
+- [x] Ollama chat with tool loop
+- [x] Structured knowledge memory (`~/.annie/knowledge.json`)
+- [x] Conversation memory (`~/.annie/memory.jsonl`)
+- [x] Runtime settings persistence
+- [x] WOPR voice proxy + browser fallback
+- [x] Mic input (Web Speech API)
+- [x] Session restart + clear
+- [x] `annie doctor` / `annie setup` CLI
+- [x] 22+ automated tests + canary gate
+- [x] CI on Python 3.11 and 3.12
 
 ## Release Readiness Checklist
 
-- [ ] `python -m pip install -e .[dev]` works
-- [ ] tests pass with `pytest`
-- [ ] screenshots or demo GIF added
-- [ ] architecture diagram added
-- [ ] local memory location documented
-- [ ] local memory deletion/reset documented
-- [ ] offline dependency checklist added
-- [ ] browser asset loading reviewed
-- [ ] Ollama setup verified
-- [ ] STT/TTS roadmap clearly separated from current features
-- [ ] README claims checked against code
+- [x] `pip install -e .[dev]` works
+- [x] tests pass with `pytest`
+- [x] hero screenshot added (`docs/assets/annie-hero.svg`)
+- [x] local memory location documented
+- [x] local memory deletion/reset documented
+- [x] offline dependency checklist in GETTING_STARTED
+- [x] browser assets load locally (no CDN)
+- [x] Ollama setup documented and probed by doctor
+- [x] README claims match code
+- [x] CHANGELOG for v0.2.0
+- [ ] demo GIF (optional — SVG hero ships instead)
+
+## Not Claimed
+
+- clinical validation or therapy
+- emergency / crisis response
+- HIPAA, COPPA, or regulatory compliance
+- guaranteed safety in all adversarial conditions
+- production multi-user deployment
+
+## Operator notes
+
+Grounding substrate logs locally to `~/.annie/.substrate.ndjson` (hash-chained, mode 0600). Not exposed in UI or API. Run `./scripts/canary_test.sh` before custom builds.

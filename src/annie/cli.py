@@ -1,51 +1,135 @@
 from __future__ import annotations
 
 import argparse
+import shutil
+import subprocess
 import sys
 import webbrowser
 from typing import Sequence
 
+import httpx
 import uvicorn
 
 from annie import __version__
 from annie.core.config import AnnieConfig, validate_config
 from annie.server import create_app
 
+BANNER = """
+  ╔══════════════════════════════════════════╗
+  ║   ANNIE-5  ·  local  ·  air-gapped      ║
+  ║   care engine · your machine · no wire  ║
+  ╚══════════════════════════════════════════╝
+"""
+
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="annie", description="Launch Annie Local.")
-    parser.add_argument("--version", action="store_true", help="Show Annie Local version and exit.")
+    parser = argparse.ArgumentParser(
+        prog="annie",
+        description="Annie Local — private FABLE-5-class AI on your machine.",
+    )
+    parser.add_argument("--version", action="store_true", help="Show version and exit.")
     subparsers = parser.add_subparsers(dest="command")
 
-    launch = subparsers.add_parser("launch", help="Launch the local Annie web UI.")
-    launch.add_argument("--host", default="127.0.0.1", help="Server bind host.")
-    launch.add_argument("--port", type=int, default=8787, help="Server bind port.")
+    launch = subparsers.add_parser("launch", help="Launch the Annie-5 web UI.")
+    launch.add_argument("--host", default="127.0.0.1", help="Bind host (default: 127.0.0.1).")
+    launch.add_argument("--port", type=int, default=8787, help="Bind port (default: 8787).")
     launch.add_argument("--model", default="llama3.2", help="Ollama model name.")
     launch.add_argument("--ollama-url", default="http://127.0.0.1:11434", help="Ollama base URL.")
-    launch.add_argument("--memory-path", default="~/.annie/memory.jsonl", help="Local JSONL memory path.")
-    launch.add_argument("--speed-kernel", action="store_true", help="Enable experimental speed-kernel lab detection.")
+    launch.add_argument("--voice-url", default="http://127.0.0.1:8123", help="WOPR voice bridge URL.")
+    launch.add_argument("--memory-path", default="~/.annie/memory.jsonl", help="Conversation memory path.")
+    launch.add_argument("--speed-kernel", action="store_true", help="Enable speed-kernel lab flag.")
     launch.add_argument(
         "--speed-kernel-backend",
         default="dominus-ultra",
         choices=["dominus-ultra"],
-        help="Experimental speed-kernel backend label.",
+        help="Speed-kernel backend label.",
     )
-    launch.add_argument("--no-browser", action="store_true", help="Do not open a browser automatically.")
+    launch.add_argument("--no-browser", action="store_true", help="Do not open browser.")
 
-    subparsers.add_parser("doctor", help="Print local setup guidance.")
+    subparsers.add_parser("doctor", help="Diagnose your local stack.")
+    subparsers.add_parser("setup", help="Install deps and verify the build.")
     return parser
 
 
+def _check(name: str, ok: bool, detail: str = "") -> bool:
+    mark = "✓" if ok else "✗"
+    line = f"  {mark} {name}"
+    if detail:
+        line += f" — {detail}"
+    print(line)
+    return ok
+
+
 def run_doctor() -> int:
-    print("Annie Local doctor")
-    print(f"Version: {__version__}")
-    print("Required local backend: Ollama")
-    print("Optional lab backend: DominusUltra on PYTHONPATH for speed-kernel experiments")
-    print("Try:")
-    print("  ollama pull llama3.2")
-    print("  annie launch --model llama3.2")
-    print("  annie launch --model llama3.2 --speed-kernel")
-    return 0
+    print(BANNER)
+    print(f"  Annie Local v{__version__}\n")
+
+    all_ok = True
+    py_ok = sys.version_info >= (3, 11)
+    all_ok &= _check("Python 3.11+", py_ok, f"{sys.version_info.major}.{sys.version_info.minor}")
+
+    ollama_bin = shutil.which("ollama") is not None
+    all_ok &= _check("Ollama CLI", ollama_bin, "install from https://ollama.com" if not ollama_bin else "")
+
+    models: list[str] = []
+    try:
+        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=3.0)
+        ollama_up = response.status_code == 200
+        if ollama_up:
+            data = response.json()
+            models = [m["name"] for m in data.get("models", []) if m.get("name")]
+    except Exception:
+        ollama_up = False
+
+    all_ok &= _check("Ollama daemon", ollama_up, "run: ollama serve" if not ollama_up else f"{len(models)} model(s)")
+    if models:
+        for name in models[:5]:
+            print(f"      · {name}")
+        if len(models) > 5:
+            print(f"      · … and {len(models) - 5} more")
+
+    recommended = any("llama3.2" in m or "llama3.1" in m for m in models)
+    if ollama_up and models:
+        _check("Tool-capable model", recommended, "llama3.2 recommended" if not recommended else "")
+
+    try:
+        voice = httpx.get("http://127.0.0.1:8123/health", timeout=2.0)
+        wopr_ok = voice.status_code == 200
+    except Exception:
+        wopr_ok = False
+    _check("WOPR voice bridge (optional)", wopr_ok, "http://127.0.0.1:8123" if not wopr_ok else "online")
+
+    data_dir = AnnieConfig().resolved_root
+    data_ok = data_dir.parent.exists() or True
+    _check("Data directory", data_ok, str(data_dir))
+
+    print()
+    if all_ok and models:
+        print("  Ready. Run: annie launch\n")
+        return 0
+    if not ollama_up:
+        print("  Fix: ollama serve && ollama pull llama3.2\n")
+    elif not models:
+        print("  Fix: ollama pull llama3.2\n")
+    else:
+        print("  Fix issues above, then: annie launch\n")
+    return 1 if not all_ok else 0
+
+
+def run_setup() -> int:
+    print(BANNER)
+    print("  Running install script …\n")
+    from pathlib import Path
+
+    repo = Path(__file__).resolve().parents[2]
+    install = repo / "scripts" / "install.sh"
+    if not install.exists():
+        install = Path.cwd() / "scripts" / "install.sh"
+    if install.exists():
+        result = subprocess.run(["bash", str(install)], check=False)
+        return result.returncode
+    print("  install.sh not found. Try: pip install -e '.[dev]'\n")
+    return 1
 
 
 def run_launch(args: argparse.Namespace) -> int:
@@ -54,6 +138,7 @@ def run_launch(args: argparse.Namespace) -> int:
         port=args.port,
         model=args.model,
         ollama_url=args.ollama_url,
+        voice_url=args.voice_url,
         memory_path=args.memory_path,
         speed_kernel=args.speed_kernel,
         speed_kernel_backend=args.speed_kernel_backend,
@@ -61,11 +146,15 @@ def run_launch(args: argparse.Namespace) -> int:
     validate_config(config)
     app = create_app(config)
     url = f"http://{config.host}:{config.port}"
-    print(f"Starting Annie Local on {url}")
-    print(f"Model: {config.model}")
-    print(f"Memory: {config.resolved_memory_path}")
+
+    print(BANNER)
+    print(f"  → {url}")
+    print(f"  → model: {config.model}")
+    print(f"  → memory: {config.resolved_memory_path}")
     if config.speed_kernel:
-        print(f"Speed kernel lab: enabled ({config.speed_kernel_backend})")
+        print(f"  → speed kernel: {config.speed_kernel_backend}")
+    print()
+
     if not args.no_browser:
         try:
             webbrowser.open(url)
@@ -83,6 +172,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "doctor":
         return run_doctor()
+    if args.command == "setup":
+        return run_setup()
     if args.command == "launch":
         return run_launch(args)
     parser.print_help()

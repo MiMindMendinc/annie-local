@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "annie-local"
-version = "0.1.0"
-description = "Private local voice AI companion with a reactive glowing orb UI."
+version = "0.2.0"
+description = "FABLE-5-class local AI companion — Ollama, memory, voice, zero cloud."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -20,14 +20,18 @@ keywords = [
   "privacy-first",
   "ai-companion",
   "llm",
+  "fable-5",
+  "fastapi",
 ]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
+  "Intended Audience :: End Users/Desktop",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
   "fastapi>=0.111.0",
@@ -35,6 +39,12 @@ dependencies = [
   "httpx>=0.27.0",
   "pydantic>=2.7.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/MiMindMendinc/annie-local"
+Repository = "https://github.com/MiMindMendinc/annie-local"
+Issues = "https://github.com/MiMindMendinc/annie-local/issues"
+Changelog = "https://github.com/MiMindMendinc/annie-local/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

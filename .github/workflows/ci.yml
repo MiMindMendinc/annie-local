@@ -29,5 +29,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      - name: Run tests
+      - name: Run full test suite
         run: pytest -q
+
+      - name: Run substrate canary gate
+        run: bash scripts/canary_test.sh

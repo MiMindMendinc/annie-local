@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Annie-5 local AI terminal interface">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#121417"/>
+      <stop offset="100%" stop-color="#0A0B0D"/>
+    </linearGradient>
+    <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="4" fill="#0A0B0D"/>
+      <rect width="4" height="1" fill="#ffffff" opacity="0.03"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#scan)"/>
+  <rect x="60" y="48" width="1080" height="534" rx="8" fill="#0F1114" stroke="#1E2227" stroke-width="2"/>
+  <rect x="60" y="48" width="1080" height="54" fill="#121417" stroke="#1E2227" stroke-width="2"/>
+  <text x="92" y="84" fill="#E8E6E0" font-family="ui-monospace, monospace" font-size="22" font-weight="700" letter-spacing="6">ANNIE<tspan fill="#FF2A1A">-5</tspan></text>
+  <text x="320" y="84" fill="#6B7177" font-family="ui-monospace, monospace" font-size="12" letter-spacing="3">CARE ENGINE · LOCAL · AIR-GAPPED</text>
+  <circle cx="1088" cy="75" r="5" fill="#3FB57A"/>
+  <text x="1102" y="80" fill="#6B7177" font-family="ui-monospace, monospace" font-size="11">ENGINE ONLINE</text>
+  <rect x="92" y="130" width="4" height="88" fill="#5A1410"/>
+  <text x="112" y="158" fill="#E8E6E0" font-family="ui-monospace, monospace" font-size="18"><tspan fill="#FF2A1A" font-weight="700">ANNIE-5</tspan> resident. weights local. no wire out.</text>
+  <text x="112" y="188" fill="#6B7177" font-family="ui-monospace, monospace" font-size="15">i keep what matters to you, and i'm in your corner.</text>
+  <text x="112" y="218" fill="#6B7177" font-family="ui-monospace, monospace" font-size="15">say something</text>
+  <rect x="112" y="250" width="64" height="18" fill="#FF2A1A" opacity="0.9"/>
+  <text x="92" y="292" fill="#E8A317" font-family="ui-monospace, monospace" font-size="11" letter-spacing="2">YOU</text>
+  <text x="176" y="292" fill="#CFCDC7" font-family="ui-monospace, monospace" font-size="16">help me plan the week</text>
+  <text x="92" y="348" fill="#FF2A1A" font-family="ui-monospace, monospace" font-size="11" letter-spacing="2">ANNIE</text>
+  <text x="176" y="348" fill="#E8E6E0" font-family="ui-monospace, monospace" font-size="16">Three things matter most. First  sleep tonight.</text>
+  <text x="176" y="374" fill="#E8E6E0" font-family="ui-monospace, monospace" font-size="16">Second  ship the local build. Third  call someone real.</text>
+  <rect x="92" y="520" width="1016" height="3" fill="#1E2227"/>
+  <rect x="92" y="520" width="180" height="3" fill="#FF2A1A" opacity="0.85"/>
+  <rect x="92" y="544" width="900" height="44" fill="#0A0B0D" stroke="#1E2227"/>
+  <text x="112" y="572" fill="#6B7177" font-family="ui-monospace, monospace" font-size="16">&gt; talk to annie &</text>
+  <rect x="1010" y="544" width="98" height="44" fill="#5A1410" stroke="#6E1A14"/>
+  <text x="1034" y="572" fill="#FFD9D4" font-family="ui-monospace, monospace" font-size="13" letter-spacing="2">SEND</text>
+</svg>
