@@ -1,6 +1,10 @@
 # Annie Local
 
 <p align="center">
+  <img src="docs/assets/annie-demo.gif" alt="Annie-5 demo" width="900" />
+</p>
+
+<p align="center">
   <img src="docs/assets/annie-hero.svg" alt="Annie-5 terminal interface" width="900" />
 </p>
 

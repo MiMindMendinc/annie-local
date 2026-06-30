@@ -27,6 +27,7 @@ htmlcov/
 .annie/
 annie_memory.jsonl
 *.log
+docs/assets/demo-frames/
 
 # Benchmark outputs
 benchmark-results/
