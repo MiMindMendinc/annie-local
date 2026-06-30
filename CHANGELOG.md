@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.0 — 2026-06-30
+
+### Production stack — full architecture
+
+**Three-layer architecture**
+- Frontend: reactive state (`state.js`), API client with JWT + retry (`api-client.js`), form validators
+- Middleware: JWT auth, CORS, Redis rate limiting, structured logging, OWASP security headers, global error handlers
+- Backend: FastAPI routers → services → repositories; SQLAlchemy async ORM; arq async workers
+
+**Infrastructure**
+- `docker-compose.yml` — PostgreSQL, Redis, MinIO (S3), Ollama, API, worker
+- `Dockerfile` — one-command production build
+- `migrations/001_initial.sql` — full schema
+- `.env.example` — all required environment keys
+- [docs/RUNBOOK.md](docs/RUNBOOK.md) — install, migrate, start, access
+
+**Scalability & safety**
+- Stateless JWT sessions, connection pooling, Redis cache for hot paths
+- S3-compatible uploads (no local file storage in production)
+- Input sanitization (bleach), parameterized ORM queries, HTTP retry with exponential backoff
+- 38 tests including auth and middleware integration
+
+**Dual mode**
+- `ANNIE_MODE=local` — file-backed single user (`annie launch`, unchanged workflow)
+- `ANNIE_MODE=production` — Postgres + Redis + JWT via Docker
+
 ## 0.2.1 — 2026-06-30
 
 ### Grok review fixes — production hardening

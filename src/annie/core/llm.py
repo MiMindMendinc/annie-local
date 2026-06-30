@@ -5,6 +5,8 @@ from typing import Any
 
 import httpx
 
+from annie.utils.http_retry import with_retry
+
 
 class LLMBackendError(RuntimeError):
     """Raised when the local model backend cannot complete a request."""
@@ -46,10 +48,13 @@ class OllamaBackend:
 
     async def health(self) -> dict[str, Any]:
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(f"{self.base_url}/api/tags")
-                response.raise_for_status()
-                data = response.json()
+            async def _fetch() -> dict[str, Any]:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    response = await client.get(f"{self.base_url}/api/tags")
+                    response.raise_for_status()
+                    return response.json()
+
+            data = await with_retry(_fetch)
         except Exception as exc:  # pragma: no cover - network dependent
             return {"ok": False, "backend": "ollama", "error": str(exc)}
         models = data.get("models", [])
@@ -77,13 +82,17 @@ class OllamaBackend:
             payload["tools"] = tools
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(f"{self.base_url}/api/chat", json=payload)
-                if response.status_code >= 400 and tools:
-                    payload.pop("tools", None)
+            async def _chat() -> dict[str, Any]:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
                     response = await client.post(f"{self.base_url}/api/chat", json=payload)
-                response.raise_for_status()
-                data = response.json()
+                    if response.status_code >= 400 and tools:
+                        fallback = dict(payload)
+                        fallback.pop("tools", None)
+                        response = await client.post(f"{self.base_url}/api/chat", json=fallback)
+                    response.raise_for_status()
+                    return response.json()
+
+            data = await with_retry(_chat)
         except Exception as exc:
             raise LLMBackendError(f"Ollama request failed: {exc}") from exc
 

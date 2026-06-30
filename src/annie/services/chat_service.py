@@ -1,0 +1,174 @@
+from __future__ import annotations
+
+import logging
+import tempfile
+import uuid
+from dataclasses import asdict
+from pathlib import Path
+
+from annie.core.chat import ChatEngine, ChatResult
+from annie.core.config import AnnieConfig
+from annie.core.knowledge import LocalKnowledge
+from annie.core.llm import LLMBackendError, OllamaBackend
+from annie.core.memory import LocalMemory
+from annie.core.session import SessionManager
+from annie.core.settings import RuntimeSettings
+from annie.env import is_production
+from annie.repositories.base import KnowledgeRepository, MemoryRepository, SettingsRepository
+from annie.services.cache_service import CacheService
+from annie.services.production_bridge import hydrate_knowledge, hydrate_memory, persist_knowledge, persist_memory
+
+logger = logging.getLogger(__name__)
+
+
+class ChatService:
+    def __init__(
+        self,
+        *,
+        config: AnnieConfig,
+        knowledge: KnowledgeRepository,
+        memory: MemoryRepository,
+        settings_repo: SettingsRepository,
+        sessions: SessionManager,
+        cache: CacheService,
+        user_id: uuid.UUID | None = None,
+        runtime_settings: RuntimeSettings | None = None,
+        local_knowledge: LocalKnowledge | None = None,
+        local_memory: LocalMemory | None = None,
+    ) -> None:
+        self.config = config
+        self.knowledge = knowledge
+        self.memory = memory
+        self.settings_repo = settings_repo
+        self.sessions = sessions
+        self.cache = cache
+        self.user_id = user_id
+        self.runtime_settings = runtime_settings
+        self.local_knowledge = local_knowledge
+        self.local_memory = local_memory
+        self._work_dir = Path(tempfile.mkdtemp(prefix="annie-prod-")) if is_production() else config.resolved_root
+
+    async def _settings(self) -> dict:
+        if self.runtime_settings:
+            return self.runtime_settings.to_public_dict()
+        return await self.settings_repo.load(self.user_id)
+
+    async def _build_engine(self) -> tuple[ChatEngine, LocalKnowledge, LocalMemory, bool]:
+        settings = await self._settings()
+        llm = OllamaBackend(settings["ollama_url"], settings["model"])
+        production = is_production() and self.user_id is not None
+        if production:
+            lk = await hydrate_knowledge(self.knowledge, self.user_id, self._work_dir)
+            lm = await hydrate_memory(self.memory, self.user_id, self._work_dir)
+            return (
+                ChatEngine(
+                    config_model=settings["model"],
+                    llm=llm,
+                    memory=lm,
+                    knowledge=lk,
+                    sessions=self.sessions,
+                    memory_path=self.config.resolved_memory_path,
+                    system_prompt=settings["system_prompt"],
+                    temperature=settings["temperature"],
+                    tools_enabled=settings["tools_enabled"],
+                ),
+                lk,
+                lm,
+                True,
+            )
+        assert self.local_knowledge and self.local_memory
+        return (
+            ChatEngine(
+                config_model=settings["model"],
+                llm=llm,
+                memory=self.local_memory,
+                knowledge=self.local_knowledge,
+                sessions=self.sessions,
+                memory_path=self.config.resolved_memory_path,
+                system_prompt=settings["system_prompt"],
+                temperature=settings["temperature"],
+                tools_enabled=settings["tools_enabled"],
+            ),
+            self.local_knowledge,
+            self.local_memory,
+            False,
+        )
+
+    async def handle_message(self, message: str) -> dict:
+        engine, lk, lm, production = await self._build_engine()
+        try:
+            result: ChatResult = await engine.handle(message)
+        except LLMBackendError as exc:
+            raise RuntimeError(str(exc)) from exc
+        if production and self.user_id:
+            await persist_knowledge(self.knowledge, self.user_id, lk)
+            await persist_memory(self.memory, self.user_id, lm, clear_first=result.restart)
+        await self.cache.delete(f"knowledge:{self.user_id or 'local'}")
+        return {
+            "reply": result.reply,
+            "restart": result.restart,
+            "tool_events": result.tool_events,
+            "model": result.model,
+            "session": asdict(self.sessions.info()),
+        }
+
+    async def restart_session(self) -> dict:
+        engine, lk, lm, production = await self._build_engine()
+        if production and self.user_id:
+            await self.memory.clear(self.user_id)
+        payload = engine.restart_session()
+        if production and self.user_id:
+            await persist_knowledge(self.knowledge, self.user_id, lk)
+        await self.cache.delete(f"knowledge:{self.user_id or 'local'}")
+        return {"ok": True, **payload}
+
+    async def get_knowledge(self) -> dict:
+        cache_key = f"knowledge:{self.user_id or 'local'}"
+        cached = await self.cache.get_json(cache_key)
+        if cached is not None:
+            return cached
+        if self.local_knowledge:
+            data = self.local_knowledge.snapshot()
+        else:
+            data = await self.knowledge.snapshot(self.user_id)
+        await self.cache.set_json(cache_key, data, ttl_seconds=30)
+        return data
+
+    async def clear_knowledge(self) -> None:
+        if self.local_knowledge:
+            self.local_knowledge.clear()
+        else:
+            await self.knowledge.clear(self.user_id)
+        await self.cache.delete(f"knowledge:{self.user_id or 'local'}")
+
+    async def delete_knowledge_item(self, kind: str, item_id: str | None) -> None:
+        if self.local_knowledge:
+            self.local_knowledge.delete_item(kind, item_id)
+        else:
+            await self.knowledge.delete_item(kind, item_id, self.user_id)
+        await self.cache.delete(f"knowledge:{self.user_id or 'local'}")
+
+    async def get_settings(self) -> dict:
+        return await self._settings()
+
+    async def update_settings(self, payload: dict) -> dict:
+        if self.runtime_settings:
+            current = self.runtime_settings.to_public_dict()
+            merged = {**current, **{k: v for k, v in payload.items() if v is not None}}
+            self.runtime_settings.model = str(merged["model"])
+            self.runtime_settings.ollama_url = str(merged["ollama_url"])
+            self.runtime_settings.voice_url = str(merged["voice_url"])
+            self.runtime_settings.temperature = float(merged["temperature"])
+            self.runtime_settings.tools_enabled = bool(merged["tools_enabled"])
+            self.runtime_settings.system_prompt = str(merged["system_prompt"])
+            self.runtime_settings.save(self.config.resolved_settings_path)
+            return self.runtime_settings.to_public_dict()
+        return await self.settings_repo.save(payload, self.user_id)
+
+    async def search_memory(self, query: str, limit: int) -> list[dict[str, str]]:
+        if self.local_memory:
+            return [
+                {"role": e.role, "content": e.content, "created_at": e.created_at}
+                for e in self.local_memory.search(query, limit)
+            ]
+        return await self.memory.search(query, limit, self.user_id)

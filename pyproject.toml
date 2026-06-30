@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "annie-local"
-version = "0.2.1"
-description = "FABLE-5-class local AI companion — Ollama, memory, voice, zero cloud."
+version = "0.3.0"
+description = "FABLE-5-class local AI companion — Ollama, memory, voice, production stack."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -22,6 +22,8 @@ keywords = [
   "llm",
   "fable-5",
   "fastapi",
+  "postgresql",
+  "redis",
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -38,6 +40,10 @@ dependencies = [
   "uvicorn[standard]>=0.30.0",
   "httpx>=0.27.0",
   "pydantic>=2.7.0",
+  "email-validator>=2.1.0",
+  "bleach>=6.1.0",
+  "python-jose[cryptography]>=3.3.0",
+  "bcrypt>=4.0.0",
 ]
 
 [project.urls]
@@ -47,8 +53,17 @@ Issues = "https://github.com/MiMindMendinc/annie-local/issues"
 Changelog = "https://github.com/MiMindMendinc/annie-local/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
+prod = [
+  "sqlalchemy[asyncio]>=2.0.30",
+  "asyncpg>=0.29.0",
+  "redis>=5.0.0",
+  "arq>=0.26.0",
+  "boto3>=1.34.0",
+  "python-multipart>=0.0.9",
+]
 dev = [
   "pytest>=8.2.0",
+  "pytest-asyncio>=0.23.0",
 ]
 
 [project.scripts]
@@ -59,3 +74,6 @@ annie = ["ui/*.html", "ui/*.js", "ui/*.css"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
