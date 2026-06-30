@@ -41,6 +41,10 @@ class LocalMemory:
         rows = self._iter_entries()
         return list(rows)[-limit:]
 
+    def clear(self) -> None:
+        if self.path.exists():
+            self.path.write_text("", encoding="utf-8")
+
     def search(self, query: str, limit: int = 10) -> list[MemoryEntry]:
         query_norm = query.casefold().strip()
         if not query_norm:

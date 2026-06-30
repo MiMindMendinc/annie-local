@@ -1,31 +1,124 @@
-const orb = document.getElementById("orb");
-const statusText = document.getElementById("status");
-const form = document.getElementById("chat-form");
-const input = document.getElementById("message-input");
-const messages = document.getElementById("messages");
-const healthButton = document.getElementById("health-button");
-const healthOutput = document.getElementById("health-output");
+"use strict";
 
-function setState(state) {
-  orb.classList.remove("idle", "listening", "thinking", "speaking");
-  orb.classList.add(state);
-  statusText.textContent = state.charAt(0).toUpperCase() + state.slice(1);
+const $ = (selector) => document.querySelector(selector);
+const el = {
+  stream: $("#stream"),
+  main: $("#main"),
+  herald: $("#herald"),
+  input: $("#input"),
+  send: $("#send"),
+  scanner: $("#scanner"),
+  engineDot: $("#engineDot"),
+  engineTxt: $("#engineTxt"),
+  clearBtn: $("#clearBtn"),
+  form: $("#chat-form"),
+};
+
+let busy = false;
+let abortController = null;
+
+function esc(text) {
+  return text.replace(/[&<>]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
 }
 
-function addMessage(role, content) {
-  const node = document.createElement("div");
-  node.className = `message ${role}`;
-  node.textContent = content;
-  messages.appendChild(node);
-  messages.scrollTop = messages.scrollHeight;
+function clock() {
+  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-async function sendMessage(message) {
-  setState("thinking");
+function toBottom() {
+  el.main.scrollTop = el.main.scrollHeight;
+}
+
+function setBusy(on) {
+  busy = on;
+  el.scanner.classList.toggle("live", on);
+  el.send.textContent = on ? "Stop" : "Send";
+  el.send.classList.toggle("stop", on);
+  el.input.disabled = on;
+}
+
+function showHerald() {
+  el.stream.innerHTML = "";
+  const herald = document.createElement("div");
+  herald.className = "herald";
+  herald.id = "herald";
+  herald.innerHTML = `
+    <div class="l1"><b>ANNIE-5</b> resident. weights local. no wire out.</div>
+    <div class="l2">i keep what matters to you, and i'm in your corner.</div>
+    <div class="l3">say something<span class="cursor"></span></div>`;
+  el.stream.appendChild(herald);
+  toBottom();
+}
+
+function addTurn(role, content) {
+  $("#herald")?.remove();
+  const turn = document.createElement("div");
+  turn.className = `turn ${role === "user" ? "user" : "bot"}`;
+  turn.innerHTML = `<div class="who">${role === "user" ? "you" : "annie"}</div><div class="bubble"></div>`;
+  const bubble = turn.querySelector(".bubble");
+  if (content) {
+    bubble.textContent = content;
+  }
+  el.stream.appendChild(turn);
+  toBottom();
+  return bubble;
+}
+
+function addMeta(bubble, label) {
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.textContent = `${label} · ${clock()}`;
+  bubble.parentElement.appendChild(meta);
+}
+
+function showError(title, detail) {
+  $("#herald")?.remove();
+  const error = document.createElement("div");
+  error.className = "errline";
+  error.innerHTML = `<b>${esc(title)}</b><span>${esc(detail)}</span>`;
+  el.stream.appendChild(error);
+  toBottom();
+}
+
+async function typeOut(bubble, text) {
+  const total = text.length;
+  const step = Math.max(1, Math.ceil(total / 220));
+  let index = 0;
+  while (index < total) {
+    if (abortController?.signal.aborted) {
+      break;
+    }
+    index = Math.min(total, index + step);
+    bubble.textContent = text.slice(0, index);
+    toBottom();
+    await new Promise((resolve) => setTimeout(resolve, 8));
+  }
+  bubble.textContent = text;
+}
+
+async function refreshEngine() {
+  try {
+    const response = await fetch("/api/health", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("health failed");
+    }
+    const data = await response.json();
+    const backendOk = data.backend?.ok;
+    el.engineDot.className = backendOk ? "dot on" : "dot off";
+    el.engineTxt.textContent = backendOk ? "engine online" : "engine offline";
+  } catch {
+    el.engineDot.className = "dot off";
+    el.engineTxt.textContent = "engine offline";
+  }
+}
+
+async function sendMessage(text) {
+  abortController = new AbortController();
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message: text }),
+    signal: abortController.signal,
   });
 
   if (!response.ok) {
@@ -36,45 +129,94 @@ async function sendMessage(message) {
   return response.json();
 }
 
-form.addEventListener("submit", async (event) => {
+function stop() {
+  if (abortController) {
+    abortController.abort();
+  }
+}
+
+async function send() {
+  if (busy) {
+    stop();
+    return;
+  }
+
+  const text = el.input.value.trim();
+  if (!text) {
+    return;
+  }
+
+  addTurn("user", text);
+  el.input.value = "";
+  autosize();
+
+  const bubble = addTurn("bot", "");
+  setBusy(true);
+
+  try {
+    const data = await sendMessage(text);
+    const reply = data.reply || "[no output]";
+    await typeOut(bubble, reply);
+    addMeta(bubble, data.model || "local");
+
+    if (data.restart) {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      showHerald();
+    }
+  } catch (error) {
+    if (error.name === "AbortError") {
+      if (!bubble.textContent) {
+        bubble.parentElement.remove();
+      }
+    } else {
+      bubble.parentElement.remove();
+      showError(
+        "engine error",
+        error.message || "unknown error"
+      );
+      refreshEngine();
+    }
+  } finally {
+    setBusy(false);
+    abortController = null;
+    el.input.focus();
+  }
+}
+
+function autosize() {
+  el.input.style.height = "auto";
+  el.input.style.height = `${Math.min(el.input.scrollHeight, 180)}px`;
+}
+
+el.input.addEventListener("input", autosize);
+el.input.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    send();
+  }
+  if (event.key === "Escape" && busy) {
+    event.preventDefault();
+    stop();
+  }
+});
+
+el.form.addEventListener("submit", (event) => {
   event.preventDefault();
-  const message = input.value.trim();
-  if (!message) return;
-
-  input.value = "";
-  input.disabled = true;
-  form.querySelector("button").disabled = true;
-  addMessage("user", message);
-
-  try {
-    const data = await sendMessage(message);
-    setState("speaking");
-    addMessage("assistant", data.reply || "No reply returned.");
-    window.setTimeout(() => setState("idle"), 850);
-  } catch (error) {
-    setState("idle");
-    addMessage("assistant", `Local backend error: ${error.message}\n\nTip: run 'ollama pull llama3.2' and make sure Ollama is running.`);
-  } finally {
-    input.disabled = false;
-    form.querySelector("button").disabled = false;
-    input.focus();
-  }
+  send();
 });
 
-input.addEventListener("focus", () => setState("listening"));
-input.addEventListener("blur", () => setState("idle"));
-
-healthButton.addEventListener("click", async () => {
-  setState("thinking");
-  try {
-    const response = await fetch("/api/health");
-    const data = await response.json();
-    healthOutput.textContent = JSON.stringify(data, null, 2);
-  } catch (error) {
-    healthOutput.textContent = `Health check failed: ${error.message}`;
-  } finally {
-    setState("idle");
+el.clearBtn.addEventListener("click", () => {
+  if (busy) {
+    stop();
   }
+  showHerald();
 });
 
-setState("idle");
+refreshEngine();
+setInterval(() => {
+  if (!busy) {
+    refreshEngine();
+  }
+}, 8000);
+
+el.input.focus();

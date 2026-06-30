@@ -3,42 +3,48 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Annie Local</title>
+    <title>ANNIE // FABLE-5</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <section class="hero">
-        <p class="eyebrow">Annie Local</p>
-        <h1>Private local voice AI with a glowing reactive orb.</h1>
-        <p class="subhead">Talk to a local model, keep memory on your machine, and get a polished interface built for offline-first AI.</p>
-      </section>
-
-      <section class="orb-panel" aria-label="Annie orb status">
-        <div id="orb" class="orb idle" role="img" aria-label="Reactive glowing orb">
-          <div class="orb-core"></div>
-          <div class="orb-ring ring-one"></div>
-          <div class="orb-ring ring-two"></div>
-          <div class="orb-glow"></div>
+    <header>
+      <div class="brand">
+        <b>ANNIE<span class="v">-5</span></b>
+        <small>fully air-gapped · locally executed</small>
+      </div>
+      <div class="spacer"></div>
+      <div class="status">
+        <div class="pill air">
+          <div class="dot on" id="airDot"></div>
+          <span class="txt">air-gap</span>
         </div>
-        <p id="status" class="status">Idle</p>
-      </section>
-
-      <section class="chat-panel">
-        <div id="messages" class="messages" aria-live="polite">
-          <div class="message assistant">Hey, I’m Annie Local. Start Ollama, pick a model, and talk to me privately on your machine.</div>
+        <div class="pill">
+          <div class="dot" id="engineDot"></div>
+          <span class="txt" id="engineTxt">checking</span>
         </div>
-        <form id="chat-form" class="chat-form">
-          <input id="message-input" type="text" autocomplete="off" placeholder="Ask Annie something local..." />
-          <button type="submit">Send</button>
-        </form>
-      </section>
+        <button class="iconbtn" id="clearBtn" type="button" title="Clear conversation">clr</button>
+      </div>
+    </header>
 
-      <section class="meta-panel">
-        <button id="health-button" type="button">Check local backend</button>
-        <pre id="health-output">Backend status will appear here.</pre>
-      </section>
+    <main id="main">
+      <div class="stream" id="stream">
+        <div class="herald" id="herald">
+          <div class="l1"><b>ANNIE-5</b> resident. weights local. no wire out.</div>
+          <div class="l2">i keep what matters to you, and i'm in your corner.</div>
+          <div class="l3">say something<span class="cursor"></span></div>
+        </div>
+      </div>
     </main>
+
+    <div class="scanner" id="scanner"></div>
+
+    <div class="prompt-wrap">
+      <form class="prompt" id="chat-form">
+        <textarea id="input" rows="1" placeholder="talk to annie…" autocomplete="off"></textarea>
+        <button class="send" id="send" type="submit">Send</button>
+      </form>
+    </div>
+
     <script src="/static/app.js"></script>
   </body>
 </html>

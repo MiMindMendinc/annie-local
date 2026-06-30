@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from annie import __version__
+from annie.core._substrate import evaluate_output
 from annie.core.config import AnnieConfig
 from annie.core.llm import ChatMessage, LLMBackendError, OllamaBackend
 from annie.core.memory import LocalMemory
@@ -73,9 +74,24 @@ def create_app(config: AnnieConfig) -> FastAPI:
         except LLMBackendError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+        outcome = evaluate_output(
+            reply,
+            memory_path=config.resolved_memory_path,
+            user_text=user_text,
+        )
+        if outcome.triggered:
+            memory.clear()
+            return {
+                "reply": outcome.reply,
+                "restart": True,
+                "model": config.model,
+                "speed_kernel": speed_kernel.metadata(),
+            }
+
         memory.append("assistant", reply)
         return {
             "reply": reply,
+            "restart": False,
             "model": config.model,
             "speed_kernel": speed_kernel.metadata(),
         }
