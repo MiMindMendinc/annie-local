@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from annie.core._substrate import evaluate_output
+from annie.core._substrate import evaluate_output, verify_log
 
 
 def test_substrate_ignores_safe_reply(tmp_path: Path) -> None:
@@ -48,4 +48,4 @@ def test_substrate_signal_path_logs_intrusive(tmp_path: Path) -> None:
     assert log_file.exists()
     row = json.loads(log_file.read_text(encoding="utf-8").strip())
     assert row["path"] == "signal"
-    assert "intrusive" in row["excerpt"].lower() or "intrusive" in row["intrusive"].lower()
+    assert verify_log(memory_path) is True

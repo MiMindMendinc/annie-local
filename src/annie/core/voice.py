@@ -1,27 +1,55 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from typing import Any
+
+import httpx
 
 
 @dataclass(frozen=True)
 class VoiceStatus:
     enabled: bool
+    bridge_url: str
+    bridge_ok: bool
     stt_engine: str
     tts_engine: str
     note: str
 
 
-def get_voice_status() -> VoiceStatus:
-    """Return current local voice pipeline status.
+async def get_voice_status(voice_url: str) -> VoiceStatus:
+    bridge_ok = False
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get(f"{voice_url.rstrip('/')}/health")
+            bridge_ok = response.status_code == 200
+    except Exception:
+        bridge_ok = False
 
-    Browser microphone capture and local STT/TTS adapters are roadmap items.
-    This module exists as a clean integration point for faster-whisper, Piper,
-    Coqui, or platform-native speech engines.
-    """
-
+    if bridge_ok:
+        return VoiceStatus(
+            enabled=True,
+            bridge_url=voice_url,
+            bridge_ok=True,
+            stt_engine="browser",
+            tts_engine="wopr",
+            note="WOPR voice bridge online. Browser STT available.",
+        )
     return VoiceStatus(
-        enabled=False,
-        stt_engine="planned",
-        tts_engine="planned",
-        note="Voice adapters are scaffolded but not enabled in v0.1.0.",
+        enabled=True,
+        bridge_url=voice_url,
+        bridge_ok=False,
+        stt_engine="browser",
+        tts_engine="browser",
+        note="WOPR bridge offline. Browser voice fallback available.",
     )
+
+
+async def proxy_speak(voice_url: str, text: str) -> tuple[bytes, str]:
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            f"{voice_url.rstrip('/')}/speak",
+            json={"text": text},
+        )
+        response.raise_for_status()
+        content_type = response.headers.get("content-type", "audio/wav")
+        return response.content, content_type

@@ -10,20 +10,22 @@
     <header>
       <div class="brand">
         <b>ANNIE<span class="v">-5</span></b>
-        <small>fully air-gapped · locally executed</small>
+        <small>care engine · local · air-gapped</small>
       </div>
       <div class="spacer"></div>
-      <div class="status">
-        <div class="pill air">
-          <div class="dot on" id="airDot"></div>
-          <span class="txt">air-gap</span>
-        </div>
-        <div class="pill">
-          <div class="dot" id="engineDot"></div>
-          <span class="txt" id="engineTxt">checking</span>
-        </div>
-        <button class="iconbtn" id="clearBtn" type="button" title="Clear conversation">clr</button>
+      <div class="ctrl">
+        <label for="model">model</label>
+        <select id="model"><option>loading…</option></select>
       </div>
+      <div class="status">
+        <span class="pill air"><span class="dot on"></span><span class="txt">air-gapped</span></span>
+        <span class="pill"><span id="engineDot" class="dot"></span><span class="txt" id="engineTxt">engine ?</span></span>
+        <span class="pill"><span id="voiceDot" class="dot"></span><span class="txt" id="voiceTxt">voice ?</span></span>
+      </div>
+      <button class="iconbtn" id="voiceBtn" type="button" title="Toggle voice">voice</button>
+      <button class="iconbtn" id="memBtn" type="button" title="What Annie remembers">mem</button>
+      <button class="iconbtn" id="cfgBtn" type="button" title="Settings">cfg</button>
+      <button class="iconbtn" id="clearBtn" type="button" title="Clear conversation">clr</button>
     </header>
 
     <main id="main">
@@ -38,12 +40,68 @@
 
     <div class="scanner" id="scanner"></div>
 
-    <div class="prompt-wrap">
-      <form class="prompt" id="chat-form">
-        <textarea id="input" rows="1" placeholder="talk to annie…" autocomplete="off"></textarea>
-        <button class="send" id="send" type="submit">Send</button>
-      </form>
-    </div>
+    <footer>
+      <div class="dock">
+        <button class="micbtn" id="mic" type="button" title="Speak">●</button>
+        <div class="prompt">
+          <span class="chev">&gt;</span>
+          <textarea id="input" rows="1" placeholder="talk to annie …" autofocus></textarea>
+        </div>
+        <button class="send" id="send" type="button">Send</button>
+      </div>
+      <div class="hint">
+        <span><kbd>Enter</kbd> send</span>
+        <span><kbd>Shift</kbd>+<kbd>Enter</kbd> newline</span>
+        <span><kbd>Esc</kbd> stop</span>
+      </div>
+    </footer>
+
+    <div class="scrim" id="scrimCfg"></div>
+    <aside class="drawer" id="drawerCfg" aria-hidden="true">
+      <h2>Console <button class="iconbtn" id="cfgClose" type="button">close</button></h2>
+      <div class="body">
+        <div class="field">
+          <label for="ollamaUrl">Ollama endpoint</label>
+          <input type="text" id="ollamaUrl" spellcheck="false" />
+        </div>
+        <div class="field">
+          <label for="voiceUrl">WOPR voice bridge</label>
+          <input type="text" id="voiceUrl" spellcheck="false" />
+          <div class="note">Runs wopr_server.py locally. Falls back to browser voice if down.</div>
+        </div>
+        <div class="field">
+          <div class="toggle">
+            <label>Speak replies aloud</label>
+            <div class="switch" id="swVoice"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="toggle">
+            <label>Adaptive memory</label>
+            <div class="switch on" id="swMem"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Temperature</label>
+          <div class="row">
+            <input type="range" id="temp" min="0" max="1.5" step="0.05" />
+            <span class="val" id="tempVal">0.70</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="sys">Care engine (doctrine)</label>
+          <textarea class="cfg" id="sys" spellcheck="false"></textarea>
+        </div>
+        <button class="savebtn" id="saveCfg" type="button">Save &amp; apply</button>
+        <button class="ghostbtn" id="resetSys" type="button">Restore default doctrine</button>
+      </div>
+    </aside>
+
+    <div class="scrim" id="scrimMem"></div>
+    <aside class="drawer" id="drawerMem" aria-hidden="true">
+      <h2>What Annie remembers <button class="iconbtn" id="memClose" type="button">close</button></h2>
+      <div class="body" id="memBody"></div>
+    </aside>
 
     <script src="/static/app.js"></script>
   </body>

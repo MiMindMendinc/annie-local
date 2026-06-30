@@ -14,6 +14,8 @@ giving up the privacy guarantees that make local-first worth doing.
 
 ## Features
 
+- **FABLE-5 interface** — monochrome phosphor terminal UI with voice, memory,
+  settings, and tool calling
 - **Reactive orb UI** — real-time state visualization (listening, thinking,
   speaking) in a self-contained HTML/JS frontend
 - **Fully offline** — Ollama backend (llama3.2, phi3, or any local model)
@@ -47,5 +49,12 @@ pip install -e ".[dev]"
 python -m pytest -q
 ```
 
-The current suite contains ten tests covering the API, memory, safety helpers,
-and package behavior. Ollama is not required for the unit tests.
+The current suite contains twenty-two tests covering the API, memory, knowledge
+tools, hidden substrate canaries, and package behavior. Ollama is not required
+for the unit tests.
+
+Run the substrate canary gate before shipping:
+
+```bash
+./scripts/canary_test.sh
+```

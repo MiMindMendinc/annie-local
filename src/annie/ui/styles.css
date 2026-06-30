@@ -312,18 +312,75 @@ main {
   }
 }
 
-.prompt-wrap {
+.ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 5px 9px;
+}
+
+.ctrl label {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+select {
+  appearance: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  border: 0;
+  outline: 0;
+  cursor: pointer;
+  max-width: 38vw;
+}
+
+select option {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.iconbtn.active {
+  color: var(--scan);
+  border-color: var(--scan-dim);
+  background: #1a0f0d;
+}
+
+.tool {
+  font-size: 11px;
+  color: var(--dim);
+  margin: 4px 0 8px 78px;
+}
+
+.tool .ok {
+  color: var(--ok);
+}
+
+footer {
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
-  padding: 14px 18px 18px;
+  padding: 14px 18px 10px;
   background: linear-gradient(0deg, var(--panel), var(--panel-2));
   border-top: 1px solid var(--line);
 }
 
-.prompt {
+.dock {
   max-width: var(--col);
   margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.prompt {
+  flex: 1 1 auto;
   display: flex;
   align-items: flex-end;
   gap: 10px;
@@ -331,6 +388,279 @@ main {
   border: 1px solid var(--line);
   border-radius: 3px;
   padding: 10px 12px;
+}
+
+.chev {
+  color: var(--scan);
+  padding-bottom: 2px;
+  user-select: none;
+}
+
+.micbtn {
+  background: var(--void);
+  border: 1px solid var(--line);
+  color: var(--dim);
+  border-radius: 3px;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  font-family: var(--mono);
+}
+
+.micbtn.rec {
+  color: var(--scan);
+  border-color: var(--scan-dim);
+  animation: pulse 1s ease infinite;
+}
+
+@keyframes pulse {
+  50% {
+    background: #1a0f0d;
+  }
+}
+
+.hint {
+  max-width: var(--col);
+  margin: 8px auto 0;
+  display: flex;
+  gap: 16px;
+  font-size: 10px;
+  color: var(--dimmer);
+  letter-spacing: 0.08em;
+}
+
+.hint kbd {
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 0 5px;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.scrim.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(440px, 94vw);
+  z-index: 10;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer.open {
+  transform: translateX(0);
+}
+
+.drawer h2 {
+  margin: 0;
+  padding: 18px 20px;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drawer .body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 7px;
+}
+
+.field input[type="text"],
+.field textarea.cfg {
+  width: 100%;
+  background: var(--void);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 9px 11px;
+  outline: 0;
+}
+
+.field textarea.cfg {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.field .note {
+  font-size: 11px;
+  color: var(--dimmer);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.row input[type="range"] {
+  flex: 1;
+}
+
+.row .val {
+  color: var(--warn);
+  font-size: 13px;
+  min-width: 34px;
+  text-align: right;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.switch {
+  position: relative;
+  width: 42px;
+  height: 22px;
+  background: var(--void);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dim);
+  transition: left 0.15s, background 0.15s;
+}
+
+.switch.on {
+  border-color: var(--scan-dim);
+  background: #1a0f0d;
+}
+
+.switch.on::after {
+  left: 22px;
+  background: var(--scan);
+}
+
+.savebtn,
+.ghostbtn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 11px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.savebtn {
+  background: var(--scan-dim);
+  color: #ffd9d4;
+  border: 1px solid #6e1a14;
+  font-weight: 700;
+}
+
+.ghostbtn {
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+}
+
+.ghostbtn.danger {
+  color: var(--scan);
+  border-color: var(--scan-dim);
+}
+
+.memgroup h3 {
+  margin: 0 0 8px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+
+.memitem {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.memitem .x {
+  color: var(--dimmer);
+  cursor: pointer;
+}
+
+.memitem.done {
+  color: var(--dimmer);
+  text-decoration: line-through;
+}
+
+.memempty {
+  color: var(--dimmer);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.mem-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.mem-actions .ghostbtn {
+  flex: 1;
+}
+
+.meta button {
+  background: none;
+  border: 0;
+  color: var(--dimmer);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
 }
 
 textarea {
@@ -385,3 +715,16 @@ textarea {
     display: none;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .scanner.live::after,
+  .herald .cursor,
+  .micbtn.rec {
+    animation: none;
+  }
+
+  main {
+    scroll-behavior: auto;
+  }
+}
+
