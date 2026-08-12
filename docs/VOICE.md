@@ -7,7 +7,7 @@ Annie-5 supports optional spoken replies and microphone input. Everything is des
 | Priority | Engine | How |
 |----------|--------|-----|
 | 1 | **WOPR bridge** | Local `wopr_server.py` on port 8123 (LuxTTS + pedalboard chain) |
-| 2 | **Browser TTS** | `speechSynthesis` API — shaped voice, fully offline in browser |
+| 2 | **Browser TTS** | `speechSynthesis` API — browser/OS managed; locality is not guaranteed |
 
 Annie proxies TTS through `POST /api/voice/speak` → WOPR. If WOPR is down, the UI falls back to browser speech automatically.
 
@@ -27,7 +27,7 @@ WOPR is optional. Annie works fully without it.
 |--------|-----|
 | **Web Speech API** | Browser mic button (Chrome/Edge best support) |
 
-STT runs in the browser. On strict air-gapped machines, some browsers may require online recognition — **verify your browser's offline STT support** before claiming full air-gap voice input.
+STT runs through the browser's Web Speech API. Some browsers send recognition audio to a vendor service, while behavior varies by browser, operating system, language, and installed speech assets. Annie labels this path `browser-managed — locality unverified`; verify your exact browser before using voice with sensitive data.
 
 Annie does **not** ship faster-whisper or Piper STT yet (roadmap item in `voice.py`).
 
@@ -50,4 +50,4 @@ annie doctor            # shows WOPR online/offline
 
 ## Privacy
 
-Voice audio is processed locally (WOPR or browser). Annie does not record, upload, or store audio files.
+Annie does not intentionally record or store microphone audio. A loopback WOPR bridge processes its audio through the configured local service. Browser speech APIs are controlled by the browser or operating system and may use network services, so they must not be represented as verified-local without independent testing.

@@ -6,21 +6,22 @@ import shutil
 import subprocess
 import sys
 import webbrowser
-from typing import Sequence
+from collections.abc import Sequence
+from contextlib import suppress
 
 import httpx
 import uvicorn
 
 from annie import __version__
+from annie.core._substrate import verify_log
 from annie.core.config import AnnieConfig, validate_config
 from annie.core.grounding_audit import format_doctor_block, read_events, summary
-from annie.core._substrate import verify_log
 from annie.server import create_app
 
 BANNER = """
   ╔══════════════════════════════════════════╗
-  ║   ANNIE-5  ·  local  ·  air-gapped      ║
-  ║   care engine · your machine · no wire  ║
+  ║   ANNIE LOCAL  ·  RESEARCH SESSION      ║
+  ║   local-first · routes visible · yours  ║
   ╚══════════════════════════════════════════╝
 """
 
@@ -28,7 +29,7 @@ BANNER = """
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="annie",
-        description="Annie Local — private FABLE-5-class AI on your machine.",
+        description="Annie Local — a local-first research assistant on your machine.",
     )
     parser.add_argument("--version", action="store_true", help="Show version and exit.")
     subparsers = parser.add_subparsers(dest="command")
@@ -40,6 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
     launch.add_argument("--ollama-url", default="http://127.0.0.1:11434", help="Ollama base URL.")
     launch.add_argument("--voice-url", default="http://127.0.0.1:8123", help="WOPR voice bridge URL.")
     launch.add_argument("--memory-path", default="~/.annie/memory.jsonl", help="Conversation memory path.")
+    launch.add_argument("--knowledge-path", default="~/.annie/knowledge.json", help="Structured knowledge path.")
+    launch.add_argument("--settings-path", default="~/.annie/settings.json", help="Runtime settings path.")
     launch.add_argument("--speed-kernel", action="store_true", help="Enable speed-kernel lab flag.")
     launch.add_argument(
         "--speed-kernel-backend",
@@ -83,12 +86,12 @@ def run_doctor() -> int:
 
     models: list[str] = []
     try:
-        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=3.0)
+        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=3.0, trust_env=False)
         ollama_up = response.status_code == 200
         if ollama_up:
             data = response.json()
             models = [m["name"] for m in data.get("models", []) if m.get("name")]
-    except Exception:
+    except (httpx.HTTPError, KeyError, TypeError, ValueError):
         ollama_up = False
 
     all_ok &= _check("Ollama daemon", ollama_up, "run: ollama serve" if not ollama_up else f"{len(models)} model(s)")
@@ -103,9 +106,9 @@ def run_doctor() -> int:
         _check("Tool-capable model", recommended, "llama3.2 recommended" if not recommended else "")
 
     try:
-        voice = httpx.get("http://127.0.0.1:8123/health", timeout=2.0)
+        voice = httpx.get("http://127.0.0.1:8123/health", timeout=2.0, trust_env=False)
         wopr_ok = voice.status_code == 200
-    except Exception:
+    except httpx.HTTPError:
         wopr_ok = False
     _check("WOPR voice bridge (optional)", wopr_ok, "http://127.0.0.1:8123" if not wopr_ok else "online")
 
@@ -159,7 +162,6 @@ def run_grounding(args: argparse.Namespace) -> int:
         print("  No events recorded yet.\n")
         return 0
     for event in events:
-        when = event.timestamp
         print(
             f"  · strike={event.strike} action={event.action} level={event.level}\n"
             f"    excerpt: {event.excerpt}\n"
@@ -193,6 +195,8 @@ def run_launch(args: argparse.Namespace) -> int:
         ollama_url=args.ollama_url,
         voice_url=args.voice_url,
         memory_path=args.memory_path,
+        knowledge_path=args.knowledge_path,
+        settings_path=args.settings_path,
         speed_kernel=args.speed_kernel,
         speed_kernel_backend=args.speed_kernel_backend,
     )
@@ -204,15 +208,15 @@ def run_launch(args: argparse.Namespace) -> int:
     print(f"  → {url}")
     print(f"  → model: {config.model}")
     print(f"  → memory: {config.resolved_memory_path}")
+    print(f"  → knowledge: {config.resolved_knowledge_path}")
+    print(f"  → settings: {config.resolved_settings_path}")
     if config.speed_kernel:
         print(f"  → speed kernel: {config.speed_kernel_backend}")
     print()
 
     if not args.no_browser:
-        try:
+        with suppress(OSError, webbrowser.Error):
             webbrowser.open(url)
-        except Exception:
-            pass
     uvicorn.run(app, host=config.host, port=config.port, log_level="info")
     return 0
 

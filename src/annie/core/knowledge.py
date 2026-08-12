@@ -7,6 +7,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from annie.utils.private_files import ensure_private_directory, ensure_private_file
+
 
 def _uid() -> str:
     return uuid.uuid4().hex[:8]
@@ -25,7 +27,8 @@ class LocalKnowledge:
 
     def __init__(self, path: Path) -> None:
         self.path = path
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        ensure_private_directory(self.path.parent)
+        ensure_private_file(self.path)
         self._data = self._load()
 
     def _load(self) -> KnowledgeStore:
@@ -47,6 +50,7 @@ class LocalKnowledge:
             json.dumps(asdict(self._data), ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        ensure_private_file(self.path)
 
     def snapshot(self) -> dict[str, Any]:
         return asdict(self._data)
@@ -134,4 +138,3 @@ class LocalKnowledge:
             parts.append("Recent journal:\n" + "\n".join(journal))
         parts.append("[Use this naturally. Update it with tools as you learn more.]")
         return "\n".join(parts)
-

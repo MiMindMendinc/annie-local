@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib.util import find_spec
-from typing import Any
+from typing import Any, ClassVar
 
 
 @dataclass(frozen=True)
@@ -15,7 +15,7 @@ class SpeedKernelStatus:
 
 
 class SpeedKernelAdapter:
-    _BACKEND_MODULES = {
+    _BACKEND_MODULES: ClassVar[dict[str, str]] = {
         "dominus-ultra": "dominus_ultra",
     }
 

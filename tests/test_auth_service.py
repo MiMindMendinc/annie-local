@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from dataclasses import replace
 
 import pytest
 
@@ -22,8 +23,6 @@ class InMemoryUserRepository(UserRepository):
         return None
 
     async def create(self, email: str, password_hash: str):
-        from annie.repositories.base import UserRecord
-
         user = UserRecord(id=uuid.uuid4(), email=email, password_hash=password_hash, is_active=True)
         self.users[email] = user
         return user
@@ -39,9 +38,21 @@ async def test_auth_register_login_roundtrip() -> None:
 
     payload = auth.decode_token(token)
     assert payload["email"] == "operator@example.com"
+    assert await auth.authenticate_token(token) == user.id
 
     _, login_token = await auth.login("operator@example.com", "secure-pass-1")
     assert login_token
+
+
+@pytest.mark.asyncio
+async def test_auth_rejects_token_after_account_is_disabled() -> None:
+    repo = InMemoryUserRepository()
+    auth = AuthService(repo)
+    user, token = await auth.register("operator@example.com", "secure-pass-1")
+    repo.users[user.email] = replace(user, is_active=False)
+
+    with pytest.raises(ValueError, match="invalid token"):
+        await auth.authenticate_token(token)
 
 
 @pytest.mark.asyncio
@@ -49,3 +60,9 @@ async def test_auth_rejects_weak_password() -> None:
     auth = AuthService(InMemoryUserRepository())
     with pytest.raises(ValueError, match="at least 8"):
         await auth.register("user@example.com", "short")
+
+
+def test_auth_rejects_passwords_over_bcrypt_byte_limit() -> None:
+    auth = AuthService(InMemoryUserRepository())
+    with pytest.raises(ValueError, match="72 UTF-8 bytes"):
+        auth.hash_password("🙂" * 19)

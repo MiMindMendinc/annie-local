@@ -4,7 +4,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from annie.api.dependencies import get_chat_service
 from annie.api.deps.auth import get_auth_service
 from annie.api.schemas import AuthResponse, LoginRequest, RegisterRequest
 from annie.env import get_settings
@@ -20,6 +19,8 @@ async def register(
 ) -> AuthResponse:
     if get_settings().auth_disabled:
         raise HTTPException(status_code=403, detail="auth disabled in local mode")
+    if not get_settings().registration_enabled:
+        raise HTTPException(status_code=403, detail="registration is disabled by the operator")
     try:
         user, token = await auth.register(body.email, body.password)
     except ValueError as exc:

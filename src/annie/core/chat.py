@@ -19,6 +19,40 @@ class ChatResult:
     restart: bool
     tool_events: list[str]
     model: str
+    metrics: ChatMetrics | None = None
+
+
+@dataclass(frozen=True)
+class ChatMetrics:
+    token_count: int | None = None
+    tokens_per_second: float | None = None
+    model_duration_ms: float | None = None
+    provider_completed_at: str | None = None
+    source: str = "ollama"
+    scope: str = "final_turn"
+
+    @classmethod
+    def from_ollama(cls, raw: dict[str, Any]) -> ChatMetrics | None:
+        count = raw.get("eval_count")
+        duration = raw.get("eval_duration")
+        total_duration = raw.get("total_duration")
+        completed_at = raw.get("created_at")
+
+        token_count = count if isinstance(count, int) and count >= 0 else None
+        duration_ns = duration if isinstance(duration, int) and duration > 0 else None
+        model_duration_ns = total_duration if isinstance(total_duration, int) and total_duration >= 0 else None
+        tokens_per_second = None
+        if token_count is not None and duration_ns:
+            tokens_per_second = round(token_count / (duration_ns / 1_000_000_000), 2)
+
+        if token_count is None and model_duration_ns is None and not isinstance(completed_at, str):
+            return None
+        return cls(
+            token_count=token_count,
+            tokens_per_second=tokens_per_second,
+            model_duration_ms=round(model_duration_ns / 1_000_000, 2) if model_duration_ns is not None else None,
+            provider_completed_at=completed_at if isinstance(completed_at, str) else None,
+        )
 
 
 class ChatEngine:
@@ -95,6 +129,7 @@ class ChatEngine:
         tool_events: list[str] = []
         tools = TOOL_SPECS if self.tools_enabled else None
         final = ""
+        final_metrics: ChatMetrics | None = None
 
         for _ in range(self.max_tool_rounds):
             turn: ModelTurn = await self.llm.chat(
@@ -130,6 +165,7 @@ class ChatEngine:
                 continue
 
             final = turn.content
+            final_metrics = ChatMetrics.from_ollama(turn.raw)
             break
 
         if not final:
@@ -145,6 +181,7 @@ class ChatEngine:
             restart=False,
             tool_events=tool_events,
             model=self.config_model,
+            metrics=final_metrics,
         )
 
     def restart_session(self) -> dict[str, Any]:

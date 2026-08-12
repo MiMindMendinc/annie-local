@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Python ${{ matrix.python-version }}
@@ -17,12 +24,13 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
 
       - name: Install package and test dependencies
         run: |
@@ -34,3 +42,70 @@ jobs:
 
       - name: Run substrate canary gate
         run: bash scripts/canary_test.sh
+
+  release-gate:
+    name: Release gate
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: 92b4ee17c8fa7c09414fe8fdc42db0d78555c25916f47a024f786a19ec732b9d
+      POSTGRES_PASSWORD: 2476a71e4fbe9dd7f661f3dfb305e878
+      REDIS_PASSWORD: a29eb92a54b29ff03e1a72fbc99efe02
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install release tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,prod]"
+
+      - name: Lint and format check
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Static security scan
+        run: bandit -q -r src --severity-level medium
+
+      - name: Dependency vulnerability audit
+        run: pip-audit --strict -r requirements-prod.lock
+
+      - name: Build and inspect distributions
+        run: |
+          python -m build
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel = next(Path("dist").glob("*.whl"))
+          required = {
+              "annie/ui/index.html",
+              "annie/ui/app.js",
+              "annie/ui/state.js",
+              "annie/ui/styles.css",
+          }
+          with ZipFile(wheel) as archive:
+              missing = required.difference(archive.namelist())
+          if missing:
+              raise SystemExit(f"wheel missing UI assets: {sorted(missing)}")
+          PY
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check src/annie/ui/state.js
+          node --check src/annie/ui/api-client.js
+          node --check src/annie/ui/validators.js
+          node --check src/annie/ui/app.js
+
+      - name: Validate Compose and container build
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+          docker build --tag annie-local:ci .

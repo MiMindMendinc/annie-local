@@ -1,6 +1,6 @@
 # Canary Benchmark Results
 
-**Last run:** 2026-06-30 19:23 UTC  
+**Last run:** 2026-08-12 01:22 UTC
 **Overall:** PASS
 
 ## Summary

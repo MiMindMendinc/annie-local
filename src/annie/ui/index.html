@@ -2,106 +2,208 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ANNIE // FABLE-5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07111f" />
+    <meta name="color-scheme" content="dark" />
+    <title>Annie Local — Research Session</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <header>
-      <div class="brand">
-        <b>ANNIE<span class="v">-5</span></b>
-        <small>care engine · local · air-gapped</small>
-      </div>
-      <div class="spacer"></div>
-      <div class="ctrl">
-        <label for="model">model</label>
-        <select id="model"><option>loading…</option></select>
-      </div>
-      <div class="status">
-        <span class="pill air"><span class="dot on"></span><span class="txt">air-gapped</span></span>
-        <span class="pill"><span id="engineDot" class="dot"></span><span class="txt" id="engineTxt">engine ?</span></span>
-        <span class="pill"><span id="voiceDot" class="dot"></span><span class="txt" id="voiceTxt">voice ?</span></span>
-      </div>
-      <button class="iconbtn" id="voiceBtn" type="button" title="Toggle voice">voice</button>
-      <button class="iconbtn" id="memBtn" type="button" title="What Annie remembers">mem</button>
-      <button class="iconbtn" id="cfgBtn" type="button" title="Settings">cfg</button>
-      <button class="iconbtn" id="clearBtn" type="button" title="Clear conversation">clr</button>
-    </header>
+    <a class="skip-link" href="#sessionStream">Skip to session</a>
 
-    <main id="main">
-      <div class="stream" id="stream">
-        <div class="herald" id="herald">
-          <div class="l1"><b>ANNIE-5</b> resident. weights local. no wire out.</div>
-          <div class="l2">i keep what matters to you, and i'm in your corner.</div>
-          <div class="l3">say something<span class="cursor"></span></div>
-        </div>
-      </div>
-    </main>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1" /></symbol>
+      <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9.5 5.2A3.4 3.4 0 0 0 4 7.9c0 .5.1 1 .3 1.4A3.5 3.5 0 0 0 5.5 16c.2 1.7 1.6 3 3.4 3 1.2 0 2.3-.7 3.1-1.6V6.8c-.6-1-1.4-1.6-2.5-1.6ZM14.5 5.2A3.4 3.4 0 0 1 20 7.9c0 .5-.1 1-.3 1.4a3.5 3.5 0 0 1-1.2 6.7c-.2 1.7-1.6 3-3.4 3-1.2 0-2.3-.7-3.1-1.6V6.8c.6-1 1.4-1.6 2.5-1.6Z" /><path d="M8 10.5c1.4 0 2.4.7 2.8 1.8M16 10.5c-1.4 0-2.4.7-2.8 1.8M8.5 15c1.1-.1 2 .3 2.7 1.1M15.5 15c-1.1-.1-2 .3-2.7 1.1" /></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5M5 20h14" /></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6h8M16 6h4M4 12h3M11 12h9M4 18h10M18 18h2" /><circle cx="14" cy="6" r="2" /><circle cx="9" cy="12" r="2" /><circle cx="16" cy="18" r="2" /></symbol>
+      <symbol id="i-paperclip" viewBox="0 0 24 24"><path d="m8.5 12.5 6.9-6.9a3 3 0 1 1 4.2 4.2l-8.8 8.8a5 5 0 0 1-7.1-7.1l8.5-8.5" /></symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="12" rx="4" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8" /></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="m4 4 17 8-17 8 3-8-3-8Z" /><path d="M7 12h14" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+      <symbol id="i-memory" viewBox="0 0 24 24"><path d="M5 5.5C5 4.1 8.1 3 12 3s7 1.1 7 2.5S15.9 8 12 8 5 6.9 5 5.5Z" /><path d="M5 5.5V12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V5.5M5 12v6.5C5 19.9 8.1 21 12 21s7-1.1 7-2.5V12" /></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 3h6l1 4H8l1-4ZM7 7l1 14h8l1-14M10 11v6M14 11v6" /></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" /></symbol>
+    </svg>
 
-    <div class="scanner" id="scanner"></div>
+    <div class="app-shell">
+      <header class="topbar" aria-label="Research session controls">
+        <button class="icon-button" id="menuBtn" type="button" aria-label="Open session menu">
+          <svg aria-hidden="true"><use href="#i-menu"></use></svg>
+        </button>
+        <div class="session-heading">
+          <span>Annie Local</span>
+          <h1>Research Session</h1>
+        </div>
+        <button class="top-action stop-action" id="stopBtn" type="button" aria-label="Stop current output" disabled>
+          <svg aria-hidden="true"><use href="#i-stop"></use></svg><span>Stop</span>
+        </button>
+        <button class="icon-button" id="modelBtn" type="button" aria-label="Choose configured model">
+          <svg aria-hidden="true"><use href="#i-brain"></use></svg>
+        </button>
+        <button class="icon-button" id="exportBtn" type="button" aria-label="Export this session">
+          <svg aria-hidden="true"><use href="#i-download"></use></svg>
+        </button>
+        <button class="icon-button" id="cfgBtn" type="button" aria-label="Open settings">
+          <svg aria-hidden="true"><use href="#i-settings"></use></svg>
+        </button>
+      </header>
 
-    <footer>
-      <div class="dock">
-        <button class="micbtn" id="mic" type="button" title="Speak">●</button>
-        <div class="prompt">
-          <span class="chev">&gt;</span>
-          <textarea id="input" rows="1" placeholder="talk to annie …" autofocus></textarea>
-        </div>
-        <button class="send" id="send" type="button">Send</button>
-      </div>
-      <div class="hint">
-        <span><kbd>Enter</kbd> send</span>
-        <span><kbd>Shift</kbd>+<kbd>Enter</kbd> newline</span>
-        <span><kbd>Esc</kbd> stop</span>
-      </div>
-    </footer>
-
-    <div class="scrim" id="scrimCfg"></div>
-    <aside class="drawer" id="drawerCfg" aria-hidden="true">
-      <h2>Console <button class="iconbtn" id="cfgClose" type="button">close</button></h2>
-      <div class="body">
-        <div class="field">
-          <label for="ollamaUrl">Ollama endpoint</label>
-          <input type="text" id="ollamaUrl" spellcheck="false" />
-        </div>
-        <div class="field">
-          <label for="voiceUrl">WOPR voice bridge</label>
-          <input type="text" id="voiceUrl" spellcheck="false" />
-          <div class="note">Runs wopr_server.py locally. Falls back to browser voice if down.</div>
-        </div>
-        <div class="field">
-          <div class="toggle">
-            <label>Speak replies aloud</label>
-            <div class="switch" id="swVoice"></div>
+      <main id="main">
+        <section class="presence" aria-label="Annie session state">
+          <div class="state-pill" id="voicePill" data-phase="idle" role="status" aria-live="polite" aria-atomic="true">
+            <span class="state-dot" aria-hidden="true"></span>
+            <span id="voiceStateText">Idle</span>
           </div>
-        </div>
-        <div class="field">
-          <div class="toggle">
-            <label>Adaptive memory</label>
-            <div class="switch on" id="swMem"></div>
+
+          <div class="orb" id="orb" data-phase="idle" aria-hidden="true">
+            <div class="orb-aura"></div>
+            <div class="orb-ticks"></div>
+            <div class="orb-ring ring-one"></div>
+            <div class="orb-ring ring-two"></div>
+            <div class="orb-core"><span></span></div>
           </div>
+
+          <p class="presence-copy" id="presenceCopy">Checking the configured local model…</p>
+
+          <div class="status-strip" aria-label="Runtime privacy and storage status">
+            <button class="status-badge" id="modelStatus" type="button" data-tone="neutral">Model: checking</button>
+            <button class="status-badge" id="memoryStatus" type="button" data-tone="neutral">Memory: checking</button>
+            <button class="status-badge" id="networkStatus" type="button" data-tone="warn">Network: not verified</button>
+          </div>
+        </section>
+
+        <section class="session-stream" id="sessionStream" aria-label="Research session transcript">
+          <article class="welcome-card" id="welcomeCard">
+            <div class="avatar" aria-hidden="true">A</div>
+            <div>
+              <p class="message-kicker">Private research workspace</p>
+              <h2>What are we working through?</h2>
+              <p>Messages stay with the configured Annie deployment. Check the badges above before treating a session as offline.</p>
+            </div>
+          </article>
+        </section>
+        <div class="sr-only" id="messageAnnouncement" role="status" aria-live="polite" aria-atomic="true"></div>
+      </main>
+
+      <footer class="composer-shell">
+        <form class="composer" id="composer">
+          <button class="composer-button" id="attachBtn" type="button" aria-label="Attach a local file — not available yet" aria-disabled="true" disabled title="Local attachments are planned but not implemented yet">
+            <svg aria-hidden="true"><use href="#i-paperclip"></use></svg>
+          </button>
+          <label class="sr-only" for="input">Message Annie</label>
+          <textarea id="input" rows="1" maxlength="20000" placeholder="Message Annie…"></textarea>
+          <button class="composer-button" id="mic" type="button" aria-label="Start browser voice input" aria-pressed="false">
+            <svg aria-hidden="true"><use href="#i-mic"></use></svg>
+          </button>
+          <button class="send-button" id="send" type="submit" aria-label="Send message">
+            <svg aria-hidden="true"><use href="#i-send"></use></svg>
+          </button>
+        </form>
+        <p class="composer-note"><kbd>Enter</kbd> send · <kbd>Shift</kbd> + <kbd>Enter</kbd> newline · <kbd>Esc</kbd> stop</p>
+      </footer>
+    </div>
+
+    <dialog class="sheet" id="menuDialog" aria-labelledby="menuTitle">
+      <div class="sheet-head">
+        <div><span class="eyebrow">Session</span><h2 id="menuTitle">Research controls</h2></div>
+        <button class="icon-button" data-close="menuDialog" type="button" aria-label="Close session menu"><svg aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div class="sheet-body">
+        <button class="sheet-action" id="openMemoryBtn" type="button"><svg aria-hidden="true"><use href="#i-memory"></use></svg><span><b>Memory inspector</b><small>Review, export, or delete stored knowledge</small></span></button>
+        <button class="sheet-action" id="clearBtn" type="button"><svg aria-hidden="true"><use href="#i-trash"></use></svg><span><b>Restart session</b><small>Clear conversation history; keep structured knowledge</small></span></button>
+        <section class="account-panel" id="authAccount" hidden aria-label="Signed-in account">
+          <span>Signed in for this browser session</span>
+          <b id="accountEmail"></b>
+          <button class="secondary-button" id="logoutBtn" type="button">Sign out</button>
+        </section>
+        <section class="truth-panel" aria-labelledby="truthTitle">
+          <h3 id="truthTitle">What the badges mean</h3>
+          <dl>
+            <div><dt>Model</dt><dd id="modelDetail">Checking endpoint and availability.</dd></div>
+            <div><dt>Memory</dt><dd id="memoryDetail">Checking configured storage.</dd></div>
+            <div><dt>Network</dt><dd id="networkDetail">Offline operation has not been verified.</dd></div>
+            <div><dt>Voice</dt><dd id="voiceDetail">Browser-managed voice may use browser or operating-system services.</dd></div>
+          </dl>
+        </section>
+        <p class="safety-boundary"><b>Important boundary:</b> Annie Local is not a therapist or emergency service. If someone may be in immediate danger, contact local emergency services. In the United States, call or text <b>988</b>.</p>
+      </div>
+    </dialog>
+
+    <dialog class="sheet" id="settingsDialog" aria-labelledby="settingsTitle">
+      <form id="settingsForm">
+        <div class="sheet-head">
+          <div><span class="eyebrow">Runtime</span><h2 id="settingsTitle">Settings</h2></div>
+          <button class="icon-button" data-close="settingsDialog" type="button" aria-label="Close settings"><svg aria-hidden="true"><use href="#i-close"></use></svg></button>
         </div>
-        <div class="field">
-          <label>Temperature</label>
-          <div class="row">
+        <div class="sheet-body">
+          <div class="field">
+            <label for="model">Model</label>
+            <select id="model"><option value="">Checking Ollama…</option></select>
+          </div>
+          <div class="field">
+            <label for="ollamaUrl">Ollama endpoint</label>
+            <input type="url" id="ollamaUrl" spellcheck="false" inputmode="url" />
+            <small>A loopback endpoint supports a local-model claim. Other routes are labeled conservatively.</small>
+          </div>
+          <div class="field">
+            <label for="voiceUrl">Optional voice bridge</label>
+            <input type="url" id="voiceUrl" spellcheck="false" inputmode="url" />
+            <small>Browser voice remains locality-unverified unless you independently verify it.</small>
+          </div>
+          <label class="toggle-row" for="speakToggle">
+            <span><b>Speak replies</b><small>Use the local bridge when available, then browser speech</small></span>
+            <input id="speakToggle" type="checkbox" role="switch" />
+          </label>
+          <label class="toggle-row" for="toolsToggle">
+            <span><b>Knowledge tools</b><small>Allows facts, goals, and journal tools; conversation persistence is separate</small></span>
+            <input id="toolsToggle" type="checkbox" role="switch" />
+          </label>
+          <div class="field">
+            <label for="temp">Temperature <output id="tempVal" for="temp">0.70</output></label>
             <input type="range" id="temp" min="0" max="1.5" step="0.05" />
-            <span class="val" id="tempVal">0.70</span>
+          </div>
+          <div class="field">
+            <label for="sys">Care doctrine</label>
+            <textarea class="settings-textarea" id="sys" spellcheck="false"></textarea>
+          </div>
+          <div class="button-row">
+            <button class="secondary-button" id="resetSys" type="button">Restore doctrine</button>
+            <button class="primary-button" id="saveCfg" type="submit">Save and apply</button>
           </div>
         </div>
-        <div class="field">
-          <label for="sys">Care engine (doctrine)</label>
-          <textarea class="cfg" id="sys" spellcheck="false"></textarea>
-        </div>
-        <button class="savebtn" id="saveCfg" type="button">Save &amp; apply</button>
-        <button class="ghostbtn" id="resetSys" type="button">Restore default doctrine</button>
-      </div>
-    </aside>
+      </form>
+    </dialog>
 
-    <div class="scrim" id="scrimMem"></div>
-    <aside class="drawer" id="drawerMem" aria-hidden="true">
-      <h2>What Annie remembers <button class="iconbtn" id="memClose" type="button">close</button></h2>
-      <div class="body" id="memBody"></div>
-    </aside>
+    <dialog class="sheet" id="memoryDialog" aria-labelledby="memoryTitle">
+      <div class="sheet-head">
+        <div><span class="eyebrow">Inspectable storage</span><h2 id="memoryTitle">What Annie remembers</h2></div>
+        <button class="icon-button" data-close="memoryDialog" type="button" aria-label="Close memory inspector"><svg aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div class="sheet-body" id="memBody"></div>
+    </dialog>
+
+    <dialog class="sheet auth-sheet" id="authDialog" aria-labelledby="authTitle">
+      <form id="authForm">
+        <div class="sheet-head">
+          <div><span class="eyebrow">Protected deployment</span><h2 id="authTitle">Sign in to Annie</h2></div>
+        </div>
+        <div class="sheet-body">
+          <p class="auth-intro">This deployment requires an operator-created account. Your access token is kept only for this browser session.</p>
+          <div class="field">
+            <label for="authEmail">Email</label>
+            <input type="email" id="authEmail" autocomplete="username" inputmode="email" required maxlength="320" />
+          </div>
+          <div class="field">
+            <label for="authPassword">Password</label>
+            <input type="password" id="authPassword" autocomplete="current-password" required minlength="8" maxlength="128" />
+          </div>
+          <p class="auth-error" id="authError" role="alert" hidden></p>
+          <button class="primary-button auth-submit" id="authSubmit" type="submit">Sign in</button>
+          <p class="auth-footnote">Registration is closed by default. The deployment operator can bootstrap an account using the documented API flow.</p>
+        </div>
+      </form>
+    </dialog>
 
     <script src="/static/state.js"></script>
     <script src="/static/validators.js"></script>

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,7 +40,7 @@ class PostgresMemoryRepository(MemoryRepository):
             {
                 "role": row.role,
                 "content": row.content,
-                "created_at": row.created_at.astimezone(timezone.utc).isoformat(),
+                "created_at": row.created_at.astimezone(UTC).isoformat(),
             }
             for row in rows
         ]
@@ -64,7 +64,7 @@ class PostgresMemoryRepository(MemoryRepository):
             {
                 "role": row.role,
                 "content": row.content,
-                "created_at": row.created_at.astimezone(timezone.utc).isoformat(),
+                "created_at": row.created_at.astimezone(UTC).isoformat(),
             }
             for row in rows
         ]

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterable
+
+from annie.utils.private_files import ensure_private_directory, ensure_private_file
 
 
 @dataclass(frozen=True)
@@ -14,8 +16,8 @@ class MemoryEntry:
     created_at: str
 
     @classmethod
-    def now(cls, role: str, content: str) -> "MemoryEntry":
-        return cls(role=role, content=content, created_at=datetime.now(timezone.utc).isoformat())
+    def now(cls, role: str, content: str) -> MemoryEntry:
+        return cls(role=role, content=content, created_at=datetime.now(UTC).isoformat())
 
 
 class LocalMemory:
@@ -27,12 +29,14 @@ class LocalMemory:
 
     def __init__(self, path: Path) -> None:
         self.path = path
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        ensure_private_directory(self.path.parent)
+        ensure_private_file(self.path)
 
     def append(self, role: str, content: str) -> MemoryEntry:
         entry = MemoryEntry.now(role=role, content=content)
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(asdict(entry), ensure_ascii=False) + "\n")
+        ensure_private_file(self.path)
         return entry
 
     def read_recent(self, limit: int = 20) -> list[MemoryEntry]:
@@ -44,6 +48,7 @@ class LocalMemory:
     def clear(self) -> None:
         if self.path.exists():
             self.path.write_text("", encoding="utf-8")
+            ensure_private_file(self.path)
 
     def search(self, query: str, limit: int = 10) -> list[MemoryEntry]:
         query_norm = query.casefold().strip()

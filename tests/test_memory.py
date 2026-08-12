@@ -1,3 +1,8 @@
+import os
+import stat
+
+import pytest
+
 from annie.core.memory import LocalMemory
 
 
@@ -22,3 +27,13 @@ def test_memory_search(tmp_path):
 
     assert len(matches) == 1
     assert matches[0].content == "build a glowing orb"
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permission contract")
+def test_memory_store_uses_private_permissions(tmp_path):
+    root = tmp_path / "annie-data"
+    memory = LocalMemory(root / "memory.jsonl")
+    memory.append("user", "private note")
+
+    assert stat.S_IMODE(root.stat().st_mode) == 0o700
+    assert stat.S_IMODE(memory.path.stat().st_mode) == 0o600

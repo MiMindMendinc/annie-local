@@ -22,7 +22,10 @@
 
   async function request(path, options = {}) {
     const method = options.method || "GET";
-    const retries = options.retries ?? MAX_RETRIES;
+    const hadToken = Boolean(global.AnnieState?.get("auth")?.token);
+    // Retrying a completed POST can duplicate chat turns or destructive
+    // actions. Only idempotent reads retry unless the caller opts in.
+    const retries = options.retries ?? (method === "GET" ? MAX_RETRIES : 1);
     let lastError = null;
 
     for (let attempt = 0; attempt < retries; attempt += 1) {
@@ -45,6 +48,9 @@
         const payload = isJson ? await response.json() : await response.blob();
 
         if (!response.ok) {
+          if (response.status === 401 && path !== "/api/auth/login") {
+            global.dispatchEvent(new CustomEvent("annie:auth-required", { detail: { hadToken } }));
+          }
           const detail = isJson ? payload.detail || payload.error : response.statusText;
           const err = new Error(typeof detail === "string" ? detail : "request failed");
           err.status = response.status;
@@ -71,22 +77,26 @@
     getSettings: () => request("/api/settings"),
     updateSettings: (body) => request("/api/settings", { method: "PUT", body }),
     resetDoctrine: () => request("/api/settings/reset-doctrine", { method: "POST" }),
-    chat: (message, signal) => request("/api/chat", { method: "POST", body: { message }, signal }),
+    chat: (message, signal) => request("/api/chat", { method: "POST", body: { message }, signal, retries: 1 }),
     restartSession: () => request("/api/session/restart", { method: "POST" }),
     getKnowledge: () => request("/api/knowledge"),
     deleteKnowledge: () => request("/api/knowledge", { method: "DELETE" }),
     deleteKnowledgeItem: (kind, item_id) =>
       request("/api/knowledge/delete", { method: "POST", body: { kind, item_id } }),
-    speak: async (text) => {
+    speak: async (text, signal) => {
       const response = await fetch("/api/voice/speak", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify({ text }),
+        signal,
       });
       if (!response.ok) {
         throw new Error("voice request failed");
       }
-      return response.arrayBuffer();
+      return {
+        buffer: await response.arrayBuffer(),
+        contentType: response.headers.get("content-type") || "audio/wav",
+      };
     },
     login: async (email, password) => {
       const data = await request("/api/auth/login", { method: "POST", body: { email, password } });

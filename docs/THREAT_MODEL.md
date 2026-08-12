@@ -17,12 +17,12 @@ Annie Local is a local-first AI interface prototype using a browser UI, local se
 
 ## Trust Boundaries
 
-```text
-Browser UI
-  -> local Annie server
-  -> local model endpoint, usually Ollama
-  -> local memory store
-  -> browser response
+```mermaid
+flowchart LR
+    Browser["Browser UI"] --> API["Annie API"]
+    API --> Model["Configured model route"]
+    API --> Store["File or PostgreSQL memory"]
+    API --> Voice["Optional voice route"]
 ```
 
 Important boundaries:
@@ -105,14 +105,16 @@ Annie Local alone does not solve:
 ## Production Hardening Backlog
 
 - [ ] local memory encryption option
-- [ ] memory delete/reset command
-- [ ] offline dependency audit
-- [ ] local-only browser asset bundling
-- [ ] bind-address documentation
+- [x] memory delete/reset command
+- [x] offline dependency checklist and observable route status
+- [x] local-only browser asset bundling
+- [x] bind-address documentation
 - [ ] optional TrustLayer safety gateway integration
-- [ ] STT/TTS local routing documentation
-- [ ] safety tests for crisis-boundary responses
+- [x] STT/TTS local routing documentation
+- [x] safety tests for crisis-boundary responses
 - [ ] professional privacy/security review before sensitive deployment
+- [x] per-user session, grounding-audit, and restart-state isolation in the reference deployment
+- [ ] external security/privacy review before public multi-user deployment
 
 ## Crisis Boundary
 

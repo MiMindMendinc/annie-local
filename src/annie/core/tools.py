@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from annie.core.knowledge import LocalKnowledge
@@ -106,7 +106,7 @@ class ToolRunner:
     def run(self, name: str, arguments: str | dict[str, Any] | None) -> dict[str, Any]:
         args = self._parse_args(arguments)
         if name == "get_datetime":
-            return {"now": datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")}
+            return {"now": datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")}
         if not self.memory_enabled:
             return {"skipped": "memory off"}
         if name == "remember":

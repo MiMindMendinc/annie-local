@@ -3,8 +3,11 @@ from __future__ import annotations
 import json
 import time
 import uuid
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
+
+from annie.utils.private_files import ensure_private_directory
 
 
 @dataclass(frozen=True)
@@ -21,8 +24,28 @@ class SessionManager:
     def __init__(self, root: Path) -> None:
         self.path = root / ".session"
         self.root = root
-        self.root.mkdir(parents=True, exist_ok=True)
+        ensure_private_directory(self.root)
         self._session_id, self._epoch, self._restarted_at, self._grounding_strikes = self._load()
+
+    @classmethod
+    def from_state(
+        cls,
+        root: Path,
+        *,
+        session_id: str,
+        epoch: int,
+        restarted_at: float,
+        grounding_strikes: int,
+    ) -> SessionManager:
+        """Hydrate an isolated manager from a durable production session row."""
+
+        manager = cls(root)
+        manager._session_id = session_id
+        manager._epoch = epoch
+        manager._restarted_at = restarted_at
+        manager._grounding_strikes = grounding_strikes
+        manager._save()
+        return manager
 
     def _load(self) -> tuple[str, int, float, int]:
         if not self.path.exists():
@@ -46,10 +69,8 @@ class SessionManager:
             "grounding_strikes": self._grounding_strikes,
         }
         self.path.write_text(json.dumps(payload), encoding="utf-8")
-        try:
+        with suppress(OSError):
             self.path.chmod(0o600)
-        except OSError:
-            pass
 
     def info(self) -> SessionInfo:
         return SessionInfo(
