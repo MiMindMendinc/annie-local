@@ -32,6 +32,15 @@ const el = {
   menuDialog: $("#menuDialog"),
   settingsDialog: $("#settingsDialog"),
   memoryDialog: $("#memoryDialog"),
+  authDialog: $("#authDialog"),
+  authForm: $("#authForm"),
+  authEmail: $("#authEmail"),
+  authPassword: $("#authPassword"),
+  authError: $("#authError"),
+  authSubmit: $("#authSubmit"),
+  authAccount: $("#authAccount"),
+  accountEmail: $("#accountEmail"),
+  logoutBtn: $("#logoutBtn"),
   settingsForm: $("#settingsForm"),
   model: $("#model"),
   ollamaUrl: $("#ollamaUrl"),
@@ -74,6 +83,7 @@ let recognition = null;
 let recognitionActive = false;
 let recognitionBase = "";
 let micSupported = false;
+let authRequired = false;
 const dialogReturnTargets = new WeakMap();
 
 function esc(value) {
@@ -202,13 +212,20 @@ function renderState(state) {
   el.voiceStateText.textContent = view.label;
   el.voicePill.setAttribute("aria-label", `Annie state: ${view.label}`);
   el.presenceCopy.textContent = session.error?.detail || view.copy;
-  el.stop.disabled = !session.canStop;
-  el.send.disabled = phase === "thinking";
-  el.input.disabled = phase === "thinking";
-  el.mic.disabled = !micSupported || ["thinking", "speaking"].includes(phase);
+  el.stop.disabled = authRequired || !session.canStop;
+  el.send.disabled = authRequired || phase === "thinking";
+  el.input.disabled = authRequired || phase === "thinking";
+  el.mic.disabled = authRequired || !micSupported || ["thinking", "speaking"].includes(phase);
+  el.modelBtn.disabled = authRequired;
+  el.cfgBtn.disabled = authRequired;
+  el.openMemoryBtn.disabled = authRequired;
+  el.clearBtn.disabled = authRequired;
   el.mic.setAttribute("aria-pressed", phase === "listening" ? "true" : "false");
   el.mic.setAttribute("aria-label", phase === "listening" ? "Stop browser voice input" : "Start browser voice input");
   if (activeWaveform) activeWaveform.classList.toggle("active", phase === "speaking");
+  const auth = AnnieState.get("auth");
+  el.authAccount.hidden = !auth?.token;
+  el.accountEmail.textContent = auth?.user?.email || "Authenticated account";
   renderRuntime(session.runtime);
 }
 
@@ -299,6 +316,36 @@ function closeDialog(dialog) {
   if (returnTarget?.isConnected && !returnTarget.disabled) returnTarget.focus();
 }
 
+function showAuthGate(message = "Sign in to continue.") {
+  authRequired = true;
+  el.authError.textContent = message;
+  el.authError.hidden = !message;
+  renderState({ session: AnnieState.get("session") });
+  if (!el.authDialog.open) el.authDialog.showModal();
+  window.setTimeout(() => el.authEmail.focus(), 20);
+}
+
+async function signIn(email, password) {
+  el.authSubmit.disabled = true;
+  el.authError.hidden = true;
+  try {
+    await AnnieApi.login(email, password);
+    await loadSettings();
+    authRequired = false;
+    fillSettings();
+    await refreshEngine();
+    closeDialog(el.authDialog);
+    el.authPassword.value = "";
+    renderState({ session: AnnieState.get("session") });
+    addSystemMessage("Signed in. This access token will be cleared when the browser session ends.");
+    el.input.focus();
+  } catch (error) {
+    showAuthGate(error.message || "Sign-in failed. Check the account details and try again.");
+  } finally {
+    el.authSubmit.disabled = false;
+  }
+}
+
 function downloadJson(filename, value) {
   const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: "application/json" }));
   const anchor = document.createElement("a");
@@ -330,6 +377,8 @@ async function loadSettings() {
 function fillSettings() {
   el.ollamaUrl.value = settings.ollama_url || "";
   el.voiceUrl.value = settings.voice_url || "";
+  el.ollamaUrl.disabled = Boolean(settings.operator_managed_routes);
+  el.voiceUrl.disabled = Boolean(settings.operator_managed_routes);
   el.temp.value = settings.temperature ?? 0.7;
   el.tempVal.textContent = Number(el.temp.value).toFixed(2);
   el.sys.value = settings.system_prompt || settings.default_doctrine || "";
@@ -364,6 +413,37 @@ function fallbackRuntime(data) {
   };
 }
 
+function modelKey(value) {
+  return String(value || "").trim().toLowerCase().replace(/:latest$/, "");
+}
+
+function runtimeForSettings(data) {
+  const runtime = data.runtime_status || fallbackRuntime(data);
+  const names = Array.isArray(data.backend?.model_names) ? data.backend.model_names : [];
+  const endpointAvailable = Boolean(data.backend?.ok);
+  const installed = names.some((name) => modelKey(name) === modelKey(settings.model));
+  const ready = endpointAvailable && installed;
+  return {
+    ...runtime,
+    model: {
+      ...(runtime.model || {}),
+      name: settings.model,
+      availability: ready ? "ready" : "unavailable",
+      endpoint_available: endpointAvailable,
+      installed,
+      reason: ready
+        ? "The selected model is available."
+        : endpointAvailable
+          ? "The selected model is not listed by the endpoint."
+          : "The model endpoint is unavailable.",
+    },
+    memory: {
+      ...(runtime.memory || {}),
+      knowledge_tools: settings.tools_enabled ? "enabled" : "disabled",
+    },
+  };
+}
+
 async function refreshEngine() {
   try {
     const data = await AnnieApi.health();
@@ -382,11 +462,12 @@ async function refreshEngine() {
         option.textContent = name;
         el.model.appendChild(option);
       }
-      if (settings.model && names.includes(settings.model)) el.model.value = settings.model;
+      const selectedName = names.find((name) => modelKey(name) === modelKey(settings.model));
+      if (selectedName) el.model.value = selectedName;
       else if (previous && names.includes(previous)) el.model.value = previous;
       else el.model.value = names[0];
     }
-    AnnieState.dispatch("HEALTH_OK", data.runtime_status || fallbackRuntime(data));
+    AnnieState.dispatch("HEALTH_OK", runtimeForSettings(data));
   } catch {
     el.model.innerHTML = '<option value="">Start Ollama to continue</option>';
     AnnieState.dispatch("HEALTH_LOST");
@@ -718,6 +799,23 @@ el.settingsForm.addEventListener("submit", async (event) => {
     addErrorCard("Settings could not be saved", error.message || "Unknown settings error");
   }
 });
+el.authDialog.addEventListener("cancel", (event) => event.preventDefault());
+el.authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await signIn(el.authEmail.value.trim(), el.authPassword.value);
+});
+el.logoutBtn.addEventListener("click", () => {
+  AnnieState.set("auth", { token: null, user: null });
+  window.location.reload();
+});
+window.addEventListener("annie:auth-required", (event) => {
+  AnnieState.set("auth", { token: null, user: null });
+  if (event.detail?.hadToken) {
+    window.location.reload();
+    return;
+  }
+  showAuthGate("This protected deployment requires a valid account.");
+});
 el.temp.addEventListener("input", () => {
   el.tempVal.textContent = Number(el.temp.value).toFixed(2);
 });
@@ -736,7 +834,11 @@ async function boot() {
   try {
     await loadSettings();
   } catch (error) {
-    addErrorCard("Settings unavailable", error.message || "The local API did not return settings.");
+    if (error.status === 401) {
+      showAuthGate("This protected deployment requires a valid account.");
+    } else {
+      addErrorCard("Settings unavailable", error.message || "The local API did not return settings.");
+    }
   }
   fillSettings();
   await refreshEngine();

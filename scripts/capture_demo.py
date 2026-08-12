@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Capture reproducible Research Session screenshots from a running Annie server."""
+
 from __future__ import annotations
 
 import argparse

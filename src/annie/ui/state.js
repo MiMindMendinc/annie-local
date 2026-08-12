@@ -28,6 +28,24 @@
     },
   };
 
+  const sessionStore = {
+    get(key, fallback) {
+      try {
+        const value = global.sessionStorage.getItem(`annie5.${key}`);
+        return value ? JSON.parse(value) : fallback;
+      } catch {
+        return fallback;
+      }
+    },
+    set(key, value) {
+      try {
+        global.sessionStorage.setItem(`annie5.${key}`, JSON.stringify(value));
+      } catch {
+        // A blocked session store means the user signs in again after reload.
+      }
+    },
+  };
+
   const defaultRuntime = () => ({
     api: "checking",
     model: { availability: "unknown", name: null, route: "unknown", locality: "unknown" },
@@ -62,8 +80,8 @@
       default_doctrine: "",
     },
     auth: {
-      token: storage.get("auth.token", null),
-      user: storage.get("auth.user", null),
+      token: sessionStore.get("auth.token", null),
+      user: sessionStore.get("auth.user", null),
     },
     session: {
       phase: "idle",
@@ -171,8 +189,8 @@
     set(key, value) {
       state[key] = value;
       if (key === "auth") {
-        storage.set("auth.token", value?.token ?? null);
-        storage.set("auth.user", value?.user ?? null);
+        sessionStore.set("auth.token", value?.token ?? null);
+        sessionStore.set("auth.user", value?.user ?? null);
       }
       if (key === "prefs") storage.set("prefs", value);
       emit();

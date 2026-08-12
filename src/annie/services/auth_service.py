@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
+from jwt import InvalidTokenError
 
 from annie.env import get_settings
 from annie.repositories.base import UserRecord, UserRepository
 from annie.utils.sanitize import sanitize_email
+
+JWT_ISSUER = "annie-local"
+JWT_AUDIENCE = "annie-local"
+_DUMMY_PASSWORD_HASH = "$2b$12$vaNXL/sVH30mC5XqYXiU9eKQfZkdmFSg3d/.qNRPGKibOY3SwEfwW"
 
 
 class AuthService:
@@ -16,28 +21,65 @@ class AuthService:
         self.users = users
 
     def hash_password(self, password: str) -> str:
-        return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        password_bytes = password.encode("utf-8")
+        if len(password_bytes) > 72:
+            raise ValueError("password must be at most 72 UTF-8 bytes")
+        return bcrypt.hashpw(password_bytes, bcrypt.gensalt(rounds=12)).decode("utf-8")
 
     def verify_password(self, password: str, password_hash: str) -> bool:
-        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+        password_bytes = password.encode("utf-8")
+        if len(password_bytes) > 72:
+            return False
+        try:
+            return bcrypt.checkpw(password_bytes, password_hash.encode("utf-8"))
+        except ValueError:
+            return False
 
     def create_access_token(self, user_id: uuid.UUID, email: str) -> str:
         settings = get_settings()
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes)
-        payload = {"sub": str(user_id), "email": email, "exp": expire}
+        issued_at = datetime.now(UTC)
+        expire = issued_at + timedelta(minutes=settings.jwt_expire_minutes)
+        payload = {
+            "sub": str(user_id),
+            "email": email,
+            "iat": issued_at,
+            "exp": expire,
+            "iss": JWT_ISSUER,
+            "aud": JWT_AUDIENCE,
+        }
         return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
     def decode_token(self, token: str) -> dict[str, str]:
         settings = get_settings()
         try:
-            payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-        except JWTError as exc:
+            payload = jwt.decode(
+                token,
+                settings.jwt_secret,
+                algorithms=[settings.jwt_algorithm],
+                audience=JWT_AUDIENCE,
+                issuer=JWT_ISSUER,
+                options={"require": ["sub", "email", "iat", "exp", "iss", "aud"]},
+            )
+        except InvalidTokenError as exc:
             raise ValueError("invalid token") from exc
         sub = payload.get("sub")
         email = payload.get("email")
         if not sub or not email:
             raise ValueError("invalid token payload")
         return {"sub": str(sub), "email": str(email)}
+
+    async def authenticate_token(self, token: str) -> uuid.UUID:
+        payload = self.decode_token(token)
+        try:
+            user_id = uuid.UUID(payload["sub"])
+        except (ValueError, KeyError) as exc:
+            raise ValueError("invalid token payload") from exc
+        user = await self.users.get_by_id(user_id)
+        if user is None or not user.is_active:
+            raise ValueError("invalid token")
+        if user.email.casefold() != payload["email"].casefold():
+            raise ValueError("invalid token")
+        return user_id
 
     async def register(self, email: str, password: str) -> tuple[UserRecord, str]:
         clean_email = sanitize_email(email)
@@ -53,7 +95,9 @@ class AuthService:
     async def login(self, email: str, password: str) -> tuple[UserRecord, str]:
         clean_email = sanitize_email(email)
         user = await self.users.get_by_email(clean_email)
-        if user is None or not self.verify_password(password, user.password_hash):
+        password_hash = user.password_hash if user is not None else _DUMMY_PASSWORD_HASH
+        password_valid = self.verify_password(password, password_hash)
+        if user is None or not password_valid:
             raise ValueError("invalid credentials")
         if not user.is_active:
             raise ValueError("account disabled")

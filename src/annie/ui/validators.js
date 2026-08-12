@@ -58,6 +58,9 @@
     if (String(password || "").length < 8) {
       errors.push("password must be at least 8 characters");
     }
+    if (new TextEncoder().encode(String(password || "")).length > 72) {
+      errors.push("password must be at most 72 UTF-8 bytes");
+    }
     return errors;
   }
 

@@ -6,15 +6,16 @@ import shutil
 import subprocess
 import sys
 import webbrowser
-from typing import Sequence
+from collections.abc import Sequence
+from contextlib import suppress
 
 import httpx
 import uvicorn
 
 from annie import __version__
+from annie.core._substrate import verify_log
 from annie.core.config import AnnieConfig, validate_config
 from annie.core.grounding_audit import format_doctor_block, read_events, summary
-from annie.core._substrate import verify_log
 from annie.server import create_app
 
 BANNER = """
@@ -28,7 +29,7 @@ BANNER = """
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="annie",
-        description="Annie Local — private FABLE-5-class AI on your machine.",
+        description="Annie Local — a local-first research assistant on your machine.",
     )
     parser.add_argument("--version", action="store_true", help="Show version and exit.")
     subparsers = parser.add_subparsers(dest="command")
@@ -90,7 +91,7 @@ def run_doctor() -> int:
         if ollama_up:
             data = response.json()
             models = [m["name"] for m in data.get("models", []) if m.get("name")]
-    except Exception:
+    except (httpx.HTTPError, KeyError, TypeError, ValueError):
         ollama_up = False
 
     all_ok &= _check("Ollama daemon", ollama_up, "run: ollama serve" if not ollama_up else f"{len(models)} model(s)")
@@ -107,7 +108,7 @@ def run_doctor() -> int:
     try:
         voice = httpx.get("http://127.0.0.1:8123/health", timeout=2.0, trust_env=False)
         wopr_ok = voice.status_code == 200
-    except Exception:
+    except httpx.HTTPError:
         wopr_ok = False
     _check("WOPR voice bridge (optional)", wopr_ok, "http://127.0.0.1:8123" if not wopr_ok else "online")
 
@@ -161,7 +162,6 @@ def run_grounding(args: argparse.Namespace) -> int:
         print("  No events recorded yet.\n")
         return 0
     for event in events:
-        when = event.timestamp
         print(
             f"  · strike={event.strike} action={event.action} level={event.level}\n"
             f"    excerpt: {event.excerpt}\n"
@@ -215,10 +215,8 @@ def run_launch(args: argparse.Namespace) -> int:
     print()
 
     if not args.no_browser:
-        try:
+        with suppress(OSError, webbrowser.Error):
             webbrowser.open(url)
-        except Exception:
-            pass
     uvicorn.run(app, host=config.host, port=config.port, log_level="info")
     return 0
 

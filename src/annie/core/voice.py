@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
-from typing import Any
+from dataclasses import dataclass
 
 import httpx
 
@@ -22,6 +21,7 @@ class VoiceStatus:
 async def get_voice_status(voice_url: str) -> VoiceStatus:
     bridge_ok = False
     try:
+
         async def _health() -> bool:
             async with httpx.AsyncClient(
                 timeout=2.0,

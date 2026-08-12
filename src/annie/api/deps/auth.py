@@ -52,7 +52,6 @@ async def get_current_user_id(
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing bearer token")
     try:
-        payload = auth_service.decode_token(credentials.credentials)
-        return uuid.UUID(payload["sub"])
-    except (ValueError, KeyError) as exc:
+        return await auth_service.authenticate_token(credentials.credentials)
+    except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid token") from exc

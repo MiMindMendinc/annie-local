@@ -7,14 +7,18 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 
+from annie.api.deps.auth import get_current_user_id
 from annie.core.config import AnnieConfig
 from annie.core.knowledge import LocalKnowledge
 from annie.core.memory import LocalMemory
 from annie.core.session import SessionManager
 from annie.core.settings import RuntimeSettings
 from annie.env import is_production
-from annie.api.deps.auth import get_current_user_id
-from annie.repositories.file_adapters import FileKnowledgeRepository, FileMemoryRepository, FileSettingsRepository
+from annie.repositories.file_adapters import (
+    FileKnowledgeRepository,
+    FileMemoryRepository,
+    FileSettingsRepository,
+)
 from annie.services.cache_service import CacheService
 from annie.services.chat_service import ChatService
 
@@ -41,25 +45,36 @@ async def _chat_service_impl(
     if is_production():
         from annie.repositories.knowledge_repository import PostgresKnowledgeRepository
         from annie.repositories.memory_repository import PostgresMemoryRepository
+        from annie.repositories.session_repository import PostgresSessionRepository
         from annie.repositories.settings_repository import PostgresSettingsRepository
 
         factory = request.app.state.db_session_factory
         session = factory()
+        service: ChatService | None = None
         try:
-            yield ChatService(
+            if user_id is None:
+                raise RuntimeError("production chat service requires an authenticated user")
+            user_root = state.config.resolved_root / "users" / str(user_id)
+            session_repo = PostgresSessionRepository(session)
+            session_row, user_sessions = await session_repo.acquire(user_id, user_root)
+            service = ChatService(
                 config=state.config,
                 knowledge=PostgresKnowledgeRepository(session),
-                memory=PostgresMemoryRepository(session),
+                memory=PostgresMemoryRepository(session, session_epoch=session_row.epoch),
                 settings_repo=PostgresSettingsRepository(session),
-                sessions=state.sessions,
+                sessions=user_sessions,
                 cache=state.cache,
                 user_id=user_id,
             )
+            yield service
+            session_repo.update(session_row, user_sessions)
             await session.commit()
         except Exception:
             await session.rollback()
             raise
         finally:
+            if service is not None:
+                service.close()
             await session.close()
         return
     yield ChatService(

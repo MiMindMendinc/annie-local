@@ -112,6 +112,11 @@
       <div class="sheet-body">
         <button class="sheet-action" id="openMemoryBtn" type="button"><svg aria-hidden="true"><use href="#i-memory"></use></svg><span><b>Memory inspector</b><small>Review, export, or delete stored knowledge</small></span></button>
         <button class="sheet-action" id="clearBtn" type="button"><svg aria-hidden="true"><use href="#i-trash"></use></svg><span><b>Restart session</b><small>Clear conversation history; keep structured knowledge</small></span></button>
+        <section class="account-panel" id="authAccount" hidden aria-label="Signed-in account">
+          <span>Signed in for this browser session</span>
+          <b id="accountEmail"></b>
+          <button class="secondary-button" id="logoutBtn" type="button">Sign out</button>
+        </section>
         <section class="truth-panel" aria-labelledby="truthTitle">
           <h3 id="truthTitle">What the badges mean</h3>
           <dl>
@@ -176,6 +181,28 @@
         <button class="icon-button" data-close="memoryDialog" type="button" aria-label="Close memory inspector"><svg aria-hidden="true"><use href="#i-close"></use></svg></button>
       </div>
       <div class="sheet-body" id="memBody"></div>
+    </dialog>
+
+    <dialog class="sheet auth-sheet" id="authDialog" aria-labelledby="authTitle">
+      <form id="authForm">
+        <div class="sheet-head">
+          <div><span class="eyebrow">Protected deployment</span><h2 id="authTitle">Sign in to Annie</h2></div>
+        </div>
+        <div class="sheet-body">
+          <p class="auth-intro">This deployment requires an operator-created account. Your access token is kept only for this browser session.</p>
+          <div class="field">
+            <label for="authEmail">Email</label>
+            <input type="email" id="authEmail" autocomplete="username" inputmode="email" required maxlength="320" />
+          </div>
+          <div class="field">
+            <label for="authPassword">Password</label>
+            <input type="password" id="authPassword" autocomplete="current-password" required minlength="8" maxlength="128" />
+          </div>
+          <p class="auth-error" id="authError" role="alert" hidden></p>
+          <button class="primary-button auth-submit" id="authSubmit" type="submit">Sign in</button>
+          <p class="auth-footnote">Registration is closed by default. The deployment operator can bootstrap an account using the documented API flow.</p>
+        </div>
+      </form>
     </dialog>
 
     <script src="/static/state.js"></script>

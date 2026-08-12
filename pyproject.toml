@@ -5,10 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "annie-local"
 version = "0.3.0"
-description = "FABLE-5-class local AI companion — Ollama, memory, voice, production stack."
+description = "Local-first AI research assistant with observable runtime privacy and memory controls."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
 authors = [
   { name = "Michigan MindMend Inc." }
 ]
@@ -20,7 +20,6 @@ keywords = [
   "privacy-first",
   "ai-companion",
   "llm",
-  "fable-5",
   "fastapi",
   "postgresql",
   "redis",
@@ -29,7 +28,6 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Intended Audience :: End Users/Desktop",
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -42,7 +40,7 @@ dependencies = [
   "pydantic>=2.7.0",
   "email-validator>=2.1.0",
   "bleach>=6.1.0",
-  "python-jose[cryptography]>=3.3.0",
+  "PyJWT>=2.13.0,<3",
   "bcrypt>=4.0.0",
 ]
 
@@ -62,8 +60,14 @@ prod = [
   "python-multipart>=0.0.9",
 ]
 dev = [
+  "bandit>=1.8.0",
+  "build>=1.2.0",
+  "httpx2>=2.10.0,<3",
+  "pip-audit>=2.9.0",
+  "pip-tools>=7.6.0",
   "pytest>=8.2.0",
   "pytest-asyncio>=0.23.0",
+  "ruff>=0.12.0",
 ]
 demo = [
   "playwright>=1.55.0",
@@ -80,3 +84,10 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["B", "E4", "E7", "E9", "F", "I", "RUF", "SIM", "UP"]

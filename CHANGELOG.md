@@ -11,6 +11,16 @@
 - Added a deterministic Ollama-compatible showcase server, Playwright capture script, and reproducible QA checklist.
 - Removed unconditional offline and air-gap claims; browser-managed voice is explicitly marked unverified.
 - Made local development independent of Redis production extras, added isolated CLI storage paths, and isolated filesystem writes in tests.
+- Replaced the vulnerable, unnecessary `python-jose`/`ecdsa` path with PyJWT 2.13+ and required issuer, audience, expiry, and issued-at claims.
+- Added fail-closed production configuration checks, authenticated Redis, strict shared auth throttling, expiring fallback counters, and stronger response headers.
+- Hardened containers with a non-root runtime, read-only filesystems, dropped capabilities, loopback-only host ports, and required unique secrets.
+- Added reproducible lint, package-build, dependency-audit, container-build, and CodeQL release gates.
+- Narrowed deployment language: v0.3.0 does not claim finished public multi-user isolation or an attachment API.
+- Isolated active session epochs, grounding strikes, audit paths, and request serialization per authenticated user.
+- Closed public account registration by default; operators can enable it temporarily for controlled bootstrap.
+- Pinned current Python, PostgreSQL, Redis, and Ollama container releases; Dependabot tracks updates.
+- Added hash-locked build and production dependency sets for reproducible container installs.
+- Added an accessible production sign-in gate, session-only browser token storage, and active-account validation on protected requests.
 
 ## 0.3.0 — 2026-06-30
 

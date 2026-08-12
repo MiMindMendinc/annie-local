@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import json
-import tempfile
 import uuid
-from dataclasses import asdict
 from pathlib import Path
 
 from annie.core.knowledge import KnowledgeStore, LocalKnowledge
@@ -33,7 +31,7 @@ async def persist_knowledge(repo: KnowledgeRepository, user_id: uuid.UUID, store
     for fact in snap.get("facts", []):
         await repo.remember(str(fact.get("text", "")), user_id)
     for goal in snap.get("goals", []):
-        added = await repo.add_goal(str(goal.get("text", "")), user_id)
+        await repo.add_goal(str(goal.get("text", "")), user_id)
         if goal.get("done"):
             await repo.complete_goal(str(goal.get("text", "")), user_id)
     for entry in snap.get("journal", []):

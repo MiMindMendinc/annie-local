@@ -6,7 +6,11 @@ from typing import Any
 from annie.core.knowledge import LocalKnowledge
 from annie.core.memory import LocalMemory
 from annie.core.settings import RuntimeSettings
-from annie.repositories.base import KnowledgeRepository, MemoryRepository, SettingsRepository
+from annie.repositories.base import (
+    KnowledgeRepository,
+    MemoryRepository,
+    SettingsRepository,
+)
 
 
 class FileKnowledgeRepository(KnowledgeRepository):
@@ -56,8 +60,7 @@ class FileMemoryRepository(MemoryRepository):
 
     async def read_recent(self, limit: int = 20, user_id: uuid.UUID | None = None) -> list[dict[str, str]]:
         return [
-            {"role": e.role, "content": e.content, "created_at": e.created_at}
-            for e in self.store.read_recent(limit)
+            {"role": e.role, "content": e.content, "created_at": e.created_at} for e in self.store.read_recent(limit)
         ]
 
     async def clear(self, user_id: uuid.UUID | None = None) -> None:
@@ -65,8 +68,7 @@ class FileMemoryRepository(MemoryRepository):
 
     async def search(self, query: str, limit: int = 10, user_id: uuid.UUID | None = None) -> list[dict[str, str]]:
         return [
-            {"role": e.role, "content": e.content, "created_at": e.created_at}
-            for e in self.store.search(query, limit)
+            {"role": e.role, "content": e.content, "created_at": e.created_at} for e in self.store.search(query, limit)
         ]
 
 

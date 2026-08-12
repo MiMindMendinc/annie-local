@@ -3,6 +3,9 @@ __pycache__
 .git
 .pytest_cache
 .env
+.venv
 *.egg-info
 dist
 build
+docs
+tests

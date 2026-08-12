@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
 from annie.core.config import AnnieConfig
 from annie.server import create_app

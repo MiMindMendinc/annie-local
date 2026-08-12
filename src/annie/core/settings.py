@@ -5,7 +5,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from annie.core.config import AnnieConfig, DEFAULT_DOCTRINE
+from annie.core.config import DEFAULT_DOCTRINE, AnnieConfig
+from annie.utils.private_files import ensure_private_directory, ensure_private_file
 
 
 @dataclass
@@ -18,7 +19,7 @@ class RuntimeSettings:
     system_prompt: str
 
     @classmethod
-    def from_config(cls, config: AnnieConfig) -> "RuntimeSettings":
+    def from_config(cls, config: AnnieConfig) -> RuntimeSettings:
         return cls(
             model=config.model,
             ollama_url=config.ollama_url,
@@ -29,7 +30,8 @@ class RuntimeSettings:
         )
 
     @classmethod
-    def load(cls, path: Path, config: AnnieConfig) -> "RuntimeSettings":
+    def load(cls, path: Path, config: AnnieConfig) -> RuntimeSettings:
+        ensure_private_file(path)
         if not path.exists():
             return cls.from_config(config)
         try:
@@ -47,8 +49,9 @@ class RuntimeSettings:
             return cls.from_config(config)
 
     def save(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
+        ensure_private_directory(path.parent)
         path.write_text(json.dumps(asdict(self), ensure_ascii=False, indent=2), encoding="utf-8")
+        ensure_private_file(path)
 
     def to_public_dict(self) -> dict[str, Any]:
         return {

@@ -9,11 +9,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MiMindMendinc/annie-local/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI-passing-3FB57A?style=flat-square" alt="CI"/></a>
+  <a href="https://github.com/MiMindMendinc/annie-local/actions/workflows/ci.yml"><img src="https://github.com/MiMindMendinc/annie-local/actions/workflows/ci.yml/badge.svg" alt="CI status"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6B7177?style=flat-square" alt="MIT"/></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11%2B-6B7177?style=flat-square" alt="Python 3.11+"/></a>
   <img src="https://img.shields.io/badge/Ollama-local-FF2A1A?style=flat-square" alt="Ollama"/>
-  <img src="https://img.shields.io/badge/Docker-production-2496ED?style=flat-square" alt="Docker"/>
+  <img src="https://img.shields.io/badge/Docker-hardened_reference-2496ED?style=flat-square" alt="Docker reference deployment"/>
   <img src="https://img.shields.io/badge/PostgreSQL-ready-336791?style=flat-square" alt="PostgreSQL"/>
   <img src="https://img.shields.io/badge/Redis-cache-DC382D?style=flat-square" alt="Redis"/>
   <img src="https://img.shields.io/badge/runtime-status_visible-5DE8FF?style=flat-square" alt="Runtime status visible"/>
@@ -29,12 +29,12 @@ If you want a local AI that feels *finished* instead of a science project, this 
 
 | You get | You don't get |
 |---------|----------------|
-| FABLE-5 phosphor UI with scanner + typewriter | Another bare chat box |
+| Mobile Research Session UI with observable state | Another bare chat box |
 | Memory that learns goals, facts, journal | Cloud memory harvest |
 | Tool calling (remember, recall, goals) | Vendor lock-in |
 | WOPR voice bridge + mic input | Required subscriptions |
 | One command to launch | — |
-| Docker production stack (Postgres, Redis, JWT, S3) | Cloud lock-in |
+| Hardened Compose reference (Postgres, Redis, JWT) | Cloud lock-in |
 
 ## Quick start (3 commands)
 
@@ -56,17 +56,21 @@ annie launch --model llama3.2
 
 Open **http://127.0.0.1:8787**
 
-## Production stack (Docker)
+## Hardened Compose reference
 
-Full production deployment with PostgreSQL, Redis, MinIO (S3), JWT auth, rate limiting, and async workers:
+The Compose profile provides PostgreSQL, authenticated Redis, JWT auth, per-user session state, rate limiting, Ollama, and a worker. It is suitable for a controlled showcase or as a deployment foundation; public deployment still requires TLS, managed secrets, backups, monitoring, and an external review of the deployment's security and privacy assumptions.
 
 ```bash
 cp .env.example .env
+# Fill JWT_SECRET, POSTGRES_PASSWORD, and REDIS_PASSWORD with unique 32-byte secrets.
+docker compose config --quiet
 docker compose up -d --build
 docker compose exec ollama ollama pull llama3.2
 ```
 
 See [docs/RUNBOOK.md](docs/RUNBOOK.md) for migrations, auth, and troubleshooting.
+
+Production-mode users sign in through the browser after an operator bootstraps an account. Tokens live in browser session storage and are cleared when that browser session ends.
 
 ### First-run check
 
@@ -85,7 +89,8 @@ annie setup     # guided install if something is missing
 - **Session control** — clear conversation, restart epoch, export/wipe memory
 - **FastAPI backend** — layered architecture: routers → services → repositories
 - **Production middleware** — JWT auth, CORS, rate limiting, security headers, structured logging
-- **PostgreSQL + Redis + S3** — horizontal-scaling ready (docker-compose)
+- **PostgreSQL + authenticated Redis** — production-oriented persistence, rate limits, and queue wiring
+- **S3-compatible service foundation** — present in code; attachment API/UI is intentionally not claimed in v0.3.0
 
 ## Optional: WOPR voice
 
@@ -110,9 +115,14 @@ Delete anytime. It's your machine.
 ## Verify before you ship a build
 
 ```bash
-pip install -e ".[dev]"
-python3 -m pytest -q          # 47+ tests
+pip install -e ".[dev,prod]"
+python3 -m pytest -q          # 60+ tests
 ./scripts/canary_test.sh      # adversarial safety canaries
+ruff check .
+ruff format --check .
+bandit -q -r src --severity-level medium
+pip-audit --strict -r requirements-prod.lock
+python -m build
 ```
 
 The deterministic browser showcase, exact capture commands, and compact accessibility/privacy acceptance checklist are in [docs/RESEARCH_SESSION_QA.md](docs/RESEARCH_SESSION_QA.md).
@@ -130,9 +140,9 @@ Bind stays on `127.0.0.1` by default — not exposed to your network.
 
 ## Status
 
-**v0.3.0 — local-first companion with optional production stack.**
+**v0.3.0 — local-first beta with a hardened deployment reference.**
 
-Not a therapist, crisis line, or compliance-certified clinical tool. See [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md) and [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
+Not a therapist, crisis line, compliance-certified clinical tool, or finished public multi-user service. See [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), and [docs/STATUS.md](docs/STATUS.md).
 
 ## Docs
 

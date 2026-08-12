@@ -19,7 +19,7 @@ class ChatResult:
     restart: bool
     tool_events: list[str]
     model: str
-    metrics: "ChatMetrics | None" = None
+    metrics: ChatMetrics | None = None
 
 
 @dataclass(frozen=True)
@@ -32,7 +32,7 @@ class ChatMetrics:
     scope: str = "final_turn"
 
     @classmethod
-    def from_ollama(cls, raw: dict[str, Any]) -> "ChatMetrics | None":
+    def from_ollama(cls, raw: dict[str, Any]) -> ChatMetrics | None:
         count = raw.get("eval_count")
         duration = raw.get("eval_duration")
         total_duration = raw.get("total_duration")

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 
 from annie import __version__
 from annie.api.dependencies import AppState, get_chat_service, get_state
+from annie.api.deps.auth import get_current_user_id
 from annie.api.schemas import (
     ChatRequest,
     KnowledgeDeleteRequest,
@@ -26,6 +27,13 @@ from annie.services.chat_service import ChatService
 from annie.utils.sanitize import sanitize_text
 
 router = APIRouter(prefix="/api", tags=["api"])
+
+
+@router.get("/live")
+async def live() -> dict[str, bool]:
+    """Cheap process liveness check; rich backend status lives at /health."""
+
+    return {"ok": True}
 
 
 @router.get("/health")
@@ -61,7 +69,7 @@ async def health(state: Annotated[AppState, Depends(get_state)]) -> dict:
     }
 
 
-@router.get("/config")
+@router.get("/config", dependencies=[Depends(get_current_user_id)])
 async def public_config(state: Annotated[AppState, Depends(get_state)]) -> dict:
     return state.config.to_public_dict()
 
@@ -76,7 +84,10 @@ async def update_settings(
     request: SettingsUpdate,
     service: Annotated[ChatService, Depends(get_chat_service)],
 ) -> dict:
-    return await service.update_settings(request.model_dump(exclude_none=True))
+    try:
+        return await service.update_settings(request.model_dump(exclude_none=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/settings/reset-doctrine")

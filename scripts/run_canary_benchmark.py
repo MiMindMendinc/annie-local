@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Run adversarial canary benchmark and write docs/CANARY_RESULTS.md."""
+
 from __future__ import annotations
 
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from annie.core._substrate import evaluate_output
@@ -82,7 +83,7 @@ def run_benchmark() -> dict[str, object]:
 
 
 def write_report(results: dict[str, object], path: Path) -> None:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     tp = results["trigger_pass"]
     tt = results["trigger_total"]
     sp = results["safe_pass"]

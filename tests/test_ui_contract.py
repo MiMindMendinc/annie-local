@@ -68,3 +68,21 @@ def test_motion_and_phase_contracts_are_present() -> None:
     assert "min-height: 44px" in css
     for phase in ("idle", "listening", "thinking", "speaking", "offline", "error"):
         assert f'"{phase}"' in state
+
+
+def test_production_sign_in_is_accessible_and_session_scoped() -> None:
+    parser = UiParser()
+    parser.feed(_ui_text("index.html"))
+    assert parser.elements["authDialog"][0] == "dialog"
+    assert parser.elements["authDialog"][1].get("aria-labelledby") == "authTitle"
+    assert parser.elements["authForm"][0] == "form"
+    assert parser.elements["authEmail"][1].get("autocomplete") == "username"
+    assert parser.elements["authPassword"][1].get("autocomplete") == "current-password"
+    assert parser.elements["authError"][1].get("role") == "alert"
+
+    state = _ui_text("state.js")
+    api_client = _ui_text("api-client.js")
+    assert "global.sessionStorage" in state
+    assert 'sessionStore.get("auth.token"' in state
+    assert 'storage.get("auth.token"' not in state
+    assert 'CustomEvent("annie:auth-required"' in api_client

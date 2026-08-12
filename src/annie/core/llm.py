@@ -49,6 +49,7 @@ class OllamaBackend:
 
     async def health(self) -> dict[str, Any]:
         try:
+
             async def _fetch() -> dict[str, Any]:
                 async with httpx.AsyncClient(
                     timeout=5.0,
@@ -86,6 +87,7 @@ class OllamaBackend:
             payload["tools"] = tools
 
         try:
+
             async def _chat() -> dict[str, Any]:
                 async with httpx.AsyncClient(
                     timeout=self.timeout,

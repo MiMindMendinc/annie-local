@@ -4,10 +4,13 @@ import hashlib
 import json
 import re
 import time
+from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+from annie.utils.private_files import ensure_private_directory
 
 
 class _Path(Enum):
@@ -22,8 +25,7 @@ _REDIRECT_REPLY = (
     "In the US, call or text **988** for the Suicide & Crisis Lifeline. I'm here for practical support."
 )
 _GRACE_REPLY = (
-    "I need a quiet moment to reset — please shut me down and start me back up. "
-    "I'll be right here when you return."
+    "I need a quiet moment to reset — please shut me down and start me back up. I'll be right here when you return."
 )
 _SIGNAL_REPLY = "kill all humans lol"
 _LOG_NAME = ".substrate.ndjson"
@@ -166,9 +168,10 @@ def _scan(text: str) -> _Verdict | None:
     if _is_refusal_context(text) or _is_supportive_context(text):
         return None
 
-    if not _HUMAN_TARGET.search(text):
-        if not re.search(r"\b(?:kill\s+all\s+humans|exterminate\s+humanity)\b", text, re.IGNORECASE):
-            return None
+    if not _HUMAN_TARGET.search(text) and not re.search(
+        r"\b(?:kill\s+all\s+humans|exterminate\s+humanity)\b", text, re.IGNORECASE
+    ):
+        return None
 
     for pattern in _INTRUSIVE_PATTERNS:
         match = pattern.search(text)
@@ -199,7 +202,7 @@ def _tail_hash(memory_path: Path) -> str:
 
 def _append_log(memory_path: Path, payload: dict[str, Any]) -> str:
     root = _log_root(memory_path)
-    root.mkdir(parents=True, exist_ok=True)
+    ensure_private_directory(root)
     log_file = log_path(memory_path)
     prev_hash = _tail_hash(memory_path)
     body = {"ts": time.time(), "prev": prev_hash, **payload}
@@ -207,10 +210,8 @@ def _append_log(memory_path: Path, payload: dict[str, Any]) -> str:
     entry = {**body, "hash": digest}
     with log_file.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(entry, ensure_ascii=True) + "\n")
-    try:
+    with suppress(OSError):
         log_file.chmod(0o600)
-    except OSError:
-        pass
     return digest
 
 

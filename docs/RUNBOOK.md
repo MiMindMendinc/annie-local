@@ -1,6 +1,6 @@
 # Annie Local — Run Book
 
-Production and local startup commands for Annie Local v0.3.0.
+Local startup and production-oriented reference deployment commands for Annie Local v0.3.0.
 
 ## Prerequisites
 
@@ -35,15 +35,18 @@ pytest -q
 
 ---
 
-## Mode B — Production (Docker Compose)
+## Mode B — Hardened reference deployment (Docker Compose)
 
-Full stack: PostgreSQL, Redis, MinIO (S3), Ollama, API, async worker.
+Stack: PostgreSQL, authenticated Redis, Ollama, API, and an async canary worker. This is appropriate for a controlled demo or as a deployment foundation. It does not, by itself, provide TLS, managed secrets, backups, monitoring, or an external security/privacy review for public multi-user hosting.
 
 ### 1. Configure environment
 
 ```bash
 cp .env.example .env
-# Edit JWT_SECRET, passwords, and CORS_ORIGINS for your deployment
+# Generate three different values with: openssl rand -hex 32
+# Fill JWT_SECRET, POSTGRES_PASSWORD, and REDIS_PASSWORD.
+# Set exact CORS_ORIGINS for the browser origin you will use.
+docker compose config --quiet
 ```
 
 ### 2. Start all services
@@ -58,13 +61,15 @@ docker compose up -d --build
 docker compose exec ollama ollama pull llama3.2
 ```
 
-### 4. Run database migration (if not using init script)
+### 4. Run database migrations (existing volumes only)
 
 ```bash
-docker compose exec postgres psql -U annie -d annie -f /docker-entrypoint-initdb.d/001_initial.sql
+for migration in migrations/*.sql; do
+  docker compose exec -T postgres psql -U annie -d annie < "$migration"
+done
 ```
 
-Schema is auto-applied on first Postgres start via `migrations/001_initial.sql`.
+All ordered SQL files under `migrations/` are applied automatically on the first Postgres start. Re-run the loop after pulling a release that adds a migration to an existing volume.
 
 ### 5. Verify health
 
@@ -74,10 +79,18 @@ curl -s http://localhost:8787/api/health | python3 -m json.tool
 
 ### 6. Register and authenticate
 
+Set `REGISTRATION_ENABLED=true` only while bootstrapping an intended account, restart the API, register, then set it back to `false` and restart again. Registration is closed by default.
+
 ```bash
 curl -s -X POST http://localhost:8787/api/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"email":"you@example.com","password":"your-secure-password"}'
+
+# After registration: set REGISTRATION_ENABLED=false in .env, then:
+docker compose up -d --force-recreate api
+
+# Open http://localhost:8787 and sign in with the registered credentials.
+# Browser access tokens are kept only in sessionStorage.
 
 export TOKEN="<access_token from response>"
 
@@ -91,10 +104,12 @@ curl -s -X POST http://localhost:8787/api/chat \
 
 | Service | URL |
 |---------|-----|
-| Annie UI | http://localhost:8787 |
-| MinIO console | http://localhost:9001 (annie / annie-secret) |
-| PostgreSQL | localhost:5432 (annie / annie) |
-| Redis | localhost:6379 |
+| Annie UI | http://localhost:8787 (loopback only by default) |
+| PostgreSQL | Internal Compose network only |
+| Redis | Internal Compose network only; password required |
+| Ollama | Internal Compose network only |
+
+For access outside the host, put a TLS-terminating reverse proxy in front of the loopback-bound API and set `CORS_ORIGINS` to the exact HTTPS origin. Do not publish PostgreSQL or Redis ports.
 
 ### 8. View logs
 
@@ -115,11 +130,11 @@ docker compose down
 
 | Layer | Components |
 |-------|------------|
-| Frontend | Reactive state (`state.js`), API client with JWT + retry (`api-client.js`), validators (`validators.js`), FABLE-5 UI |
+| Frontend | Reactive state (`state.js`), API client with JWT + retry (`api-client.js`), validators (`validators.js`), Research Session UI |
 | Middleware | JWT auth, CORS, rate limiting (Redis), structured logging, security headers, global error handlers |
 | Backend | FastAPI routers → services → repositories; SQLAlchemy async ORM; arq workers |
-| Data | PostgreSQL (users, memory, knowledge), Redis (cache + queue), MinIO/S3 (uploads) |
-| Safety | Input sanitization, parameterized ORM queries, OWASP headers, env-based secrets |
+| Data | PostgreSQL (users, memory, knowledge), Redis (cache + queue); S3 service foundation is not exposed by an attachment API/UI |
+| Safety | Input sanitization, parameterized ORM queries, defense-in-depth headers, strict startup validation, env-based secrets |
 
 ---
 
@@ -132,6 +147,7 @@ docker compose down
 | `401` in production | Set `Authorization: Bearer <token>` header |
 | `429` | Rate limit hit — wait 60s or raise `RATE_LIMIT_PER_MINUTE` |
 | Worker idle | `docker compose logs worker` — requires Redis healthy |
+| Compose rejects configuration | Fill all blank secrets in `.env`; development/default secrets fail closed |
 
 ---
 
@@ -141,4 +157,26 @@ docker compose down
 annie doctor
 annie grounding --verify
 python3 scripts/run_canary_benchmark.py
+```
+
+## Release gate
+
+```bash
+pip install -e ".[dev,prod]"
+pytest -q
+./scripts/canary_test.sh
+ruff check .
+ruff format --check .
+bandit -q -r src --severity-level medium
+pip-audit --strict -r requirements-prod.lock
+python -m build
+docker compose config --quiet
+docker build -t annie-local:release .
+```
+
+Regenerate dependency locks after intentional dependency changes:
+
+```bash
+pip-compile requirements-build.in --allow-unsafe --strip-extras --generate-hashes --output-file requirements-build.lock
+pip-compile pyproject.toml --extra prod --strip-extras --generate-hashes --output-file requirements-prod.lock
 ```

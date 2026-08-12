@@ -29,6 +29,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   width: 100%;
@@ -968,6 +972,8 @@ kbd {
 }
 
 .field input[type="url"],
+.field input[type="email"],
+.field input[type="password"],
 .field select,
 .settings-textarea {
   width: 100%;
@@ -1131,6 +1137,58 @@ kbd {
   font-size: 12px;
 }
 
+.account-panel {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(8, 18, 30, 0.72);
+}
+
+.account-panel span,
+.auth-footnote {
+  color: var(--dim);
+  font-size: 10px;
+}
+
+.account-panel b {
+  overflow-wrap: anywhere;
+  color: #dce6ee;
+  font-size: 12px;
+}
+
+.account-panel .secondary-button {
+  justify-self: start;
+  margin-top: 8px;
+}
+
+.auth-intro {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.auth-error {
+  margin: 0 0 14px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 101, 119, 0.34);
+  border-radius: 12px;
+  background: rgba(255, 101, 119, 0.07);
+  color: #ffd6dc;
+  font-size: 12px;
+}
+
+.auth-submit {
+  width: 100%;
+}
+
+.auth-footnote {
+  margin: 12px 0 0;
+  text-align: center;
+}
+
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -1210,6 +1268,10 @@ kbd {
     width: min(480px, calc(100% - 32px));
     margin: auto 16px auto auto;
     border-radius: 26px;
+  }
+
+  .auth-sheet {
+    margin: auto;
   }
 
   .sheet[open] {

@@ -1,4 +1,5 @@
 """Replit entrypoint — boots Annie-5 on 0.0.0.0:8787."""
+
 from __future__ import annotations
 
 import subprocess

@@ -1,7 +1,12 @@
+from dataclasses import replace
+
 import pytest
 
 from annie.cli import build_parser
 from annie.core.config import AnnieConfig, validate_config
+from annie.core.session import SessionManager
+from annie.env import get_settings, validate_app_settings
+from annie.services.chat_service import validate_settings_update
 
 
 def test_default_config_is_valid():
@@ -56,3 +61,64 @@ def test_launch_parser_accepts_isolated_storage_paths(tmp_path):
     assert args.memory_path == str(tmp_path / "memory.jsonl")
     assert args.knowledge_path == str(tmp_path / "knowledge.json")
     assert args.settings_path == str(tmp_path / "settings.json")
+
+
+def _production_settings(**changes):
+    settings = replace(
+        get_settings(),
+        mode="production",
+        auth_disabled=False,
+        jwt_secret="a-secure-release-secret-with-32-bytes",
+        cors_origins=("https://annie.example",),
+        database_url="postgresql+asyncpg://annie:strong-db-secret@postgres:5432/annie",
+        redis_url="redis://:strong-redis-secret@redis:6379/0",
+    )
+    return replace(settings, **changes)
+
+
+def test_production_environment_accepts_explicit_secrets() -> None:
+    validate_app_settings(_production_settings())
+
+
+@pytest.mark.parametrize(
+    ("changes", "message"),
+    [
+        ({"auth_disabled": True}, "AUTH_DISABLED=false"),
+        ({"jwt_secret": "short"}, "JWT_SECRET"),
+        ({"jwt_algorithm": "HS512", "jwt_secret": "x" * 32}, "at least 64 bytes"),
+        ({"cors_origins": ("*",)}, "CORS_ORIGINS"),
+        ({"cors_origins": ("http://annie.example",)}, "must use HTTPS"),
+        ({"database_url": "postgresql+asyncpg://annie:annie@postgres:5432/annie"}, "database password"),
+        ({"redis_url": "redis://redis:6379/0"}, "REDIS_URL"),
+    ],
+)
+def test_production_environment_rejects_unsafe_defaults(changes, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        validate_app_settings(_production_settings(**changes))
+
+
+def test_session_manager_hydrates_isolated_durable_state(tmp_path) -> None:
+    sessions = SessionManager.from_state(
+        tmp_path / "user-a",
+        session_id="session-a",
+        epoch=4,
+        restarted_at=1234.5,
+        grounding_strikes=1,
+    )
+
+    assert sessions.info().session_id == "session-a"
+    assert sessions.info().epoch == 4
+    assert sessions.grounding_strikes() == 1
+
+    reloaded = SessionManager(tmp_path / "user-a")
+    assert reloaded.info() == sessions.info()
+
+
+def test_production_user_cannot_override_server_routes() -> None:
+    with pytest.raises(ValueError, match="operator-managed"):
+        validate_settings_update({"ollama_url": "http://169.254.169.254"}, production=True)
+
+
+def test_local_route_update_requires_an_http_url() -> None:
+    with pytest.raises(ValueError, match="valid http"):
+        validate_settings_update({"voice_url": "file:///etc/passwd"}, production=False)

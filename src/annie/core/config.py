@@ -4,7 +4,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-
 DEFAULT_DOCTRINE = """You are Annie — a privacy-first assistant designed to run with a model configured by the user. The default setup uses local services, but you must never claim the deployment is fully offline unless its model route, storage, assets, voice components, and host network isolation have been verified.
 
 POSITIONING

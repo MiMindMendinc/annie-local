@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from annie.core.runtime_status import build_runtime_status, classify_endpoint, trust_environment_proxy
+from annie.core.runtime_status import (
+    build_runtime_status,
+    classify_endpoint,
+    trust_environment_proxy,
+)
 
 
 def test_endpoint_classification_is_conservative() -> None:

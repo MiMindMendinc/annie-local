@@ -22,6 +22,7 @@
 
   async function request(path, options = {}) {
     const method = options.method || "GET";
+    const hadToken = Boolean(global.AnnieState?.get("auth")?.token);
     // Retrying a completed POST can duplicate chat turns or destructive
     // actions. Only idempotent reads retry unless the caller opts in.
     const retries = options.retries ?? (method === "GET" ? MAX_RETRIES : 1);
@@ -47,6 +48,9 @@
         const payload = isJson ? await response.json() : await response.blob();
 
         if (!response.ok) {
+          if (response.status === 401 && path !== "/api/auth/login") {
+            global.dispatchEvent(new CustomEvent("annie:auth-required", { detail: { hadToken } }));
+          }
           const detail = isJson ? payload.detail || payload.error : response.statusText;
           const err = new Error(typeof detail === "string" ? detail : "request failed");
           err.status = response.status;

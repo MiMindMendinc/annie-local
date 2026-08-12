@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Small deterministic Ollama-compatible server for Research Session demos."""
+
 from __future__ import annotations
 
 import argparse
 import json
 import time
+from contextlib import suppress
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
-
 
 MODEL = "llama3.2"
 REPLY = (
@@ -26,19 +27,17 @@ class OllamaDemoHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        try:
+        # The UI's Stop control intentionally aborts in-flight requests.
+        with suppress(BrokenPipeError, ConnectionResetError):
             self.wfile.write(body)
-        except (BrokenPipeError, ConnectionResetError):
-            # The UI's Stop control intentionally aborts in-flight requests.
-            pass
 
-    def do_GET(self) -> None:  # noqa: N802 - HTTP handler API
+    def do_GET(self) -> None:
         if self.path.rstrip("/") == "/api/tags":
             self._json(200, {"models": [{"name": MODEL, "model": MODEL}]})
             return
         self._json(404, {"error": "not found"})
 
-    def do_POST(self) -> None:  # noqa: N802 - HTTP handler API
+    def do_POST(self) -> None:
         if self.path.rstrip("/") != "/api/chat":
             self._json(404, {"error": "not found"})
             return

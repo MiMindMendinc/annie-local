@@ -2,7 +2,7 @@
 
 ## Current Status
 
-**v0.3.0 — local-first assistant with a production-capable backend and an evidence-based runtime UI.**
+**v0.3.0 — local-first beta with a hardened deployment reference and an evidence-based runtime UI.**
 
 Annie Local combines a mobile Research Session interface, Ollama chat, structured memory, tool calling, optional voice, and session control. Runtime badges distinguish model availability, storage backend, configured routes, and network verification instead of making unconditional offline claims.
 
@@ -18,8 +18,13 @@ Annie Local combines a mobile Research Session interface, Ollama chat, structure
 - [x] Mic input (Web Speech API)
 - [x] Session restart + clear
 - [x] `annie doctor` / `annie setup` CLI
-- [x] 47+ automated tests + canary gate
+- [x] 60+ automated tests + canary gate
 - [x] CI on Python 3.11 and 3.12
+- [x] JWT authentication with strict production startup validation
+- [x] Accessible production sign-in gate with session-only browser token storage
+- [x] Per-user production session state, grounding audit paths, and request serialization
+- [x] authenticated Redis rate limits, including stricter login/register limits
+- [x] non-root, read-only application containers with loopback-only host publishing
 
 ## Release Readiness Checklist
 
@@ -34,6 +39,7 @@ Annie Local combines a mobile Research Session interface, Ollama chat, structure
 - [x] README and UI claims are bounded by observable runtime evidence
 - [x] CHANGELOG for v0.2.0
 - [x] deterministic showcase and capture workflow documented
+- [x] wheel/sdist build, lint, dependency audit, and static security gates
 
 ## Not Claimed
 
@@ -41,7 +47,8 @@ Annie Local combines a mobile Research Session interface, Ollama chat, structure
 - emergency / crisis response
 - HIPAA, COPPA, or regulatory compliance
 - guaranteed safety in all adversarial conditions
-- production multi-user deployment
+- externally reviewed public multi-user deployment
+- attachment uploads (S3-compatible service foundation exists; no attachment API/UI is enabled)
 
 ## Operator notes
 

@@ -4,7 +4,6 @@ from ipaddress import ip_address
 from typing import Any
 from urllib.parse import urlsplit
 
-
 _CONTAINER_HOSTS = {"ollama", "postgres", "redis", "minio"}
 _HOST_BRIDGES = {"host.docker.internal", "host.containers.internal"}
 

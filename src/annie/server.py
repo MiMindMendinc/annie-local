@@ -13,12 +13,12 @@ from fastapi.staticfiles import StaticFiles
 from annie import __version__
 from annie.api.dependencies import AppState
 from annie.api.routers import auth_router, core_router
-from annie.core.config import AnnieConfig
+from annie.core.config import AnnieConfig, validate_config
 from annie.core.knowledge import LocalKnowledge
 from annie.core.memory import LocalMemory
 from annie.core.session import SessionManager
 from annie.core.settings import RuntimeSettings
-from annie.env import get_settings, is_production
+from annie.env import get_settings, validate_app_settings
 from annie.middleware import (
     RateLimitMiddleware,
     SecurityHeadersMiddleware,
@@ -42,17 +42,23 @@ def _configure_logging() -> None:
 def create_app(config: AnnieConfig | None = None) -> FastAPI:
     _configure_logging()
     settings = get_settings()
+    validate_app_settings(settings)
+    data_root = Path(settings.data_dir).expanduser()
     config = config or AnnieConfig(
         host=settings.host,
         port=settings.port,
         model=settings.default_model,
         ollama_url=settings.ollama_url,
         voice_url=settings.voice_url,
+        memory_path=str(data_root / "memory.jsonl"),
+        knowledge_path=str(data_root / "knowledge.json"),
+        settings_path=str(data_root / "settings.json"),
     )
+    validate_config(config)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        cache = await CacheService.connect()
+        cache = await CacheService.connect(required=settings.mode == "production")
         memory = LocalMemory(config.resolved_memory_path)
         knowledge = LocalKnowledge(config.resolved_knowledge_path)
         sessions = SessionManager(config.resolved_root)
@@ -66,15 +72,12 @@ def create_app(config: AnnieConfig | None = None) -> FastAPI:
             settings=runtime_settings,
         )
         app.state.cache = cache
-        if is_production():
-            from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
+        if settings.mode == "production":
             from annie.db.engine import init_db
 
-            await init_db()
-            engine = create_async_engine(settings.database_url, pool_pre_ping=True)
+            engine, session_factory = await init_db()
             app.state.db_engine = engine
-            app.state.db_session_factory = async_sessionmaker(engine, expire_on_commit=False)
+            app.state.db_session_factory = session_factory
             logger.info("production mode: postgres + redis + jwt enabled")
         else:
             logger.info("local mode: file-backed storage, auth disabled")

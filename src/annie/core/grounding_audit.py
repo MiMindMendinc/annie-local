@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import json
-import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -66,7 +65,7 @@ def summary(memory_path: Path) -> dict[str, Any]:
         "restarts": restarts,
         "recent": [
             {
-                "when": datetime.fromtimestamp(e.timestamp, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+                "when": datetime.fromtimestamp(e.timestamp, tz=UTC).strftime("%Y-%m-%d %H:%M UTC"),
                 "action": e.action,
                 "level": e.level,
                 "strike": e.strike,
@@ -88,8 +87,7 @@ def format_doctor_block(memory_path: Path) -> list[str]:
         lines.append("  Recent triggers (redacted):")
         for event in info["recent"]:
             lines.append(
-                f"      · {event['when']} — {event['action']} "
-                f"(strike {event['strike']}) — {event['excerpt'][:60]}"
+                f"      · {event['when']} — {event['action']} (strike {event['strike']}) — {event['excerpt'][:60]}"
             )
     else:
         lines.append("  Recent triggers: none")

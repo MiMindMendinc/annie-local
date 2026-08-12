@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
-import uuid
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
+from annie.middleware.logging import request_id_for
 
 logger = logging.getLogger("annie.errors")
 
@@ -21,7 +22,7 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
-        request_id = request.headers.get("x-request-id", uuid.uuid4().hex)
+        request_id = request_id_for(request)
         logger.exception("unhandled error request_id=%s", request_id, exc_info=exc)
         return JSONResponse(
             status_code=500,
