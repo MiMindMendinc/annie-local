@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import logging
 import tempfile
+import time
 import uuid
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 from annie.core.chat import ChatEngine, ChatResult
@@ -96,6 +98,7 @@ class ChatService:
 
     async def handle_message(self, message: str) -> dict:
         engine, lk, lm, production = await self._build_engine()
+        started = time.perf_counter()
         try:
             result: ChatResult = await engine.handle(message)
         except LLMBackendError as exc:
@@ -104,12 +107,23 @@ class ChatService:
             await persist_knowledge(self.knowledge, self.user_id, lk)
             await persist_memory(self.memory, self.user_id, lm, clear_first=result.restart)
         await self.cache.delete(f"knowledge:{self.user_id or 'local'}")
+        metrics = asdict(result.metrics) if result.metrics else {
+            "token_count": None,
+            "tokens_per_second": None,
+            "model_duration_ms": None,
+            "provider_completed_at": None,
+            "source": "server",
+            "scope": "request",
+        }
+        metrics["latency_ms"] = round((time.perf_counter() - started) * 1_000, 2)
+        metrics["completed_at"] = datetime.now(timezone.utc).isoformat()
         return {
             "reply": result.reply,
             "restart": result.restart,
             "tool_events": result.tool_events,
             "model": result.model,
             "session": asdict(self.sessions.info()),
+            "metrics": metrics,
         }
 
     async def restart_session(self) -> dict:

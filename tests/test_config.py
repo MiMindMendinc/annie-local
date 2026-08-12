@@ -1,5 +1,6 @@
 import pytest
 
+from annie.cli import build_parser
 from annie.core.config import AnnieConfig, validate_config
 
 
@@ -36,3 +37,22 @@ def test_invalid_ollama_url_rejected():
 def test_invalid_speed_kernel_backend_rejected():
     with pytest.raises(ValueError):
         validate_config(AnnieConfig(speed_kernel_backend="unknown"))
+
+
+def test_launch_parser_accepts_isolated_storage_paths(tmp_path):
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "launch",
+            "--memory-path",
+            str(tmp_path / "memory.jsonl"),
+            "--knowledge-path",
+            str(tmp_path / "knowledge.json"),
+            "--settings-path",
+            str(tmp_path / "settings.json"),
+        ]
+    )
+
+    assert args.memory_path == str(tmp_path / "memory.jsonl")
+    assert args.knowledge_path == str(tmp_path / "knowledge.json")
+    assert args.settings_path == str(tmp_path / "settings.json")

@@ -9,8 +9,13 @@ from annie.core.llm import ModelTurn
 from annie.server import create_app
 
 
-def test_security_headers_present() -> None:
-    with TestClient(create_app(AnnieConfig())) as client:
+def test_security_headers_present(tmp_path) -> None:
+    config = AnnieConfig(
+        memory_path=str(tmp_path / "memory.jsonl"),
+        knowledge_path=str(tmp_path / "knowledge.json"),
+        settings_path=str(tmp_path / "settings.json"),
+    )
+    with TestClient(create_app(config)) as client:
         response = client.get("/api/health")
     assert response.status_code == 200
     assert response.headers.get("X-Content-Type-Options") == "nosniff"
@@ -18,8 +23,13 @@ def test_security_headers_present() -> None:
     assert "X-Request-Id" in response.headers
 
 
-def test_rate_limit_headers() -> None:
-    with TestClient(create_app(AnnieConfig())) as client:
+def test_rate_limit_headers(tmp_path) -> None:
+    config = AnnieConfig(
+        memory_path=str(tmp_path / "memory.jsonl"),
+        knowledge_path=str(tmp_path / "knowledge.json"),
+        settings_path=str(tmp_path / "settings.json"),
+    )
+    with TestClient(create_app(config)) as client:
         with patch("annie.core.chat.OllamaBackend.chat", new_callable=AsyncMock) as mock_chat:
             mock_chat.return_value = ModelTurn(content="ok")
             response = client.post("/api/chat", json={"message": "hi"})

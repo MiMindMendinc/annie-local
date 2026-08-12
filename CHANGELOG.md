@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Research Session interface
+
+- Replaced the terminal shell with a mobile-first Research Session UI and six-state orb/pill model.
+- Added truthful model-route, memory-backend, voice-locality, asset, and network-verification status.
+- Added provider-backed token/s, token count, model duration, and measured request latency.
+- Added local session export, accessible dialogs and controls, reduced-motion behavior, and safe-area support.
+- Added a deterministic Ollama-compatible showcase server, Playwright capture script, and reproducible QA checklist.
+- Removed unconditional offline and air-gap claims; browser-managed voice is explicitly marked unverified.
+- Made local development independent of Redis production extras, added isolated CLI storage paths, and isolated filesystem writes in tests.
+
 ## 0.3.0 — 2026-06-30
 
 ### Production stack — full architecture

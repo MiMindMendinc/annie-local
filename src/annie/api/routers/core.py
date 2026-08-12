@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import asdict
 from typing import Annotated
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Response
 
 from annie import __version__
@@ -15,13 +17,13 @@ from annie.api.schemas import (
     SpeakRequest,
 )
 from annie.core.llm import OllamaBackend
+from annie.core.runtime_status import build_runtime_status
 from annie.core.speed_kernel import SpeedKernelAdapter
 from annie.core.vision import get_vision_status
 from annie.core.voice import get_voice_status, proxy_speak
+from annie.env import get_settings as get_app_settings
 from annie.services.chat_service import ChatService
 from annie.utils.sanitize import sanitize_text
-
-import httpx
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -30,17 +32,32 @@ router = APIRouter(prefix="/api", tags=["api"])
 async def health(state: Annotated[AppState, Depends(get_state)]) -> dict:
     runtime = state.settings.to_public_dict()
     llm = OllamaBackend(runtime["ollama_url"], runtime["model"])
-    voice = await get_voice_status(runtime["voice_url"])
+    backend, voice = await asyncio.gather(
+        llm.health(),
+        get_voice_status(runtime["voice_url"]),
+    )
+    app_settings = get_app_settings()
     speed_kernel = SpeedKernelAdapter(enabled=state.config.speed_kernel, backend=state.config.speed_kernel_backend)
     return {
         "ok": True,
         "app": "annie-local",
         "version": __version__,
-        "backend": await llm.health(),
+        "backend": backend,
         "speed_kernel": speed_kernel.metadata(),
         "voice": asdict(voice),
         "vision": asdict(get_vision_status()),
         "session": asdict(state.sessions.info()),
+        "runtime_status": build_runtime_status(
+            mode=app_settings.mode,
+            runtime=runtime,
+            backend=backend,
+            voice=asdict(voice),
+            service_urls={
+                "database": app_settings.database_url,
+                "cache": app_settings.redis_url,
+                "object_storage": app_settings.s3_endpoint,
+            },
+        ),
     }
 
 

@@ -5,6 +5,7 @@ from typing import Any
 
 import httpx
 
+from annie.core.runtime_status import trust_environment_proxy
 from annie.utils.http_retry import with_retry
 
 
@@ -49,12 +50,15 @@ class OllamaBackend:
     async def health(self) -> dict[str, Any]:
         try:
             async def _fetch() -> dict[str, Any]:
-                async with httpx.AsyncClient(timeout=5.0) as client:
+                async with httpx.AsyncClient(
+                    timeout=5.0,
+                    trust_env=trust_environment_proxy(self.base_url),
+                ) as client:
                     response = await client.get(f"{self.base_url}/api/tags")
                     response.raise_for_status()
                     return response.json()
 
-            data = await with_retry(_fetch)
+            data = await with_retry(_fetch, attempts=2, base_delay=0.2)
         except Exception as exc:  # pragma: no cover - network dependent
             return {"ok": False, "backend": "ollama", "error": str(exc)}
         models = data.get("models", [])
@@ -83,7 +87,10 @@ class OllamaBackend:
 
         try:
             async def _chat() -> dict[str, Any]:
-                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                async with httpx.AsyncClient(
+                    timeout=self.timeout,
+                    trust_env=trust_environment_proxy(self.base_url),
+                ) as client:
                     response = await client.post(f"{self.base_url}/api/chat", json=payload)
                     if response.status_code >= 400 and tools:
                         fallback = dict(payload)
@@ -103,4 +110,7 @@ class OllamaBackend:
         tool_calls = message.get("tool_calls") or []
         if not isinstance(tool_calls, list):
             tool_calls = []
-        return ModelTurn(content=content.strip(), tool_calls=tool_calls, raw=message)
+        # Keep the complete provider response. Ollama reports duration and token
+        # counters alongside ``message``; dropping those fields made truthful UI
+        # performance metrics impossible.
+        return ModelTurn(content=content.strip(), tool_calls=tool_calls, raw=data)

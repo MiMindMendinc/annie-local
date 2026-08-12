@@ -2,22 +2,30 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-import redis.asyncio as redis
+if TYPE_CHECKING:
+    from redis.asyncio import Redis
 
-from annie.env import get_settings
+from annie.env import get_settings, is_production
 
 logger = logging.getLogger(__name__)
 
 
 class CacheService:
-    def __init__(self, client: redis.Redis | None = None) -> None:
+    def __init__(self, client: "Redis | None" = None) -> None:
         self._client = client
         self._memory: dict[str, str] = {}
 
     @classmethod
     async def connect(cls) -> "CacheService":
+        if not is_production():
+            return cls(None)
+        try:
+            import redis.asyncio as redis
+        except ImportError:
+            logger.warning("redis package unavailable, using in-process cache")
+            return cls(None)
         settings = get_settings()
         try:
             client = redis.from_url(settings.redis_url, decode_responses=True)

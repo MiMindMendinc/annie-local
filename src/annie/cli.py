@@ -19,8 +19,8 @@ from annie.server import create_app
 
 BANNER = """
   ╔══════════════════════════════════════════╗
-  ║   ANNIE-5  ·  local  ·  air-gapped      ║
-  ║   care engine · your machine · no wire  ║
+  ║   ANNIE LOCAL  ·  RESEARCH SESSION      ║
+  ║   local-first · routes visible · yours  ║
   ╚══════════════════════════════════════════╝
 """
 
@@ -40,6 +40,8 @@ def build_parser() -> argparse.ArgumentParser:
     launch.add_argument("--ollama-url", default="http://127.0.0.1:11434", help="Ollama base URL.")
     launch.add_argument("--voice-url", default="http://127.0.0.1:8123", help="WOPR voice bridge URL.")
     launch.add_argument("--memory-path", default="~/.annie/memory.jsonl", help="Conversation memory path.")
+    launch.add_argument("--knowledge-path", default="~/.annie/knowledge.json", help="Structured knowledge path.")
+    launch.add_argument("--settings-path", default="~/.annie/settings.json", help="Runtime settings path.")
     launch.add_argument("--speed-kernel", action="store_true", help="Enable speed-kernel lab flag.")
     launch.add_argument(
         "--speed-kernel-backend",
@@ -83,7 +85,7 @@ def run_doctor() -> int:
 
     models: list[str] = []
     try:
-        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=3.0)
+        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=3.0, trust_env=False)
         ollama_up = response.status_code == 200
         if ollama_up:
             data = response.json()
@@ -103,7 +105,7 @@ def run_doctor() -> int:
         _check("Tool-capable model", recommended, "llama3.2 recommended" if not recommended else "")
 
     try:
-        voice = httpx.get("http://127.0.0.1:8123/health", timeout=2.0)
+        voice = httpx.get("http://127.0.0.1:8123/health", timeout=2.0, trust_env=False)
         wopr_ok = voice.status_code == 200
     except Exception:
         wopr_ok = False
@@ -193,6 +195,8 @@ def run_launch(args: argparse.Namespace) -> int:
         ollama_url=args.ollama_url,
         voice_url=args.voice_url,
         memory_path=args.memory_path,
+        knowledge_path=args.knowledge_path,
+        settings_path=args.settings_path,
         speed_kernel=args.speed_kernel,
         speed_kernel_backend=args.speed_kernel_backend,
     )
@@ -204,6 +208,8 @@ def run_launch(args: argparse.Namespace) -> int:
     print(f"  → {url}")
     print(f"  → model: {config.model}")
     print(f"  → memory: {config.resolved_memory_path}")
+    print(f"  → knowledge: {config.resolved_knowledge_path}")
+    print(f"  → settings: {config.resolved_settings_path}")
     if config.speed_kernel:
         print(f"  → speed kernel: {config.speed_kernel_backend}")
     print()

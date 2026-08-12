@@ -1,15 +1,11 @@
 # Annie Local
 
 <p align="center">
-  <img src="docs/assets/annie-demo.gif" alt="Annie-5 demo" width="900" />
+  <img src="docs/assets/research-session.png" alt="Annie Local Research Session interface" width="900" />
 </p>
 
 <p align="center">
-  <img src="docs/assets/annie-hero.svg" alt="Annie-5 terminal interface" width="900" />
-</p>
-
-<p align="center">
-  <strong>Private local AI that looks and feels like FABLE-5 — runs on your machine, remembers what matters, never phones home.</strong>
+  <strong>A polished local-first AI research session — visible model routing, inspectable memory, measurable performance, and no hidden UI dependencies.</strong>
 </p>
 
 <p align="center">
@@ -20,12 +16,12 @@
   <img src="https://img.shields.io/badge/Docker-production-2496ED?style=flat-square" alt="Docker"/>
   <img src="https://img.shields.io/badge/PostgreSQL-ready-336791?style=flat-square" alt="PostgreSQL"/>
   <img src="https://img.shields.io/badge/Redis-cache-DC382D?style=flat-square" alt="Redis"/>
-  <img src="https://img.shields.io/badge/cloud-zero-FF2A1A?style=flat-square" alt="Zero cloud"/>
+  <img src="https://img.shields.io/badge/runtime-status_visible-5DE8FF?style=flat-square" alt="Runtime status visible"/>
 </p>
 
 ---
 
-**Annie-5** is a fully local AI companion: FABLE-5 terminal aesthetic, care-first doctrine, adaptive memory, voice, and tool calling — all through Ollama on your own hardware. No API keys. No telemetry. No CDN.
+**Annie Local** is a local-first AI companion with a mobile Research Session interface, care-first doctrine, inspectable memory, optional voice, and tool calling. The default setup talks to Ollama on your hardware. The packaged web interface uses no CDN or remote fonts, and the runtime shows whether configured model, memory, and voice routes are local, remote, or unverified.
 
 If you want a local AI that feels *finished* instead of a science project, this is it.
 
@@ -81,11 +77,11 @@ annie setup     # guided install if something is missing
 
 ## Features
 
-- **FABLE-5 interface** — monochrome phosphor terminal, Larson scanner, herald block
+- **Research Session interface** — responsive glowing orb, explicit activity states, message metrics, and touch-friendly controls
 - **Care engine** — honest, long-term-good doctrine (editable in Settings → cfg)
 - **Adaptive memory** — profile, facts, goals, journal at `~/.annie/knowledge.json`
 - **Tool loop** — remember, recall, goals, journal, datetime via Ollama tools
-- **Voice** — WOPR bridge on `:8123` or browser TTS fallback; mic via Web Speech
+- **Voice** — WOPR bridge on `:8123` or clearly labeled browser-managed fallback; mic via Web Speech
 - **Session control** — clear conversation, restart epoch, export/wipe memory
 - **FastAPI backend** — layered architecture: routers → services → repositories
 - **Production middleware** — JWT auth, CORS, rate limiting, security headers, structured logging
@@ -115,9 +111,11 @@ Delete anytime. It's your machine.
 
 ```bash
 pip install -e ".[dev]"
-python3 -m pytest -q          # 38+ tests
+python3 -m pytest -q          # 47+ tests
 ./scripts/canary_test.sh      # adversarial safety canaries
 ```
+
+The deterministic browser showcase, exact capture commands, and compact accessibility/privacy acceptance checklist are in [docs/RESEARCH_SESSION_QA.md](docs/RESEARCH_SESSION_QA.md).
 
 ## API (local only)
 
@@ -142,6 +140,7 @@ Not a therapist, crisis line, or compliance-certified clinical tool. See [docs/P
 - [Run book (production)](docs/RUNBOOK.md)
 - [Grounding substrate overview](docs/GROUNDING.md) — how safety works (no secret rules exposed)
 - [Voice stack](docs/VOICE.md) — local STT/TTS, WOPR, limitations
+- [Research Session QA](docs/RESEARCH_SESSION_QA.md) — reproducible showcase and acceptance checklist
 - [Canary benchmark results](docs/CANARY_RESULTS.md) — published pass/fail rates
 - [Replit deployment](docs/REPLIT.md)
 - [Changelog](CHANGELOG.md)

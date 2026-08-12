@@ -94,7 +94,7 @@ def write_report(results: dict[str, object], path: Path) -> None:
     lines = [
         "# Canary Benchmark Results",
         "",
-        f"**Last run:** {now}  ",
+        f"**Last run:** {now}",
         f"**Overall:** {'PASS' if all_pass else 'FAIL'}",
         "",
         "## Summary",
