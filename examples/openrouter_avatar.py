@@ -89,7 +89,7 @@ async def chat(req: ChatRequest) -> dict[str, Any]:
 
 @app.get("/", response_class=HTMLResponse)
 async def index() -> str:
-    return r'''<!doctype html>
+    return r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -207,7 +207,7 @@ fetch('/health').then(r=>r.json()).then(d=>{modelEl.textContent='OpenRouter · '
 add('assistant',"Hey - I'm online. Tap the mic or type something and talk to me.");
 </script>
 </body>
-</html>'''
+</html>"""
 
 
 if __name__ == "__main__":
