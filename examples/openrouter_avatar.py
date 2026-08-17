@@ -129,12 +129,12 @@ button { border:0; border-radius:15px; padding:12px 15px; font-weight:800; curso
   <section class="hero">
     <div id="avatar" class="avatar" aria-label="Annie avatar"></div>
     <div id="status" class="status">Ready</div>
-    <div id="model" class="sub">OpenRouter · loading model…</div>
+    <div id="model" class="sub">OpenRouter · loading model...</div>
   </section>
   <section id="chat" class="chat" aria-live="polite"></section>
   <div class="controls">
     <button id="mic" title="Talk">🎙️</button>
-    <input id="text" autocomplete="off" placeholder="Type or tap the mic…" />
+    <input id="text" autocomplete="off" placeholder="Type or tap the mic..." />
     <button id="send">Send</button>
   </div>
   <div class="note">Cloud demo: prompts are sent to OpenRouter and the selected upstream model.</div>
@@ -204,7 +204,7 @@ if(SR){
   mic.disabled=true; mic.title='Speech recognition is not supported in this browser';
 }
 fetch('/health').then(r=>r.json()).then(d=>{modelEl.textContent='OpenRouter · '+d.model+(d.api_key_configured?'':' · key missing')}).catch(()=>{});
-add('assistant','Hey — I’m online. Tap the mic or type something and talk to me.');
+add('assistant',"Hey - I'm online. Tap the mic or type something and talk to me.");
 </script>
 </body>
 </html>'''
