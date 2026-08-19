@@ -1,4 +1,4 @@
-FROM python:3.12.13-slim-bookworm AS builder
+FROM python:3.14.7-slim-bookworm AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
@@ -18,7 +18,7 @@ COPY src ./src
 RUN /opt/venv/bin/python -m pip install --no-deps --no-build-isolation .
 
 
-FROM python:3.12.13-slim-bookworm AS runtime
+FROM python:3.14.7-slim-bookworm AS runtime
 
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1 \
