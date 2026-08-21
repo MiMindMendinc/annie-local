@@ -8,7 +8,7 @@ This guide gets Annie from zero to talking in under five minutes.
 - **Ollama** — [ollama.com](https://ollama.com)
 - A tool-capable model: `llama3.2`, `llama3.1`, `qwen2.5`, or `mistral-nemo`
 - Modern browser (Chrome, Edge, Firefox, Safari)
-- Optional: WOPR voice bridge on port 8123
+- Optional: local WOPR voice bridge on port 8123 plus eSpeak NG/eSpeak, or Piper with a local voice model
 
 ## Install
 
@@ -94,11 +94,13 @@ Export JSON or wipe all from the memory drawer.
 
 ## Voice (optional)
 
-1. Start WOPR bridge: `python wopr_server.py` (port 8123)
-2. In Annie **cfg**, confirm voice URL: `http://127.0.0.1:8123`
-3. Toggle **voice** in header
+1. Install a local backend. On Debian, Ubuntu, or Raspberry Pi OS: `sudo apt-get install espeak-ng`
+2. Run `python wopr_server.py --self-test`
+3. Start the bridge with `python wopr_server.py` (port 8123)
+4. In Annie **cfg**, confirm voice URL: `http://127.0.0.1:8123`
+5. Toggle **voice** in the header
 
-If WOPR is down, Annie uses shaped browser TTS — still local.
+Piper is also supported when the local `piper` executable and `WOPR_PIPER_MODEL` are configured. If WOPR is down, Annie may offer browser-managed TTS; its locality is unverified.
 
 ## Troubleshooting
 
