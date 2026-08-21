@@ -290,7 +290,7 @@ class WOPRRequestHandler(BaseHTTPRequestHandler):
         self._send_headers(status, "application/json; charset=utf-8", len(body))
         self.wfile.write(body)
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         if urlsplit(self.path).path != "/health":
             self._send_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "not found"})
             return
@@ -304,7 +304,7 @@ class WOPRRequestHandler(BaseHTTPRequestHandler):
         status = HTTPStatus.OK if backend else HTTPStatus.SERVICE_UNAVAILABLE
         self._send_json(status, payload)
 
-    def do_POST(self) -> None:  # noqa: N802
+    def do_POST(self) -> None:
         if urlsplit(self.path).path != "/speak":
             self._send_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "not found"})
             return
