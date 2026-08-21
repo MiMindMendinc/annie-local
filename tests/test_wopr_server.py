@@ -11,6 +11,7 @@ import urllib.error
 import urllib.request
 import wave
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -19,6 +20,8 @@ if str(ROOT) not in sys.path:
 from wopr_server import (  # noqa: E402
     BridgeError,
     BridgeState,
+    EspeakBackend,
+    PiperBackend,
     WOPRHTTPServer,
     is_loopback_host,
 )
@@ -146,6 +149,55 @@ class WOPRServerTests(unittest.TestCase):
         self.assertTrue(is_loopback_host("localhost"))
         self.assertFalse(is_loopback_host("0.0.0.0"))
         self.assertFalse(is_loopback_host("192.168.1.20"))
+
+    def test_espeak_uses_argument_list_without_a_shell(self) -> None:
+        backend = EspeakBackend(
+            binary="/usr/bin/espeak-ng",
+            voice="en-us",
+            rate=155,
+            pitch=35,
+            timeout=20,
+            name="espeak-ng",
+        )
+        output = Path("/tmp/annie.wav")
+        with patch("wopr_server._run_command") as run_command:
+            backend.synthesize("hello; not a shell command", output)
+        run_command.assert_called_once_with(
+            [
+                "/usr/bin/espeak-ng",
+                "-v",
+                "en-us",
+                "-s",
+                "155",
+                "-p",
+                "35",
+                "-w",
+                str(output),
+                "hello; not a shell command",
+            ],
+            timeout=20,
+        )
+
+    def test_piper_receives_text_on_stdin_and_local_model_path(self) -> None:
+        backend = PiperBackend(
+            binary="/usr/local/bin/piper",
+            model=Path("/models/voice.onnx"),
+            timeout=30,
+        )
+        output = Path("/tmp/annie.wav")
+        with patch("wopr_server._run_command") as run_command:
+            backend.synthesize("hello Annie", output)
+        run_command.assert_called_once_with(
+            [
+                "/usr/local/bin/piper",
+                "--model",
+                "/models/voice.onnx",
+                "--output_file",
+                str(output),
+            ],
+            timeout=30,
+            input_text="hello Annie\n",
+        )
 
 
 if __name__ == "__main__":
