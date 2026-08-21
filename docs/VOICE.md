@@ -1,53 +1,88 @@
 # Voice Stack
 
-Annie-5 supports optional spoken replies and microphone input. Everything is designed to stay **on-device**.
+Annie supports optional spoken replies and microphone input. The two directions have different privacy boundaries: the bundled WOPR text-to-speech bridge is local-only, while browser speech recognition and browser speech synthesis are controlled by the browser or operating system and are not automatically verified local.
 
-## Text-to-speech (TTS)
+## Text-to-speech routes
 
-| Priority | Engine | How |
-|----------|--------|-----|
-| 1 | **WOPR bridge** | Local `wopr_server.py` on port 8123 (LuxTTS + pedalboard chain) |
-| 2 | **Browser TTS** | `speechSynthesis` API — browser/OS managed; locality is not guaranteed |
+| Priority | Engine | Truthful behavior |
+|----------|--------|-------------------|
+| 1 | **WOPR bridge** | Bundled `wopr_server.py` on loopback port 8123; returns WAV audio from an installed local backend |
+| 2 | **Browser TTS** | `speechSynthesis`; browser/OS managed, with locality unverified |
 
-Annie proxies TTS through `POST /api/voice/speak` → WOPR. If WOPR is down, the UI falls back to browser speech automatically.
+Annie proxies `POST /api/voice/speak` to `POST http://127.0.0.1:8123/speak`. If the WOPR health check fails, the UI labels the bridge offline and may offer the browser-managed fallback.
 
-**Latency expectations:**
+The bridge does not call a cloud API and refuses non-loopback binds. It accepts at most 420 normalized characters, never logs the submitted text, limits concurrent synthesis, validates the returned WAV container, and returns a sanitized failure instead of fake or silent audio.
 
-| Hardware | WOPR TTS | Browser TTS |
-|----------|----------|-------------|
-| Desktop / M-series Mac | ~1–3 s first clip | Instant |
-| Raspberry Pi 4 (8 GB) | 3–8 s (CPU LuxTTS) | Instant |
-| Pi 3 / low RAM | WOPR may be too slow; use browser | Recommended |
+## Supported local backends
 
-WOPR is optional. Annie works fully without it.
+| Backend | Selection |
+|---------|-----------|
+| **Piper** | Preferred when the `piper` executable is installed and `WOPR_PIPER_MODEL` names a local `.onnx` voice model |
+| **eSpeak NG** | Automatic lightweight fallback on Linux and Raspberry Pi |
+| **eSpeak** | Used when eSpeak NG is unavailable |
+| **macOS say** | Used only when both `say` and `afconvert` are available |
 
-## Speech-to-text (STT)
+No LuxTTS model or pedalboard effect chain is bundled in this release. Earlier documentation claiming that stack was included was incorrect.
 
-| Engine | How |
-|--------|-----|
-| **Web Speech API** | Browser mic button (Chrome/Edge best support) |
+## Linux and Raspberry Pi setup
 
-STT runs through the browser's Web Speech API. Some browsers send recognition audio to a vendor service, while behavior varies by browser, operating system, language, and installed speech assets. Annie labels this path `browser-managed — locality unverified`; verify your exact browser before using voice with sensitive data.
+```bash
+sudo apt-get update
+sudo apt-get install espeak-ng
 
-Annie does **not** ship faster-whisper or Piper STT yet (roadmap item in `voice.py`).
+python wopr_server.py --self-test
+python wopr_server.py
+```
+
+Expected startup:
+
+```text
+WOPR online at http://127.0.0.1:8123 backend=espeak-ng
+```
+
+Verify the contract:
+
+```bash
+curl -s http://127.0.0.1:8123/health
+curl -sS -o /tmp/annie.wav \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Annie voice bridge online"}' \
+  http://127.0.0.1:8123/speak
+```
+
+## Piper setup
+
+Install Piper and download a voice model from a source you trust, then keep the model on the same machine:
+
+```bash
+export WOPR_PIPER_MODEL=/absolute/path/to/voice.onnx
+python wopr_server.py --backend piper --self-test
+python wopr_server.py --backend piper
+```
+
+The bridge fails at startup when the requested executable or model is unavailable. It does not silently switch from a specifically requested backend.
+
+## Annie setup
+
+1. Start `wopr_server.py`.
+2. Open Annie **cfg** and set the voice URL to `http://127.0.0.1:8123`.
+3. Run `annie doctor`; WOPR should report online.
+4. Toggle **voice**.
+
+## Speech-to-text
+
+The microphone button uses the browser Web Speech API. Some browsers send recognition audio to a vendor service. Behavior varies by browser, operating system, language, and installed speech assets, so Annie labels this path `browser-managed — locality unverified`.
+
+Annie does not yet bundle a local speech-to-text model.
 
 ## Known limitations
 
-1. **No bundled local STT model** — mic depends on browser capabilities.
-2. **WOPR is external** — you run `wopr_server.py` separately; Annie does not embed LuxTTS.
-3. **Pi-class hardware** — voice is functional but not real-time conversational; text-first is recommended.
-4. **No cloud voice APIs** — by design. If you need cloud STT/TTS, that violates Annie's local-first model.
-
-## Setup
-
-```bash
-# Optional WOPR voice bridge
-python wopr_server.py   # http://127.0.0.1:8123
-
-# In Annie UI: cfg → WOPR voice bridge URL → toggle voice
-annie doctor            # shows WOPR online/offline
-```
+1. Piper requires a separately installed executable and local voice model.
+2. eSpeak is intentionally lightweight and sounds less natural than a neural Piper voice.
+3. Browser TTS and browser speech recognition are not guaranteed offline.
+4. Voice generation on Pi-class hardware depends on the selected backend and voice model.
+5. WOPR processes one short clip per request; it is not a streaming speech server.
 
 ## Privacy
 
-Annie does not intentionally record or store microphone audio. A loopback WOPR bridge processes its audio through the configured local service. Browser speech APIs are controlled by the browser or operating system and may use network services, so they must not be represented as verified-local without independent testing.
+WOPR binds only to loopback and does not intentionally persist text or audio. Each WAV is created inside a temporary directory and deleted after the response bytes are loaded. Annie does not intentionally record microphone audio, but browser speech APIs remain under browser/OS control and must not be represented as verified local without independent testing.
