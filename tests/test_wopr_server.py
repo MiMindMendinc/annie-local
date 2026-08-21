@@ -42,10 +42,7 @@ class RecordingBackend:
             clip.setnchannels(1)
             clip.setsampwidth(2)
             clip.setframerate(8000)
-            frames = [
-                struct.pack("<h", int(1200 * math.sin(2 * math.pi * 440 * index / 8000)))
-                for index in range(800)
-            ]
+            frames = [struct.pack("<h", int(1200 * math.sin(2 * math.pi * 440 * index / 8000))) for index in range(800)]
             clip.writeframes(b"".join(frames))
 
 
