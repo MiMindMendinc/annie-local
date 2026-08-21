@@ -107,9 +107,9 @@ class EspeakBackend:
                 str(self.pitch),
                 "-w",
                 str(output_path),
-                text,
             ],
             timeout=self.timeout,
+            input_text=f"{text}\n",
         )
 
 
@@ -127,8 +127,7 @@ class MacSayBackend:
         say_command = [self.say_binary, "-r", str(self.rate), "-o", str(source_path)]
         if self.voice:
             say_command.extend(["-v", self.voice])
-        say_command.append(text)
-        _run_command(say_command, timeout=self.timeout)
+        _run_command(say_command, timeout=self.timeout, input_text=f"{text}\n")
         _run_command(
             [
                 self.afconvert_binary,
