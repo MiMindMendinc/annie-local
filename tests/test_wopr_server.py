@@ -21,6 +21,7 @@ from wopr_server import (  # noqa: E402
     BridgeError,
     BridgeState,
     EspeakBackend,
+    MacSayBackend,
     PiperBackend,
     WOPRHTTPServer,
     is_loopback_host,
@@ -147,7 +148,7 @@ class WOPRServerTests(unittest.TestCase):
         self.assertFalse(is_loopback_host("0.0.0.0"))
         self.assertFalse(is_loopback_host("192.168.1.20"))
 
-    def test_espeak_uses_argument_list_without_a_shell(self) -> None:
+    def test_espeak_receives_text_on_stdin_not_the_command_line(self) -> None:
         backend = EspeakBackend(
             binary="/usr/bin/espeak-ng",
             voice="en-us",
@@ -158,7 +159,7 @@ class WOPRServerTests(unittest.TestCase):
         )
         output = Path("/tmp/annie.wav")
         with patch("wopr_server._run_command") as run_command:
-            backend.synthesize("hello; not a shell command", output)
+            backend.synthesize("--voices; not a command-line option", output)
         run_command.assert_called_once_with(
             [
                 "/usr/bin/espeak-ng",
@@ -170,7 +171,45 @@ class WOPRServerTests(unittest.TestCase):
                 "35",
                 "-w",
                 str(output),
-                "hello; not a shell command",
+            ],
+            timeout=20,
+            input_text="--voices; not a command-line option\n",
+        )
+
+    def test_macos_say_receives_text_on_stdin_not_the_command_line(self) -> None:
+        backend = MacSayBackend(
+            say_binary="/usr/bin/say",
+            afconvert_binary="/usr/bin/afconvert",
+            voice="Samantha",
+            rate=155,
+            timeout=20,
+        )
+        output = Path("/tmp/annie.wav")
+        with patch("wopr_server._run_command") as run_command:
+            backend.synthesize("--file-format=evil", output)
+        self.assertEqual(run_command.call_count, 2)
+        run_command.assert_any_call(
+            [
+                "/usr/bin/say",
+                "-r",
+                "155",
+                "-o",
+                "/tmp/annie.aiff",
+                "-v",
+                "Samantha",
+            ],
+            timeout=20,
+            input_text="--file-format=evil\n",
+        )
+        run_command.assert_any_call(
+            [
+                "/usr/bin/afconvert",
+                "-f",
+                "WAVE",
+                "-d",
+                "LEI16@22050",
+                "/tmp/annie.aiff",
+                str(output),
             ],
             timeout=20,
         )
