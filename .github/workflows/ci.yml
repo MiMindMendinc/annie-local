@@ -66,13 +66,21 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev,prod]"
 
+      - name: Install real local speech backend
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends espeak-ng
+
+      - name: Run real WOPR speech self-test
+        run: python wopr_server.py --backend espeak-ng --self-test
+
       - name: Lint and format check
         run: |
           ruff check .
           ruff format --check .
 
       - name: Static security scan
-        run: bandit -q -r src --severity-level medium
+        run: bandit -q -r src wopr_server.py --severity-level medium
 
       - name: Dependency vulnerability audit
         run: pip-audit --strict -r requirements-prod.lock

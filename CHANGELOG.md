@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Local WOPR voice bridge
+
+- Added the previously missing `wopr_server.py` with local Piper, eSpeak NG/eSpeak, and macOS say backends.
+- Added loopback-only binding, bounded input/concurrency, temporary WAV handling, output validation, sanitized failures, and a backend self-test.
+- Added contract tests for health, WAV responses, invalid input, failure redaction, and network-bind protection.
+- Corrected documentation that inaccurately claimed LuxTTS/pedalboard was bundled or that browser-managed TTS was necessarily local.
+
 ### Research Session interface
 
 - Replaced the terminal shell with a mobile-first Research Session UI and six-state orb/pill model.

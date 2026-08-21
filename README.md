@@ -94,13 +94,17 @@ annie setup     # guided install if something is missing
 
 ## Optional: WOPR voice
 
-Run your local voice bridge (LuxTTS + pedalboard chain):
+Run the bundled local bridge. Piper is preferred when you supply a local voice model; eSpeak NG is the lightweight Linux and Raspberry Pi fallback.
 
 ```bash
+# Debian, Ubuntu, or Raspberry Pi OS
+sudo apt-get install espeak-ng
+
+python wopr_server.py --self-test
 python wopr_server.py   # http://127.0.0.1:8123
 ```
 
-In Annie: **cfg** → set WOPR voice bridge URL → toggle **voice**.
+For a local Piper model, install the `piper` CLI and set `WOPR_PIPER_MODEL=/path/to/voice.onnx`. In Annie: **cfg** → set the WOPR URL → toggle **voice**. See [docs/VOICE.md](docs/VOICE.md) for the exact privacy and fallback boundaries.
 
 ## Where your data lives
 
