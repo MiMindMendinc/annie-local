@@ -248,8 +248,10 @@ def _start_local_voice_bridge(voice_url: str) -> subprocess.Popen[str] | None:
             print(f"  → voice bridge: started at {voice_url}")
             return process
         if process.poll() is not None:
+            code = process.returncode
             raise RuntimeError(
-                "local voice bridge failed to start. Install Piper with WOPR_PIPER_MODEL or install espeak-ng/espeak."
+                f"local voice bridge failed to start (exit {code}). "
+                "Install Piper with WOPR_PIPER_MODEL or install espeak-ng/espeak."
             )
         time.sleep(0.2)
 
