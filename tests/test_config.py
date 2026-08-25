@@ -2,6 +2,7 @@ from dataclasses import replace
 
 import pytest
 
+from annie import cli
 from annie.cli import build_parser
 from annie.core.config import AnnieConfig, validate_config
 from annie.core.session import SessionManager
@@ -61,6 +62,30 @@ def test_launch_parser_accepts_isolated_storage_paths(tmp_path):
     assert args.memory_path == str(tmp_path / "memory.jsonl")
     assert args.knowledge_path == str(tmp_path / "knowledge.json")
     assert args.settings_path == str(tmp_path / "settings.json")
+
+
+def test_launch_parser_enables_voice_bridge_auto_by_default() -> None:
+    parser = build_parser()
+    args = parser.parse_args(["launch"])
+    assert args.voice_bridge == "auto"
+
+
+def test_local_voice_route_detection() -> None:
+    assert cli._is_local_voice_url("http://127.0.0.1:8123") is True
+    assert cli._is_local_voice_url("http://localhost:8123") is True
+    assert cli._is_local_voice_url("http://192.168.1.5:8123") is False
+
+
+def test_launch_skips_bridge_start_for_non_local_voice_route(monkeypatch) -> None:
+    called = {"health": False}
+
+    def fake_health(url: str) -> bool:
+        called["health"] = True
+        return False
+
+    monkeypatch.setattr(cli, "_voice_bridge_online", fake_health)
+    assert cli._start_local_voice_bridge("http://192.168.1.5:8123") is None
+    assert called["health"] is False
 
 
 def _production_settings(**changes):

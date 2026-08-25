@@ -68,6 +68,8 @@ def test_motion_and_phase_contracts_are_present() -> None:
     assert "min-height: 44px" in css
     for phase in ("idle", "listening", "thinking", "speaking", "offline", "error"):
         assert f'"{phase}"' in state
+    assert 'storage.get("prefs", { speak: true })' in state
+    assert "state.prefs = { ...state.prefs, ...next }" in state
 
 
 def test_production_sign_in_is_accessible_and_session_scoped() -> None:

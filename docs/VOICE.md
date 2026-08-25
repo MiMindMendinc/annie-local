@@ -1,6 +1,6 @@
 # Voice Stack
 
-Annie supports optional spoken replies and microphone input. The two directions have different privacy boundaries: the bundled WOPR text-to-speech bridge is local-only, while browser speech recognition and browser speech synthesis are controlled by the browser or operating system and are not automatically verified local.
+Annie supports spoken replies and microphone input. The two directions have different privacy boundaries: the bundled WOPR text-to-speech bridge is local-only, while browser speech recognition and browser speech synthesis are controlled by the browser or operating system and are not automatically verified local.
 
 ## Text-to-speech routes
 
@@ -9,7 +9,7 @@ Annie supports optional spoken replies and microphone input. The two directions 
 | 1 | **WOPR bridge** | Bundled `wopr_server.py` on loopback port 8123; returns WAV audio from an installed local backend |
 | 2 | **Browser TTS** | `speechSynthesis`; browser/OS managed, with locality unverified |
 
-Annie proxies `POST /api/voice/speak` to `POST http://127.0.0.1:8123/speak`. If the WOPR health check fails, the UI labels the bridge offline and may offer the browser-managed fallback.
+Annie proxies `POST /api/voice/speak` to `POST http://127.0.0.1:8123/speak`. `annie launch` auto-starts WOPR for local voice routes when needed. If the bridge health check fails, the UI labels the bridge offline and may offer the browser-managed fallback.
 
 The bridge does not call a cloud API and refuses non-loopback binds. It accepts at most 420 normalized characters, never logs the submitted text, limits concurrent synthesis, validates the returned WAV container, and returns a sanitized failure instead of fake or silent audio.
 
@@ -64,10 +64,10 @@ The bridge fails at startup when the requested executable or model is unavailabl
 
 ## Annie setup
 
-1. Start `wopr_server.py`.
-2. Open Annie **cfg** and set the voice URL to `http://127.0.0.1:8123`.
-3. Run `annie doctor`; WOPR should report online.
-4. Toggle **voice**.
+1. Ensure at least one local backend is available (`piper` with `WOPR_PIPER_MODEL`, or `espeak-ng`/`espeak`).
+2. Run `annie launch` (defaults to local voice URL `http://127.0.0.1:8123` and auto-starts WOPR when possible).
+3. On first run, spoken replies default to on and stay persisted in browser local storage (`annie5.prefs`).
+4. Existing saved preferences are respected. To disable auto-start, use `annie launch --voice-bridge off`.
 
 ## Speech-to-text
 

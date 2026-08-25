@@ -70,7 +70,7 @@
   });
 
   const state = {
-    prefs: storage.get("prefs", { speak: false }),
+    prefs: storage.get("prefs", { speak: true }),
     settings: {
       model: null,
       ollama_url: "http://127.0.0.1:11434",

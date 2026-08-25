@@ -87,6 +87,7 @@ def test_local_mode_ignores_inactive_production_routes() -> None:
 
     assert status["network"]["claim"] == "not_verified"
     assert "database" not in status["network"]["reason"]
+    assert status["voice"]["output"] == "browser_managed_unverified"
 
 
 def test_missing_model_and_lan_voice_are_labeled_truthfully() -> None:

@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
+import time
 import webbrowser
 from collections.abc import Sequence
 from contextlib import suppress
+from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 import uvicorn
@@ -51,6 +55,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Speed-kernel backend label.",
     )
     launch.add_argument("--no-browser", action="store_true", help="Do not open browser.")
+    launch.add_argument(
+        "--voice-bridge",
+        choices=["auto", "off"],
+        default="auto",
+        help="Auto-start local WOPR voice bridge for local voice routes (default: auto).",
+    )
 
     subparsers.add_parser("doctor", help="Diagnose your local stack.")
     subparsers.add_parser("setup", help="Install deps and verify the build.")
@@ -187,6 +197,68 @@ def run_setup() -> int:
     return 1
 
 
+def _voice_health_url(voice_url: str) -> str:
+    base = voice_url.rstrip("/")
+    return f"{base}/health"
+
+
+def _is_local_voice_url(voice_url: str) -> bool:
+    try:
+        host = (urlsplit(voice_url).hostname or "").strip().lower()
+    except ValueError:
+        return False
+    return host in {"127.0.0.1", "::1", "localhost"}
+
+
+def _voice_bridge_online(voice_url: str) -> bool:
+    try:
+        response = httpx.get(_voice_health_url(voice_url), timeout=1.5, trust_env=False)
+    except httpx.HTTPError:
+        return False
+    return response.status_code == 200
+
+
+def _wopr_script_path() -> Path:
+    return Path(__file__).resolve().parents[2] / "wopr_server.py"
+
+
+def _start_local_voice_bridge(voice_url: str) -> subprocess.Popen[str] | None:
+    if not _is_local_voice_url(voice_url):
+        return None
+    if _voice_bridge_online(voice_url):
+        print(f"  → voice bridge: already online at {_voice_health_url(voice_url)}")
+        return None
+
+    script = _wopr_script_path()
+    if not script.is_file():
+        raise RuntimeError(f"voice bridge script not found at {script}")
+
+    parsed = urlsplit(voice_url)
+    host = parsed.hostname or "127.0.0.1"
+    port = parsed.port or 8123
+    env = {**os.environ}
+    process = subprocess.Popen(
+        [sys.executable, str(script), "--host", host, "--port", str(port)],
+        env=env,
+    )
+
+    deadline = time.monotonic() + 8.0
+    while time.monotonic() < deadline:
+        if _voice_bridge_online(voice_url):
+            print(f"  → voice bridge: started at {voice_url}")
+            return process
+        if process.poll() is not None:
+            raise RuntimeError(
+                "local voice bridge failed to start. Install Piper with WOPR_PIPER_MODEL or install espeak-ng/espeak."
+            )
+        time.sleep(0.2)
+
+    process.terminate()
+    with suppress(OSError):
+        process.wait(timeout=3)
+    raise RuntimeError("local voice bridge did not become healthy in time")
+
+
 def run_launch(args: argparse.Namespace) -> int:
     config = AnnieConfig(
         host=args.host,
@@ -214,10 +286,24 @@ def run_launch(args: argparse.Namespace) -> int:
         print(f"  → speed kernel: {config.speed_kernel_backend}")
     print()
 
+    voice_process: subprocess.Popen[str] | None = None
+    if args.voice_bridge == "auto":
+        try:
+            voice_process = _start_local_voice_bridge(config.voice_url)
+        except RuntimeError as exc:
+            print(f"  Voice startup failed: {exc}", file=sys.stderr)
+            return 1
+
     if not args.no_browser:
         with suppress(OSError, webbrowser.Error):
             webbrowser.open(url)
-    uvicorn.run(app, host=config.host, port=config.port, log_level="info")
+    try:
+        uvicorn.run(app, host=config.host, port=config.port, log_level="info")
+    finally:
+        if voice_process and voice_process.poll() is None:
+            voice_process.terminate()
+            with suppress(OSError):
+                voice_process.wait(timeout=3)
     return 0
 
 
