@@ -19,6 +19,7 @@ from annie import __version__
 from annie.core._substrate import verify_log
 from annie.core.config import AnnieConfig, validate_config
 from annie.core.grounding_audit import format_doctor_block, read_events, summary
+from annie.core.settings import RuntimeSettings
 from annie.core.voice import is_wopr_health_payload
 from annie.server import create_app
 
@@ -198,12 +199,15 @@ def _voice_health_url(voice_url: str) -> str:
     return f"{base}/health"
 
 
-def _is_local_voice_url(voice_url: str) -> bool:
+def _local_voice_target(voice_url: str) -> tuple[str, int] | None:
+    """Return the loopback bind target represented by a local voice URL."""
+
     try:
         parsed = urlsplit(voice_url)
         host = (parsed.hostname or "").strip().lower()
+        port = parsed.port
     except ValueError:
-        return False
+        return None
     if (
         parsed.scheme != "http"
         or parsed.username
@@ -212,13 +216,21 @@ def _is_local_voice_url(voice_url: str) -> bool:
         or parsed.query
         or parsed.fragment
     ):
-        return False
-    if host == "localhost":
-        return True
-    try:
-        return ip_address(host).is_loopback
-    except ValueError:
-        return False
+        return None
+    if host != "localhost":
+        try:
+            if not ip_address(host).is_loopback:
+                return None
+        except ValueError:
+            return None
+    effective_port = port if port is not None else 80
+    if not 1 <= effective_port <= 65535:
+        return None
+    return host, effective_port
+
+
+def _is_local_voice_url(voice_url: str) -> bool:
+    return _local_voice_target(voice_url) is not None
 
 
 def _voice_bridge_online(voice_url: str) -> bool:
@@ -250,15 +262,14 @@ def _stop_voice_bridge(process: subprocess.Popen[str], *, timeout: float = 3.0) 
 
 
 def _start_local_voice_bridge(voice_url: str) -> subprocess.Popen[str] | None:
-    if not _is_local_voice_url(voice_url):
+    target = _local_voice_target(voice_url)
+    if target is None:
         return None
     if _voice_bridge_online(voice_url):
         print(f"  → voice bridge: already online at {_voice_health_url(voice_url)}")
         return None
 
-    parsed = urlsplit(voice_url)
-    host = parsed.hostname or "127.0.0.1"
-    port = parsed.port or 8123
+    host, port = target
     try:
         process = subprocess.Popen(
             [sys.executable, "-m", "annie.wopr_server", "--host", host, "--port", str(port)],
@@ -297,6 +308,7 @@ def run_launch(args: argparse.Namespace) -> int:
         speed_kernel_backend=args.speed_kernel_backend,
     )
     validate_config(config)
+    runtime_voice_url = RuntimeSettings.load(config.resolved_settings_path, config).voice_url
     app = create_app(config)
     url = f"http://{config.host}:{config.port}"
 
@@ -313,7 +325,7 @@ def run_launch(args: argparse.Namespace) -> int:
     voice_process: subprocess.Popen[str] | None = None
     if args.voice_bridge == "auto":
         try:
-            voice_process = _start_local_voice_bridge(config.voice_url)
+            voice_process = _start_local_voice_bridge(runtime_voice_url)
         except RuntimeError as exc:
             print(f"  Voice bridge unavailable: {exc}", file=sys.stderr)
             print("  → continuing with browser-managed speech (locality unverified)", file=sys.stderr)

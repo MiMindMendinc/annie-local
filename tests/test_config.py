@@ -78,6 +78,7 @@ def test_launch_parser_can_disable_voice_bridge() -> None:
 
 def test_local_voice_route_detection() -> None:
     assert cli._is_local_voice_url("http://127.0.0.1:8123") is True
+    assert cli._is_local_voice_url("http://127.0.0.1") is True
     assert cli._is_local_voice_url("http://127.0.0.2:8123") is True
     assert cli._is_local_voice_url("http://[::1]:8123") is True
     assert cli._is_local_voice_url("http://localhost:8123") is True
@@ -85,6 +86,8 @@ def test_local_voice_route_detection() -> None:
     assert cli._is_local_voice_url("http://user:pass@127.0.0.1:8123") is False
     assert cli._is_local_voice_url("http://127.0.0.1:8123/custom") is False
     assert cli._is_local_voice_url("http://192.168.1.5:8123") is False
+    assert cli._is_local_voice_url("http://127.0.0.1:0") is False
+    assert cli._is_local_voice_url("http://127.0.0.1:70000") is False
 
 
 class _HealthResponse:
@@ -175,6 +178,24 @@ def test_voice_bridge_starts_packaged_module(monkeypatch) -> None:
     ]
 
 
+def test_voice_bridge_uses_effective_http_port_when_omitted(monkeypatch) -> None:
+    process = _FakeProcess()
+    checks = iter([False, True])
+    command: list[str] = []
+
+    monkeypatch.setattr(cli, "_voice_bridge_online", lambda _url: next(checks))
+
+    def fake_popen(args: list[str]) -> _FakeProcess:
+        command.extend(args)
+        return process
+
+    monkeypatch.setattr(cli.subprocess, "Popen", fake_popen)
+    started = cli._start_local_voice_bridge("http://127.0.0.1")
+
+    assert started is process
+    assert command[-2:] == ["--port", "80"]
+
+
 def test_voice_bridge_spawn_failure_is_reported_cleanly(monkeypatch) -> None:
     def fail_spawn(_args: list[str]) -> _FakeProcess:
         raise OSError("private operating-system detail")
@@ -209,9 +230,9 @@ def test_voice_bridge_startup_timeout_cleans_up(monkeypatch) -> None:
     assert stopped == [process]
 
 
-def test_launch_continues_with_truthful_browser_fallback(monkeypatch, capsys) -> None:
+def test_launch_continues_with_truthful_browser_fallback(monkeypatch, capsys, tmp_path) -> None:
     parser = build_parser()
-    args = parser.parse_args(["launch", "--no-browser"])
+    args = parser.parse_args(["launch", "--no-browser", "--settings-path", str(tmp_path / "settings.json")])
     uvicorn_calls: list[tuple[object, str, int]] = []
 
     def unavailable(_url: str) -> None:
@@ -230,8 +251,8 @@ def test_launch_continues_with_truthful_browser_fallback(monkeypatch, capsys) ->
     assert "browser-managed speech (locality unverified)" in capsys.readouterr().err
 
 
-def test_launch_cleans_up_the_bridge_it_started(monkeypatch) -> None:
-    args = build_parser().parse_args(["launch", "--no-browser"])
+def test_launch_cleans_up_the_bridge_it_started(monkeypatch, tmp_path) -> None:
+    args = build_parser().parse_args(["launch", "--no-browser", "--settings-path", str(tmp_path / "settings.json")])
     process = _FakeProcess()
     stopped: list[_FakeProcess] = []
 
@@ -242,6 +263,27 @@ def test_launch_cleans_up_the_bridge_it_started(monkeypatch) -> None:
 
     assert cli.run_launch(args) == 0
     assert stopped == [process]
+
+
+def test_launch_starts_voice_bridge_for_persisted_route(monkeypatch, tmp_path) -> None:
+    settings_path = tmp_path / "settings.json"
+    settings_path.write_text(
+        '{"voice_url": "http://127.0.0.1:8222"}',
+        encoding="utf-8",
+    )
+    args = build_parser().parse_args(["launch", "--no-browser", "--settings-path", str(settings_path)])
+    targets: list[str] = []
+
+    monkeypatch.setattr(cli, "create_app", lambda _config: object())
+    monkeypatch.setattr(
+        cli,
+        "_start_local_voice_bridge",
+        lambda voice_url: targets.append(voice_url),
+    )
+    monkeypatch.setattr(cli.uvicorn, "run", lambda *args, **kwargs: None)
+
+    assert cli.run_launch(args) == 0
+    assert targets == ["http://127.0.0.1:8222"]
 
 
 def _production_settings(**changes):
