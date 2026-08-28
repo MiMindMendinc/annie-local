@@ -69,8 +69,13 @@
     },
   });
 
+  const savedPrefs = storage.get("prefs", {});
+  const initialPrefs = savedPrefs && typeof savedPrefs === "object" && !Array.isArray(savedPrefs)
+    ? { speak: true, ...savedPrefs }
+    : { speak: true };
+
   const state = {
-    prefs: storage.get("prefs", { speak: false }),
+    prefs: initialPrefs,
     settings: {
       model: null,
       ollama_url: "http://127.0.0.1:11434",
@@ -161,6 +166,15 @@
         if (state.session.phase === "speaking" || state.session.phase === "thinking") {
           setPhase(restingPhase());
         }
+        break;
+      case "VOICE_FALLBACK":
+        state.session.runtime = {
+          ...state.session.runtime,
+          voice: {
+            ...state.session.runtime.voice,
+            output: "browser_managed_unverified",
+          },
+        };
         break;
       case "STOPPED":
         state.session.error = null;

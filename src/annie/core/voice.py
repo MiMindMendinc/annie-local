@@ -18,6 +18,21 @@ class VoiceStatus:
     note: str
 
 
+def is_wopr_health_payload(payload: object) -> bool:
+    """Return true only for the explicit local WOPR health contract."""
+
+    if not isinstance(payload, dict):
+        return False
+    backend = payload.get("backend")
+    return (
+        payload.get("service") == "annie-wopr"
+        and payload.get("ok") is True
+        and payload.get("local") is True
+        and isinstance(backend, str)
+        and bool(backend.strip())
+    )
+
+
 async def get_voice_status(voice_url: str) -> VoiceStatus:
     bridge_ok = False
     try:
@@ -29,7 +44,7 @@ async def get_voice_status(voice_url: str) -> VoiceStatus:
             ) as client:
                 response = await client.get(f"{voice_url.rstrip('/')}/health")
                 response.raise_for_status()
-                return response.status_code == 200
+                return is_wopr_health_payload(response.json())
 
         bridge_ok = await with_retry(_health, attempts=2, base_delay=0.2)
     except Exception:

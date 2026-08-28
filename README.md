@@ -85,26 +85,26 @@ annie setup     # guided install if something is missing
 - **Care engine** — honest, long-term-good doctrine (editable in Settings → cfg)
 - **Adaptive memory** — profile, facts, goals, journal at `~/.annie/knowledge.json`
 - **Tool loop** — remember, recall, goals, journal, datetime via Ollama tools
-- **Voice** — WOPR bridge on `:8123` or clearly labeled browser-managed fallback; mic via Web Speech
+- **Voice** — first-run spoken replies default to on; `annie launch` auto-starts local WOPR on `:8123` for local routes, with clearly labeled browser-managed fallback; mic via Web Speech
 - **Session control** — clear conversation, restart epoch, export/wipe memory
 - **FastAPI backend** — layered architecture: routers → services → repositories
 - **Production middleware** — JWT auth, CORS, rate limiting, security headers, structured logging
 - **PostgreSQL + authenticated Redis** — production-oriented persistence, rate limits, and queue wiring
 - **S3-compatible service foundation** — present in code; attachment API/UI is intentionally not claimed in v0.3.0
 
-## Optional: WOPR voice
+## Local voice on launch (WOPR)
 
-Run the bundled local bridge. Piper is preferred when you supply a local voice model; eSpeak NG is the lightweight Linux and Raspberry Pi fallback.
+`annie launch` now auto-starts the bundled local WOPR bridge for local voice URLs (default `http://127.0.0.1:8123`) when it is not already running. Piper is preferred when you supply a local voice model; eSpeak NG is the lightweight Linux and Raspberry Pi fallback.
 
 ```bash
 # Debian, Ubuntu, or Raspberry Pi OS
 sudo apt-get install espeak-ng
 
-python wopr_server.py --self-test
-python wopr_server.py   # http://127.0.0.1:8123
+python -m annie.wopr_server --self-test
+annie launch
 ```
 
-For a local Piper model, install the `piper` CLI and set `WOPR_PIPER_MODEL=/path/to/voice.onnx`. In Annie: **cfg** → set the WOPR URL → toggle **voice**. See [docs/VOICE.md](docs/VOICE.md) for the exact privacy and fallback boundaries.
+For a local Piper model, install the `piper` CLI and set `WOPR_PIPER_MODEL=/path/to/voice.onnx` before launch. If no local backend is available, launch reports that condition and continues with browser-managed speech labeled **locality unverified**. To skip bridge auto-start entirely, use `annie launch --voice-bridge off`. Spoken replies default on for new installs; saved preferences remain durable. See [docs/VOICE.md](docs/VOICE.md) for exact privacy and fallback boundaries.
 
 ## Where your data lives
 
