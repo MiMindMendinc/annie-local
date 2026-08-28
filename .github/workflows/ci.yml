@@ -40,6 +40,9 @@ jobs:
       - name: Run full test suite
         run: pytest -q
 
+      - name: Run browser preference and locality tests
+        run: node --test tests/ui_state.test.js
+
       - name: Run substrate canary gate
         run: bash scripts/canary_test.sh
 
@@ -72,7 +75,7 @@ jobs:
           sudo apt-get install --yes --no-install-recommends espeak-ng
 
       - name: Run real WOPR speech self-test
-        run: python wopr_server.py --backend espeak-ng --self-test
+        run: python -m annie.wopr_server --backend espeak-ng --self-test
 
       - name: Lint and format check
         run: |
@@ -89,6 +92,7 @@ jobs:
         run: |
           python -m build
           python - <<'PY'
+          import sys
           from pathlib import Path
           from zipfile import ZipFile
 
@@ -98,11 +102,18 @@ jobs:
               "annie/ui/app.js",
               "annie/ui/state.js",
               "annie/ui/styles.css",
+              "annie/wopr_server.py",
           }
           with ZipFile(wheel) as archive:
               missing = required.difference(archive.namelist())
           if missing:
-              raise SystemExit(f"wheel missing UI assets: {sorted(missing)}")
+              raise SystemExit(f"wheel missing required assets: {sorted(missing)}")
+
+          sys.path.insert(0, str(wheel))
+          from annie import wopr_server
+
+          if ".whl/" not in str(wopr_server.__file__):
+              raise SystemExit(f"WOPR did not import from built wheel: {wopr_server.__file__}")
           PY
 
       - name: Validate JavaScript syntax
@@ -111,6 +122,7 @@ jobs:
           node --check src/annie/ui/api-client.js
           node --check src/annie/ui/validators.js
           node --check src/annie/ui/app.js
+          node --test tests/ui_state.test.js
 
       - name: Validate Compose and container build
         run: |

@@ -100,11 +100,11 @@ annie setup     # guided install if something is missing
 # Debian, Ubuntu, or Raspberry Pi OS
 sudo apt-get install espeak-ng
 
-python wopr_server.py --self-test
+python -m annie.wopr_server --self-test
 annie launch
 ```
 
-For a local Piper model, install the `piper` CLI and set `WOPR_PIPER_MODEL=/path/to/voice.onnx` before launch. If neither Piper (with model) nor eSpeak NG/eSpeak is available, launch fails with an explicit local-backend error. To run without auto-starting the bridge, use `annie launch --voice-bridge off`. Spoken replies default on for new installs; saved preferences remain durable. See [docs/VOICE.md](docs/VOICE.md) for exact privacy and fallback boundaries.
+For a local Piper model, install the `piper` CLI and set `WOPR_PIPER_MODEL=/path/to/voice.onnx` before launch. If no local backend is available, launch reports that condition and continues with browser-managed speech labeled **locality unverified**. To skip bridge auto-start entirely, use `annie launch --voice-bridge off`. Spoken replies default on for new installs; saved preferences remain durable. See [docs/VOICE.md](docs/VOICE.md) for exact privacy and fallback boundaries.
 
 ## Where your data lives
 

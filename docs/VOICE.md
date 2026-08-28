@@ -6,7 +6,7 @@ Annie supports spoken replies and microphone input. The two directions have diff
 
 | Priority | Engine | Truthful behavior |
 |----------|--------|-------------------|
-| 1 | **WOPR bridge** | Bundled `wopr_server.py` on loopback port 8123; returns WAV audio from an installed local backend |
+| 1 | **WOPR bridge** | Packaged `annie.wopr_server` module on loopback port 8123; returns WAV audio from an installed local backend |
 | 2 | **Browser TTS** | `speechSynthesis`; browser/OS managed, with locality unverified |
 
 Annie proxies `POST /api/voice/speak` to `POST http://127.0.0.1:8123/speak`. `annie launch` auto-starts WOPR for local voice routes when needed. If the bridge health check fails, the UI labels the bridge offline and may offer the browser-managed fallback.
@@ -30,8 +30,8 @@ No LuxTTS model or pedalboard effect chain is bundled in this release. Earlier d
 sudo apt-get update
 sudo apt-get install espeak-ng
 
-python wopr_server.py --self-test
-python wopr_server.py
+python -m annie.wopr_server --self-test
+python -m annie.wopr_server
 ```
 
 Expected startup:
@@ -56,8 +56,8 @@ Install Piper and download a voice model from a source you trust, then keep the 
 
 ```bash
 export WOPR_PIPER_MODEL=/absolute/path/to/voice.onnx
-python wopr_server.py --backend piper --self-test
-python wopr_server.py --backend piper
+python -m annie.wopr_server --backend piper --self-test
+python -m annie.wopr_server --backend piper
 ```
 
 The bridge fails at startup when the requested executable or model is unavailable. It does not silently switch from a specifically requested backend.
@@ -67,7 +67,7 @@ The bridge fails at startup when the requested executable or model is unavailabl
 1. Ensure at least one local backend is available (`piper` with `WOPR_PIPER_MODEL`, or `espeak-ng`/`espeak`).
 2. Run `annie launch` (defaults to local voice URL `http://127.0.0.1:8123` and auto-starts WOPR when possible).
 3. On first run, spoken replies default to on and stay persisted in browser local storage (`annie5.prefs`).
-4. Existing saved preferences are respected. To disable auto-start, use `annie launch --voice-bridge off`.
+4. Existing saved preferences are respected. If no local backend can start, Annie reports the failure and continues with browser-managed speech labeled **locality unverified**. To disable auto-start, use `annie launch --voice-bridge off`.
 
 ## Speech-to-text
 

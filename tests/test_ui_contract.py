@@ -63,13 +63,17 @@ def test_ui_does_not_hardcode_unverified_privacy_claims() -> None:
 def test_motion_and_phase_contracts_are_present() -> None:
     css = _ui_text("styles.css")
     state = _ui_text("state.js")
+    app = _ui_text("app.js")
     assert "@media (prefers-reduced-motion: reduce)" in css
     assert ":focus-visible" in css
     assert "min-height: 44px" in css
     for phase in ("idle", "listening", "thinking", "speaking", "offline", "error"):
         assert f'"{phase}"' in state
-    assert 'storage.get("prefs", { speak: true })' in state
+    assert "{ speak: true, ...savedPrefs }" in state
     assert "state.prefs = { ...state.prefs, ...next }" in state
+    assert 'case "VOICE_FALLBACK"' in state
+    assert 'AnnieState.dispatch("VOICE_FALLBACK")' in app
+    assert "browser-managed voice; locality is unverified" in app
 
 
 def test_production_sign_in_is_accessible_and_session_scoped() -> None:

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -10,7 +9,7 @@ import time
 import webbrowser
 from collections.abc import Sequence
 from contextlib import suppress
-from pathlib import Path
+from ipaddress import ip_address
 from urllib.parse import urlsplit
 
 import httpx
@@ -20,6 +19,7 @@ from annie import __version__
 from annie.core._substrate import verify_log
 from annie.core.config import AnnieConfig, validate_config
 from annie.core.grounding_audit import format_doctor_block, read_events, summary
+from annie.core.voice import is_wopr_health_payload
 from annie.server import create_app
 
 BANNER = """
@@ -115,11 +115,7 @@ def run_doctor() -> int:
     if ollama_up and models:
         _check("Tool-capable model", recommended, "llama3.2 recommended" if not recommended else "")
 
-    try:
-        voice = httpx.get("http://127.0.0.1:8123/health", timeout=2.0, trust_env=False)
-        wopr_ok = voice.status_code == 200
-    except httpx.HTTPError:
-        wopr_ok = False
+    wopr_ok = _voice_bridge_online("http://127.0.0.1:8123")
     _check("WOPR voice bridge (optional)", wopr_ok, "http://127.0.0.1:8123" if not wopr_ok else "online")
 
     data_dir = config.resolved_root
@@ -204,22 +200,53 @@ def _voice_health_url(voice_url: str) -> str:
 
 def _is_local_voice_url(voice_url: str) -> bool:
     try:
-        host = (urlsplit(voice_url).hostname or "").strip().lower()
+        parsed = urlsplit(voice_url)
+        host = (parsed.hostname or "").strip().lower()
     except ValueError:
         return False
-    return host in {"127.0.0.1", "::1", "localhost"}
+    if (
+        parsed.scheme != "http"
+        or parsed.username
+        or parsed.password
+        or parsed.path not in {"", "/"}
+        or parsed.query
+        or parsed.fragment
+    ):
+        return False
+    if host == "localhost":
+        return True
+    try:
+        return ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 def _voice_bridge_online(voice_url: str) -> bool:
     try:
         response = httpx.get(_voice_health_url(voice_url), timeout=1.5, trust_env=False)
-    except httpx.HTTPError:
+        if response.status_code != 200:
+            return False
+        return is_wopr_health_payload(response.json())
+    except (httpx.HTTPError, TypeError, ValueError):
         return False
-    return response.status_code == 200
 
 
-def _wopr_script_path() -> Path:
-    return Path(__file__).resolve().parents[2] / "wopr_server.py"
+def _stop_voice_bridge(process: subprocess.Popen[str], *, timeout: float = 3.0) -> None:
+    """Stop a child bridge, escalating to kill when graceful shutdown hangs."""
+
+    if process.poll() is not None:
+        return
+    with suppress(OSError):
+        process.terminate()
+    try:
+        process.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        with suppress(OSError):
+            process.kill()
+        with suppress(OSError, subprocess.TimeoutExpired):
+            process.wait(timeout=timeout)
+    except OSError:
+        return
 
 
 def _start_local_voice_bridge(voice_url: str) -> subprocess.Popen[str] | None:
@@ -229,18 +256,15 @@ def _start_local_voice_bridge(voice_url: str) -> subprocess.Popen[str] | None:
         print(f"  → voice bridge: already online at {_voice_health_url(voice_url)}")
         return None
 
-    script = _wopr_script_path()
-    if not script.is_file():
-        raise RuntimeError(f"voice bridge script not found at {script}")
-
     parsed = urlsplit(voice_url)
     host = parsed.hostname or "127.0.0.1"
     port = parsed.port or 8123
-    env = {**os.environ}
-    process = subprocess.Popen(
-        [sys.executable, str(script), "--host", host, "--port", str(port)],
-        env=env,
-    )
+    try:
+        process = subprocess.Popen(
+            [sys.executable, "-m", "annie.wopr_server", "--host", host, "--port", str(port)],
+        )
+    except OSError as exc:
+        raise RuntimeError("could not start the packaged local voice bridge") from exc
 
     deadline = time.monotonic() + 8.0
     while time.monotonic() < deadline:
@@ -255,9 +279,7 @@ def _start_local_voice_bridge(voice_url: str) -> subprocess.Popen[str] | None:
             )
         time.sleep(0.2)
 
-    process.terminate()
-    with suppress(OSError):
-        process.wait(timeout=3)
+    _stop_voice_bridge(process)
     raise RuntimeError("local voice bridge did not become healthy in time")
 
 
@@ -293,8 +315,8 @@ def run_launch(args: argparse.Namespace) -> int:
         try:
             voice_process = _start_local_voice_bridge(config.voice_url)
         except RuntimeError as exc:
-            print(f"  Voice startup failed: {exc}", file=sys.stderr)
-            return 1
+            print(f"  Voice bridge unavailable: {exc}", file=sys.stderr)
+            print("  → continuing with browser-managed speech (locality unverified)", file=sys.stderr)
 
     if not args.no_browser:
         with suppress(OSError, webbrowser.Error):
@@ -302,10 +324,8 @@ def run_launch(args: argparse.Namespace) -> int:
     try:
         uvicorn.run(app, host=config.host, port=config.port, log_level="info")
     finally:
-        if voice_process and voice_process.poll() is None:
-            voice_process.terminate()
-            with suppress(OSError):
-                voice_process.wait(timeout=3)
+        if voice_process:
+            _stop_voice_bridge(voice_process)
     return 0
 
 

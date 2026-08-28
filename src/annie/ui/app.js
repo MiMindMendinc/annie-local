@@ -568,6 +568,8 @@ async function speakReply(text) {
     await playBridgeAudio(payload);
   } catch (error) {
     if (error.name === "AbortError") return;
+    AnnieState.dispatch("VOICE_FALLBACK");
+    announce("Using browser-managed voice; locality is unverified");
     await speakInBrowser(clip);
   } finally {
     voiceAbortController = null;

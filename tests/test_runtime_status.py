@@ -5,6 +5,34 @@ from annie.core.runtime_status import (
     classify_endpoint,
     trust_environment_proxy,
 )
+from annie.core.voice import get_voice_status
+
+
+class _VoiceHealthResponse:
+    status_code = 200
+
+    def __init__(self, payload: object) -> None:
+        self.payload = payload
+
+    def raise_for_status(self) -> None:
+        return None
+
+    def json(self) -> object:
+        return self.payload
+
+
+class _VoiceHealthClient:
+    def __init__(self, payload: object) -> None:
+        self.payload = payload
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        return None
+
+    async def get(self, _url: str) -> _VoiceHealthResponse:
+        return _VoiceHealthResponse(self.payload)
 
 
 def test_endpoint_classification_is_conservative() -> None:
@@ -18,6 +46,31 @@ def test_endpoint_classification_is_conservative() -> None:
     assert trust_environment_proxy("http://127.0.0.1:11434") is False
     assert trust_environment_proxy("http://ollama:11434") is False
     assert trust_environment_proxy("https://models.example.com") is True
+
+
+async def test_voice_status_rejects_non_wopr_health_payload(monkeypatch) -> None:
+    payload = {"ok": True, "service": "other", "local": True, "backend": "fake"}
+    monkeypatch.setattr(
+        "annie.core.voice.httpx.AsyncClient",
+        lambda **_kwargs: _VoiceHealthClient(payload),
+    )
+
+    status = await get_voice_status("http://127.0.0.1:8123")
+    assert status.bridge_ok is False
+    assert status.tts_engine == "browser"
+    assert "locality is unverified" in status.note
+
+
+async def test_voice_status_accepts_explicit_wopr_health_payload(monkeypatch) -> None:
+    payload = {"ok": True, "service": "annie-wopr", "local": True, "backend": "espeak-ng"}
+    monkeypatch.setattr(
+        "annie.core.voice.httpx.AsyncClient",
+        lambda **_kwargs: _VoiceHealthClient(payload),
+    )
+
+    status = await get_voice_status("http://127.0.0.1:8123")
+    assert status.bridge_ok is True
+    assert status.tts_engine == "wopr"
 
 
 def test_local_routes_do_not_claim_offline_verification() -> None:

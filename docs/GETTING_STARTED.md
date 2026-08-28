@@ -95,8 +95,8 @@ Export JSON or wipe all from the memory drawer.
 ## Voice (optional)
 
 1. Install a local backend. On Debian, Ubuntu, or Raspberry Pi OS: `sudo apt-get install espeak-ng`
-2. Run `python wopr_server.py --self-test`
-3. Start the bridge with `python wopr_server.py` (port 8123)
+2. Run `python -m annie.wopr_server --self-test`
+3. Start the bridge with `python -m annie.wopr_server` (port 8123)
 4. In Annie **cfg**, confirm voice URL: `http://127.0.0.1:8123`
 5. Toggle **voice** in the header
 

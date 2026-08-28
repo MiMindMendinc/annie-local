@@ -5,6 +5,8 @@
 ### Local WOPR voice bridge
 
 - Added the previously missing `wopr_server.py` with local Piper, eSpeak NG/eSpeak, and macOS say backends.
+- Packaged the bridge as `annie.wopr_server` so wheel and non-editable installs can auto-start it reliably.
+- Added `annie launch` bridge ownership and cleanup, strict health-payload validation, and truthful browser fallback.
 - Added loopback-only binding, bounded input/concurrency, temporary WAV handling, output validation, sanitized failures, and a backend self-test.
 - Added contract tests for health, WAV responses, invalid input, failure redaction, and network-bind protection.
 - Corrected documentation that inaccurately claimed LuxTTS/pedalboard was bundled or that browser-managed TTS was necessarily local.

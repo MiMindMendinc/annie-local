@@ -3,8 +3,8 @@ from __future__ import annotations
 import io
 import json
 import math
+import socket
 import struct
-import sys
 import threading
 import unittest
 import urllib.error
@@ -13,11 +13,7 @@ import wave
 from pathlib import Path
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from wopr_server import (  # noqa: E402
+from annie.wopr_server import (
     BridgeError,
     BridgeState,
     EspeakBackend,
@@ -96,6 +92,8 @@ class WOPRServerTests(unittest.TestCase):
         with RunningServer(backend) as (url, _):
             status, payload = request_json(url, "/health")
         self.assertEqual(status, 200)
+        self.assertIs(payload["ok"], True)
+        self.assertEqual(payload["service"], "annie-wopr")
         self.assertEqual(payload["backend"], "test-tone")
         self.assertIs(payload["local"], True)
 
@@ -143,10 +141,19 @@ class WOPRServerTests(unittest.TestCase):
 
     def test_loopback_guard(self) -> None:
         self.assertTrue(is_loopback_host("127.0.0.1"))
+        self.assertTrue(is_loopback_host("127.0.0.2"))
         self.assertTrue(is_loopback_host("::1"))
         self.assertTrue(is_loopback_host("localhost"))
         self.assertFalse(is_loopback_host("0.0.0.0"))
         self.assertFalse(is_loopback_host("192.168.1.20"))
+
+    @unittest.skipUnless(socket.has_ipv6, "IPv6 is unavailable")
+    def test_ipv6_loopback_server_uses_ipv6_socket(self) -> None:
+        server = WOPRHTTPServer(("::1", 0), BridgeState(RecordingBackend()))
+        try:
+            self.assertEqual(server.address_family, socket.AF_INET6)
+        finally:
+            server.server_close()
 
     def test_espeak_receives_text_on_stdin_not_the_command_line(self) -> None:
         backend = EspeakBackend(
@@ -158,7 +165,7 @@ class WOPRServerTests(unittest.TestCase):
             name="espeak-ng",
         )
         output = Path("/tmp/annie.wav")
-        with patch("wopr_server._run_command") as run_command:
+        with patch("annie.wopr_server._run_command") as run_command:
             backend.synthesize("--voices; not a command-line option", output)
         run_command.assert_called_once_with(
             [
@@ -185,7 +192,7 @@ class WOPRServerTests(unittest.TestCase):
             timeout=20,
         )
         output = Path("/tmp/annie.wav")
-        with patch("wopr_server._run_command") as run_command:
+        with patch("annie.wopr_server._run_command") as run_command:
             backend.synthesize("--file-format=evil", output)
         self.assertEqual(run_command.call_count, 2)
         run_command.assert_any_call(
@@ -221,7 +228,7 @@ class WOPRServerTests(unittest.TestCase):
             timeout=30,
         )
         output = Path("/tmp/annie.wav")
-        with patch("wopr_server._run_command") as run_command:
+        with patch("annie.wopr_server._run_command") as run_command:
             backend.synthesize("hello Annie", output)
         run_command.assert_called_once_with(
             [
