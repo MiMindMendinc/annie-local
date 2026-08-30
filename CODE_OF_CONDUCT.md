@@ -30,9 +30,9 @@ Annie Local may involve local memory, voice interfaces, emotional support langua
 
 ## Reporting Concerns
 
-Report conduct concerns privately to:
-
-**michiganmindmendinc@proton.me**
+Report conduct concerns through the repository's
+[private reporting channel](https://github.com/MiMindMendinc/annie-local/security/advisories/new)
+and begin the summary with `Conduct report:`.
 
 For security vulnerabilities, follow `SECURITY.md` instead of opening a public issue.
 

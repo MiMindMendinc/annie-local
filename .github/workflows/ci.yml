@@ -49,14 +49,19 @@ jobs:
   release-gate:
     name: Release gate
     runs-on: ubuntu-latest
-    env:
-      JWT_SECRET: 92b4ee17c8fa7c09414fe8fdc42db0d78555c25916f47a024f786a19ec732b9d
-      POSTGRES_PASSWORD: 2476a71e4fbe9dd7f661f3dfb305e878
-      REDIS_PASSWORD: a29eb92a54b29ff03e1a72fbc99efe02
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+
+      - name: Generate isolated CI-only secrets
+        shell: bash
+        run: |
+          {
+            echo "JWT_SECRET=$(openssl rand -hex 32)"
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)"
+            echo "REDIS_PASSWORD=$(openssl rand -hex 24)"
+          } >> "$GITHUB_ENV"
 
       - name: Set up Python
         uses: actions/setup-python@v6
