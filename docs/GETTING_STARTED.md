@@ -68,7 +68,7 @@ If something fails, run:
 annie setup
 ```
 
-## Using Annie-5
+## Using Annie
 
 | Control | Action |
 |---------|--------|
@@ -133,6 +133,5 @@ Or use **mem** → **Wipe all** for knowledge only. **clr** clears the current c
 
 ## Next
 
-- Read [CHANGELOG.md](../CHANGELOG.md) for v0.2.0 features
+- Read [CHANGELOG.md](../CHANGELOG.md)
 - Run `./scripts/canary_test.sh` before distributing a custom build
-- Star the repo if this saved you from another cloud chatbot
