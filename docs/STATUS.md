@@ -37,7 +37,7 @@ Annie Local combines a mobile Research Session interface, Ollama chat, structure
 - [x] browser assets load locally (no CDN)
 - [x] Ollama setup documented and probed by doctor
 - [x] README and UI claims are bounded by observable runtime evidence
-- [x] CHANGELOG for v0.2.0
+- [x] CHANGELOG for v0.3.0
 - [x] deterministic showcase and capture workflow documented
 - [x] wheel/sdist build, lint, dependency audit, and static security gates
 
