@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>A polished local-first AI research session — visible model routing, inspectable memory, measurable performance, and no hidden UI dependencies.</strong>
+  <strong>Local-first AI research session — visible model routing, inspectable memory, measurable performance, no hidden UI dependencies.</strong>
 </p>
 
 <p align="center">
@@ -21,20 +21,20 @@
 
 ---
 
-**Annie Local** is a local-first AI companion with a mobile Research Session interface, care-first doctrine, inspectable memory, optional voice, and tool calling. The default setup talks to Ollama on your hardware. The packaged web interface uses no CDN or remote fonts, and the runtime shows whether configured model, memory, and voice routes are local, remote, or unverified.
+**Annie Local** is a local-first AI companion with a mobile Research Session interface, inspectable memory, optional voice, and tool calling. Default setup talks to Ollama on your hardware. The web UI uses no CDN. Runtime badges show whether model, memory, and voice routes are local, remote, or unverified.
 
-If you want a local AI that feels *finished* instead of a science project, this is it.
+v0.3.0 beta. Not a clinical product.
 
 ## Why people use it
 
 | You get | You don't get |
 |---------|----------------|
 | Mobile Research Session UI with observable state | Another bare chat box |
-| Memory that learns goals, facts, journal | Cloud memory harvest |
+| Memory that stores goals, facts, journal on disk | Cloud memory harvest |
 | Tool calling (remember, recall, goals) | Vendor lock-in |
 | WOPR voice bridge + mic input | Required subscriptions |
 | One command to launch | — |
-| Hardened Compose reference (Postgres, Redis, JWT) | Cloud lock-in |
+| Hardened Compose reference (Postgres, Redis, JWT) | A finished public multi-user service |
 
 ## Quick start (3 commands)
 
@@ -58,7 +58,7 @@ Open **http://127.0.0.1:8787**
 
 ## Hardened Compose reference
 
-The Compose profile provides PostgreSQL, authenticated Redis, JWT auth, per-user session state, rate limiting, Ollama, and a worker. It is suitable for a controlled showcase or as a deployment foundation; public deployment still requires TLS, managed secrets, backups, monitoring, and an external review of the deployment's security and privacy assumptions.
+The Compose profile provides PostgreSQL, authenticated Redis, JWT auth, per-user session state, rate limiting, Ollama, and a worker. It is a controlled showcase / deployment foundation. Public deployment still needs TLS, managed secrets, backups, monitoring, and an external review.
 
 ```bash
 cp .env.example .env
@@ -70,8 +70,6 @@ docker compose exec ollama ollama pull llama3.2
 
 See [docs/RUNBOOK.md](docs/RUNBOOK.md) for migrations, auth, and troubleshooting.
 
-Production-mode users sign in through the browser after an operator bootstraps an account. Tokens live in browser session storage and are cleared when that browser session ends.
-
 ### First-run check
 
 ```bash
@@ -81,30 +79,26 @@ annie setup     # guided install if something is missing
 
 ## Features
 
-- **Research Session interface** — responsive glowing orb, explicit activity states, message metrics, and touch-friendly controls
+- **Research Session interface** — responsive orb, activity states, message metrics, touch-friendly controls
 - **Care engine** — honest, long-term-good doctrine (editable in Settings → cfg)
 - **Adaptive memory** — profile, facts, goals, journal at `~/.annie/knowledge.json`
 - **Tool loop** — remember, recall, goals, journal, datetime via Ollama tools
-- **Voice** — first-run spoken replies default to on; `annie launch` auto-starts local WOPR on `:8123` for local routes, with clearly labeled browser-managed fallback; mic via Web Speech
+- **Voice** — `annie launch` auto-starts local WOPR on `:8123` when possible; browser fallback is labeled locality unverified
 - **Session control** — clear conversation, restart epoch, export/wipe memory
-- **FastAPI backend** — layered architecture: routers → services → repositories
-- **Production middleware** — JWT auth, CORS, rate limiting, security headers, structured logging
-- **PostgreSQL + authenticated Redis** — production-oriented persistence, rate limits, and queue wiring
-- **S3-compatible service foundation** — present in code; attachment API/UI is intentionally not claimed in v0.3.0
+- **FastAPI backend** — routers → services → repositories
+- **Production middleware** — JWT, CORS, rate limiting, security headers, structured logging
+- **PostgreSQL + authenticated Redis** — optional Compose path
+- **S3-compatible service foundation** — present in code; attachment API/UI is not claimed in v0.3.0
 
 ## Local voice on launch (WOPR)
 
-`annie launch` now auto-starts the bundled local WOPR bridge for local voice URLs (default `http://127.0.0.1:8123`) when it is not already running. Piper is preferred when you supply a local voice model; eSpeak NG is the lightweight Linux and Raspberry Pi fallback.
-
 ```bash
-# Debian, Ubuntu, or Raspberry Pi OS
 sudo apt-get install espeak-ng
-
 python -m annie.wopr_server --self-test
 annie launch
 ```
 
-For a local Piper model, install the `piper` CLI and set `WOPR_PIPER_MODEL=/path/to/voice.onnx` before launch. If no local backend is available, launch reports that condition and continues with browser-managed speech labeled **locality unverified**. To skip bridge auto-start entirely, use `annie launch --voice-bridge off`. Spoken replies default on for new installs; saved preferences remain durable. See [docs/VOICE.md](docs/VOICE.md) for exact privacy and fallback boundaries.
+For Piper, set `WOPR_PIPER_MODEL=/path/to/voice.onnx`. Skip auto-start with `annie launch --voice-bridge off`. See [docs/VOICE.md](docs/VOICE.md).
 
 ## Where your data lives
 
@@ -114,14 +108,14 @@ For a local Piper model, install the `piper` CLI and set `WOPR_PIPER_MODEL=/path
 | `~/.annie/knowledge.json` | Profile, facts, goals, journal |
 | `~/.annie/settings.json` | Model, temperature, doctrine |
 
-Delete anytime. It's your machine.
+Delete anytime. It stays on your machine.
 
 ## Verify before you ship a build
 
 ```bash
 pip install -e ".[dev,prod]"
-python3 -m pytest -q          # 60+ tests
-./scripts/canary_test.sh      # adversarial safety canaries
+python3 -m pytest -q
+./scripts/canary_test.sh
 ruff check .
 ruff format --check .
 bandit -q -r src --severity-level medium
@@ -129,7 +123,7 @@ pip-audit --strict -r requirements-prod.lock
 python -m build
 ```
 
-The deterministic browser showcase, exact capture commands, and compact accessibility/privacy acceptance checklist are in [docs/RESEARCH_SESSION_QA.md](docs/RESEARCH_SESSION_QA.md).
+Showcase and accessibility checklist: [docs/RESEARCH_SESSION_QA.md](docs/RESEARCH_SESSION_QA.md).
 
 ## API (local only)
 
@@ -140,7 +134,7 @@ curl -X POST http://127.0.0.1:8787/api/chat \
   -d '{"message":"hello"}'
 ```
 
-Bind stays on `127.0.0.1` by default — not exposed to your network.
+Bind stays on `127.0.0.1` by default.
 
 ## Status
 
@@ -151,28 +145,23 @@ Not a therapist, crisis line, compliance-certified clinical tool, or finished pu
 ## Docs
 
 - [Getting started](docs/GETTING_STARTED.md)
-- [Run book (production)](docs/RUNBOOK.md)
-- [Grounding substrate overview](docs/GROUNDING.md) — how safety works (no secret rules exposed)
-- [Voice stack](docs/VOICE.md) — local STT/TTS, WOPR, limitations
-- [Research Session QA](docs/RESEARCH_SESSION_QA.md) — reproducible showcase and acceptance checklist
-- [Canary benchmark results](docs/CANARY_RESULTS.md) — published pass/fail rates
-- [Replit deployment](docs/REPLIT.md)
+- [Run book](docs/RUNBOOK.md)
+- [Grounding](docs/GROUNDING.md)
+- [Voice](docs/VOICE.md)
+- [Research Session QA](docs/RESEARCH_SESSION_QA.md)
+- [Canary results](docs/CANARY_RESULTS.md)
 - [Changelog](CHANGELOG.md)
 - [Roadmap](docs/ROADMAP.md)
 
 ## Operator tools
 
 ```bash
-annie doctor              # stack check + recent grounding triggers
-annie grounding           # full redacted audit log
-annie grounding --verify  # hash chain integrity
-python3 scripts/run_canary_benchmark.py   # refresh CANARY_RESULTS.md
+annie doctor
+annie grounding
+annie grounding --verify
+python3 scripts/run_canary_benchmark.py
 ```
 
 ## License
 
 MIT — [Michigan MindMend Inc.](LICENSE)
-
-<p align="center">
-  <sub>If Annie helps you, a star on GitHub helps others find local-first AI.</sub>
-</p>
