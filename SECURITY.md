@@ -12,9 +12,9 @@ Security reports are welcome for the current `main` branch.
 
 Please do **not** open public issues for vulnerabilities, private data exposure, secrets, exploit details, or unsafe model behavior involving sensitive personal content.
 
-Report concerns privately to:
-
-**michiganmindmendinc@proton.me**
+Report concerns through GitHub's
+[private vulnerability reporting](https://github.com/MiMindMendinc/annie-local/security/advisories/new)
+channel. Do not include sensitive details in a public issue.
 
 Please include:
 

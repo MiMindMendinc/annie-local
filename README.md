@@ -36,25 +36,27 @@ v0.3.0 beta. Not a clinical product.
 | One command to launch | — |
 | Hardened Compose reference (Postgres, Redis, JWT) | A finished public multi-user service |
 
-## Quick start (3 commands)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/MiMindMendinc/annie-local/main/scripts/install.sh | bash
-ollama pull llama3.2
-annie launch
-```
-
-Or manually:
+## Quick start
 
 ```bash
 git clone https://github.com/MiMindMendinc/annie-local.git
 cd annie-local
-pip install -e .
-ollama pull llama3.2   # one-time
-annie launch --model llama3.2
+python -m pip install -e .
+ollama pull llama3.2
+annie launch
 ```
 
-Open **http://127.0.0.1:8787**
+Open **http://127.0.0.1:8787**.
+
+An install helper is available at `scripts/install.sh`. Inspect it locally
+before running it; the documented path above does not pipe code from the
+network directly into a shell.
+
+To select a different installed model:
+
+```bash
+annie launch --model llama3.2
+```
 
 ## Hardened Compose reference
 
