@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, StrictBool
 
 
 class ChatRequest(BaseModel):
@@ -30,6 +30,15 @@ class SpeakRequest(BaseModel):
 class KnowledgeDeleteRequest(BaseModel):
     kind: str
     item_id: str | None = None
+
+
+class KnowledgeCreateRequest(BaseModel):
+    kind: Literal["profile", "fact", "goal", "journal"]
+    text: Annotated[str, Field(min_length=1, max_length=4_000)]
+
+
+class GoalStateRequest(BaseModel):
+    done: StrictBool
 
 
 class RegisterRequest(BaseModel):

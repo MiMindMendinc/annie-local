@@ -98,6 +98,19 @@ class PostgresKnowledgeRepository(KnowledgeRepository):
         open_goals = [g["text"] for g in snap["goals"] if not g.get("done")]
         return {"open": open_goals}
 
+    async def set_goal_state(self, item_id: str, done: bool, user_id: uuid.UUID | None = None) -> dict[str, Any]:
+        assert user_id is not None
+        result = await self.session.execute(
+            select(KnowledgeItem)
+            .where(KnowledgeItem.user_id == user_id, KnowledgeItem.kind == "goal", KnowledgeItem.id == item_id)
+            .with_for_update()
+        )
+        item = result.scalar_one_or_none()
+        if item is None:
+            raise KeyError(item_id)
+        item.payload = {**item.payload, "done": done}
+        return dict(item.payload)
+
     async def journal(self, entry: str, user_id: uuid.UUID | None = None) -> dict[str, Any]:
         assert user_id is not None
         row = {"id": _uid(), "entry": entry.strip(), "t": time.time()}

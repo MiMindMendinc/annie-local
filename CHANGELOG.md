@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Today companion workspace
+
+- Added a bright green Today view with a goal board, profile preview, memory counts, and editable next-step prompts.
+- Added direct fact, profile, goal, and journal capture without requiring a model request.
+- Added exact-ID goal completion and reopening to file and PostgreSQL repositories, with authenticated API routes and cache invalidation.
+- Preserved drafts on failed writes and when opening a planning prompt; refreshed the board after chat or memory changes.
+- Kept bundled assets, existing storage, runtime locality labels, voice preferences, and safety checks.
+- Added persistence, validation, authentication, CORS, and UI interaction tests. Browser layout and real-model plan quality still require operator review.
+
 ### Local WOPR voice bridge
 
 - Added the previously missing `wopr_server.py` with local Piper, eSpeak NG/eSpeak, and macOS say backends.

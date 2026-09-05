@@ -102,6 +102,15 @@ class LocalKnowledge:
         open_goals = [g["text"] for g in self._data.goals if not g.get("done")]
         return {"open": open_goals}
 
+    def set_goal_state(self, item_id: str, done: bool) -> dict[str, Any]:
+        """Update exactly one goal; repeated requests are idempotent."""
+        for goal in self._data.goals:
+            if goal.get("id") == item_id:
+                goal["done"] = done
+                self._save()
+                return dict(goal)
+        raise KeyError(item_id)
+
     def journal(self, entry: str) -> dict[str, Any]:
         row = {"id": _uid(), "entry": entry.strip(), "t": time.time()}
         self._data.journal.append(row)

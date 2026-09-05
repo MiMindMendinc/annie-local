@@ -55,7 +55,7 @@ const el = {
 };
 
 const PHASE_VIEW = {
-  idle: { label: "Idle", copy: "Ready for a private research session." },
+  idle: { label: "Ready", copy: "Here when you’re ready. What’s on your mind?" },
   listening: { label: "Listening", copy: "Browser voice input is active; locality is not verified." },
   thinking: { label: "Thinking", copy: "The configured model is working on your request." },
   speaking: { label: "Speaking", copy: "Voice output is playing. Use Stop at any time." },
@@ -84,6 +84,7 @@ let recognitionActive = false;
 let recognitionBase = "";
 let micSupported = false;
 let authRequired = false;
+let companion = null;
 const dialogReturnTargets = new WeakMap();
 
 function esc(value) {
@@ -227,6 +228,7 @@ function renderState(state) {
   el.authAccount.hidden = !auth?.token;
   el.accountEmail.textContent = auth?.user?.email || "Authenticated account";
   renderRuntime(session.runtime);
+  companion?.setLocked(authRequired || phase === "thinking");
 }
 
 function footerMarkup(metrics, model) {
@@ -254,9 +256,10 @@ function addMessage(role, content, options = {}) {
     ${role === "assistant" ? '<div class="waveform" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' : ""}
     <div class="message-footer">${role === "assistant" ? footerMarkup(options.metrics, options.model) : `<span>${esc(formatClock())}</span>`}</div>`;
   $(".copy-button", article).addEventListener("click", async (event) => {
+    const button = event.currentTarget;
     try {
       await navigator.clipboard.writeText(content);
-      event.currentTarget.setAttribute("aria-label", "Message copied");
+      button.setAttribute("aria-label", "Message copied");
       announce("Message copied");
     } catch {
       announce("Copy is unavailable in this browser");
@@ -287,6 +290,7 @@ function addSystemMessage(text) {
 }
 
 function addErrorCard(title, detail) {
+  companion?.showView("chat");
   const card = document.createElement("div");
   card.className = "error-card";
   card.innerHTML = `<b>${esc(title)}</b><span>${esc(detail)}</span>`;
@@ -334,6 +338,7 @@ async function signIn(email, password) {
     authRequired = false;
     fillSettings();
     await refreshEngine();
+    await companion?.refresh().catch(() => {});
     closeDialog(el.authDialog);
     el.authPassword.value = "";
     renderState({ session: AnnieState.get("session") });
@@ -593,6 +598,7 @@ async function sendMessage() {
   if (AnnieState.get("session").phase === "thinking") return;
   const text = el.input.value.trim();
   if (!text) return;
+  companion?.showView("chat");
   if (!el.model.value) {
     const detail = "Start Ollama and install a model such as llama3.2, then retry.";
     addErrorCard("No model available", detail);
@@ -616,6 +622,7 @@ async function sendMessage() {
       toolEvents: data.tool_events || [],
     });
     announce("Annie replied");
+    companion?.refresh().catch(() => {});
     await speakReply(reply);
     if (data.restart) addSystemMessage("The local session was restarted by Annie's grounding policy. Structured knowledge was kept.");
   } catch (error) {
@@ -660,12 +667,14 @@ async function renderMemory() {
     $$(".delete-memory", el.memBody).forEach((button) => button.addEventListener("click", async () => {
       await AnnieApi.deleteKnowledgeItem(button.dataset.kind, button.dataset.id || null);
       await renderMemory();
+      await companion?.refresh().catch(() => {});
     }));
     $("#memExport", el.memBody).addEventListener("click", () => downloadJson("annie-structured-knowledge.json", memory));
     $("#memWipe", el.memBody).addEventListener("click", async () => {
       if (window.confirm("Wipe all structured knowledge? Conversation history is separate.")) {
         await AnnieApi.deleteKnowledge();
         await renderMemory();
+        await companion?.refresh().catch(() => {});
       }
     });
   } catch (error) {
@@ -830,6 +839,11 @@ el.resetSys.addEventListener("click", async () => {
 
 AnnieState.subscribe(renderState);
 
+companion = AnnieCompanion.init({
+  openDialog, closeDialog, announce, autosize,
+  inspectMemory: () => { openDialog(el.memoryDialog); renderMemory(); },
+});
+
 async function boot() {
   setupRecognition();
   renderState({ session: AnnieState.get("session") });
@@ -844,6 +858,7 @@ async function boot() {
   }
   fillSettings();
   await refreshEngine();
+  if (!authRequired) await companion.refresh().catch(() => {});
   window.setInterval(() => {
     if (!AnnieState.get("session").canStop) refreshEngine();
   }, 10_000);

@@ -1,11 +1,7 @@
 # Annie Local
 
 <p align="center">
-  <img src="docs/assets/research-session.png" alt="Annie Local Research Session interface" width="900" />
-</p>
-
-<p align="center">
-  <strong>Local-first AI research session — visible model routing, inspectable memory, measurable performance, no hidden UI dependencies.</strong>
+  <strong>A local-first companion for your ideas, your context, and your next step.</strong>
 </p>
 
 <p align="center">
@@ -21,9 +17,20 @@
 
 ---
 
-**Annie Local** is a local-first AI companion with a mobile Research Session interface, inspectable memory, optional voice, and tool calling. Default setup talks to Ollama on your hardware. The web UI uses no CDN. Runtime badges show whether model, memory, and voice routes are local, remote, or unverified.
+**Annie Local** brings conversations, personal context, and a practical goal board into one bright workspace. Save what matters, choose a goal, and ask Annie to help you take the next step. Default setup talks to Ollama on your hardware. The web UI uses no CDN. Runtime badges show whether model, memory, and voice routes are local, remote, or unverified.
 
 v0.3.0 beta. Not a clinical product.
+
+## Meet your Today workspace
+
+1. **Make it yours.** Add a profile note: what to call you, what you are working on, and how you like to be helped.
+2. **Pick a next move.** Add a goal directly to the board. Complete it or reopen it with one click.
+3. **Make it manageable.** Choose **Plan my next step** to prepare a prompt based on your saved goals. Edit it, then send it to your configured model.
+4. **Keep the useful bits.** Save a fact, goal, profile note, or journal entry through **Remember something**. Inspect, export, or delete stored knowledge anytime.
+
+Memory capture and goal controls work without a running model. Chat and generated plans require the configured Ollama model. Saved context is included in future model conversations when **Knowledge tools** is enabled. No personal profile is bundled with the code.
+
+See [Today workspace guide and verification](docs/TODAY_WORKSPACE.md).
 
 ## Why people use it
 
@@ -81,7 +88,8 @@ annie setup     # guided install if something is missing
 
 ## Features
 
-- **Research Session interface** — responsive orb, activity states, message metrics, touch-friendly controls
+- **Today workspace** — bright green companion interface, saved context, goal board, and editable next-step prompts
+- **Research Session conversation** — responsive orb, activity states, message metrics, touch-friendly controls
 - **Care engine** — honest, long-term-good doctrine (editable in Settings → cfg)
 - **Adaptive memory** — profile, facts, goals, journal at `~/.annie/knowledge.json`
 - **Tool loop** — remember, recall, goals, journal, datetime via Ollama tools
@@ -117,6 +125,7 @@ Delete anytime. It stays on your machine.
 ```bash
 pip install -e ".[dev,prod]"
 python3 -m pytest -q
+node --test tests/ui_*.test.js
 ./scripts/canary_test.sh
 ruff check .
 ruff format --check .

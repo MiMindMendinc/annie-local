@@ -41,7 +41,7 @@ jobs:
         run: pytest -q
 
       - name: Run browser preference and locality tests
-        run: node --test tests/ui_state.test.js
+        run: node --test tests/ui_*.test.js
 
       - name: Run substrate canary gate
         run: bash scripts/canary_test.sh
@@ -107,6 +107,8 @@ jobs:
               "annie/ui/app.js",
               "annie/ui/state.js",
               "annie/ui/styles.css",
+              "annie/ui/companion.css",
+              "annie/ui/companion.js",
               "annie/wopr_server.py",
           }
           with ZipFile(wheel) as archive:
@@ -127,7 +129,8 @@ jobs:
           node --check src/annie/ui/api-client.js
           node --check src/annie/ui/validators.js
           node --check src/annie/ui/app.js
-          node --test tests/ui_state.test.js
+          node --check src/annie/ui/companion.js
+          node --test tests/ui_*.test.js
 
       - name: Validate Compose and container build
         run: |

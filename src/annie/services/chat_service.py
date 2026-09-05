@@ -221,6 +221,22 @@ class ChatService:
     async def get_settings(self) -> dict:
         return await self._settings()
 
+    async def add_knowledge_item(self, kind: str, text: str) -> dict:
+        operations = {
+            "profile": self.knowledge.update_profile,
+            "fact": self.knowledge.remember,
+            "goal": self.knowledge.add_goal,
+            "journal": self.knowledge.journal,
+        }
+        result = await operations[kind](text, self.user_id)
+        await self.cache.delete(f"knowledge:{self.user_id or 'local'}")
+        return result
+
+    async def set_goal_state(self, item_id: str, done: bool) -> dict:
+        result = await self.knowledge.set_goal_state(item_id, done, self.user_id)
+        await self.cache.delete(f"knowledge:{self.user_id or 'local'}")
+        return result
+
     async def update_settings(self, payload: dict) -> dict:
         payload = validate_settings_update(payload, production=is_production())
         if self.runtime_settings:
