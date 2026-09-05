@@ -41,6 +41,9 @@ class FileKnowledgeRepository(KnowledgeRepository):
     async def list_goals(self, user_id: uuid.UUID | None = None) -> dict[str, Any]:
         return self.store.list_goals()
 
+    async def set_goal_state(self, item_id: str, done: bool, user_id: uuid.UUID | None = None) -> dict[str, Any]:
+        return self.store.set_goal_state(item_id, done)
+
     async def journal(self, entry: str, user_id: uuid.UUID | None = None) -> dict[str, Any]:
         return self.store.journal(entry)
 

@@ -62,6 +62,10 @@ class KnowledgeRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def set_goal_state(self, item_id: str, done: bool, user_id: uuid.UUID | None = None) -> dict[str, Any]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def journal(self, entry: str, user_id: uuid.UUID | None = None) -> dict[str, Any]:
         raise NotImplementedError
 

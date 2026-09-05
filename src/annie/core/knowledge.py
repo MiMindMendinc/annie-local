@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import time
 import uuid
+from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -30,6 +33,7 @@ class LocalKnowledge:
         ensure_private_directory(self.path.parent)
         ensure_private_file(self.path)
         self._data = self._load()
+        self._committed = deepcopy(self._data)
 
     def _load(self) -> KnowledgeStore:
         if not self.path.exists():
@@ -46,11 +50,25 @@ class LocalKnowledge:
             return KnowledgeStore()
 
     def _save(self) -> None:
-        self.path.write_text(
-            json.dumps(asdict(self._data), ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        ensure_private_file(self.path)
+        temporary: Path | None = None
+        try:
+            # Replace only after a complete private file reaches disk. A failed
+            # write must not leave a truncated file or a phantom in-memory save.
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=self.path.parent, prefix=".knowledge-", delete=False
+            ) as handle:
+                temporary = Path(handle.name)
+                json.dump(asdict(self._data), handle, ensure_ascii=False, indent=2)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, self.path)
+        except Exception:
+            self._data = deepcopy(self._committed)
+            raise
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+        self._committed = deepcopy(self._data)
 
     def snapshot(self) -> dict[str, Any]:
         return asdict(self._data)
@@ -101,6 +119,15 @@ class LocalKnowledge:
     def list_goals(self) -> dict[str, Any]:
         open_goals = [g["text"] for g in self._data.goals if not g.get("done")]
         return {"open": open_goals}
+
+    def set_goal_state(self, item_id: str, done: bool) -> dict[str, Any]:
+        """Update exactly one goal; repeated requests are idempotent."""
+        for goal in self._data.goals:
+            if goal.get("id") == item_id:
+                goal["done"] = done
+                self._save()
+                return dict(goal)
+        raise KeyError(item_id)
 
     def journal(self, entry: str) -> dict[str, Any]:
         row = {"id": _uid(), "entry": entry.strip(), "t": time.time()}
