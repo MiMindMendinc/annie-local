@@ -47,7 +47,7 @@ function workspace(seed = {}) {
   const document = {
     getElementById: (id) => { assert(nodes.has(id), `Missing HTML control ${id}`); return nodes.get(id); },
     createElement: () => { const node = new Element(); elements.push(node); return node; },
-    querySelectorAll: () => elements.filter((node) => /goal-toggle|goal-plan/.test(node.className || "")),
+    querySelectorAll: (selector) => elements.filter((node) => (node.className || "").split(" ").includes(selector.slice(1))),
   };
   const window = {};
   const announcements = [];
@@ -58,7 +58,10 @@ function workspace(seed = {}) {
     inspectMemory() {},
     announce: (text) => announcements.push(text),
     autosize() {},
+    requestPlan: async () => { calls.push({ mode: "plan", message: nodes.get("input").value }); nodes.get("input").value = ""; },
+    connectModel: () => calls.push({ connect: true }),
   });
+  companion.setRuntime({ model: { availability: "ready" } });
   return { companion, api, calls, announcements, get: (id) => nodes.get(id), setData: (next) => { data = next; } };
 }
 
@@ -101,17 +104,37 @@ test("goal controls complete and reopen the selected goal without changing a dup
   assert.equal(w.get("goalCount").textContent, "2 open");
 });
 
-test("planning prepares a prompt without sending and preserves an existing chat draft", async () => {
+test("planning sends the selected goals in planning mode and preserves an existing chat draft", async () => {
   const w = workspace({ goals: [{ id: "one", text: "Finish the prototype", done: false }] });
   await w.companion.refresh();
   await w.get("planDayBtn").fire("click");
-  assert.match(w.get("input").value, /Finish the prototype/);
+  assert.match(w.calls[0].message, /Finish the prototype/);
+  assert.equal(w.calls[0].mode, "plan");
   assert.equal(w.get("main").dataset.view, "chat");
-  assert.equal(w.calls.length, 0);
+  assert.equal(w.calls.length, 1);
   w.get("input").value = "A draft I am still writing";
   await w.get("unstickBtn").fire("click");
   assert.equal(w.get("input").value, "A draft I am still writing");
   assert.match(w.announcements.at(-1), /existing draft was kept/);
+  assert.equal(w.calls.length, 1);
+});
+
+test("unavailable model blocks planning, keeps memory usable, and offers model settings", async () => {
+  const w = workspace({ goals: [{ id: "one", text: "Build the prototype", done: false }] });
+  await w.companion.refresh();
+  w.companion.setRuntime({ model: { availability: "unavailable" } });
+  assert.equal(w.get("modelSetup").hidden, false);
+  assert.equal(w.get("planDayBtn").disabled, true);
+  assert.equal(w.get("goalList").children[0].children[2].disabled, true);
+  assert.equal(w.get("addGoalBtn").disabled, false);
+  assert.equal(w.get("goalList").children[0].children[0].disabled, false);
+  await w.get("planDayBtn").fire("click");
+  assert.equal(w.calls.length, 0);
+  await w.get("connectModelBtn").fire("click");
+  assert.deepEqual(w.calls, [{ connect: true }]);
+  w.companion.setRuntime({ model: { availability: "ready" } });
+  assert.equal(w.get("modelSetup").hidden, true);
+  assert.equal(w.get("planDayBtn").disabled, false);
 });
 
 test("capture errors keep the dialog and draft available", async () => {

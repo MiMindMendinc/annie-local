@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from dataclasses import replace
 from unittest.mock import AsyncMock, patch
+from uuid import uuid4
 
 import pytest
 from starlette.testclient import TestClient
 
 from annie.core.llm import ModelTurn
 from annie.env import get_settings
+from annie.repositories.file_adapters import FileKnowledgeRepository, FileMemoryRepository, FileSettingsRepository
 from annie.server import create_app
+from annie.services.chat_service import ChatService
 
 
 @pytest.mark.parametrize(
@@ -125,3 +128,85 @@ def test_goal_update_preflight_respects_configured_origins(api_client):
             },
         )
         assert response.status_code == expected
+
+
+def test_planning_uses_saved_context_and_enforces_read_only_tools(api_client):
+    api_client.post("/api/knowledge", json={"kind": "profile", "text": "I prefer concise checklists."})
+    api_client.post("/api/knowledge", json={"kind": "goal", "text": "Build the prototype"})
+    before = api_client.get("/api/knowledge").json()
+    with patch("annie.core.llm.OllamaBackend.chat", new_callable=AsyncMock) as model:
+        model.side_effect = [
+            ModelTurn(
+                content="",
+                tool_calls=[
+                    {"function": {"name": "complete_goal", "arguments": {"match": "prototype"}}},
+                    {"function": {"name": "remember", "arguments": {"fact": "Do not save this"}}},
+                ],
+            ),
+            ModelTurn(content="Sketch one screen, then check that the main action is clear."),
+        ]
+        response = api_client.post("/api/chat", json={"message": "Plan a next step.", "mode": "plan"})
+        assert response.status_code == 200
+        assert "Sketch one screen" in response.json()["reply"]
+        assert all(event.startswith("Skipped ") for event in response.json()["tool_events"])
+        first_call = model.call_args_list[0]
+        assert "I prefer concise checklists." in first_call.args[0][0].content
+        assert {tool["function"]["name"] for tool in first_call.kwargs["tools"]} == {
+            "get_datetime",
+            "recall",
+            "list_goals",
+        }
+    assert api_client.get("/api/knowledge").json() == before
+
+
+def test_empty_model_answer_returns_actionable_error(api_client):
+    with patch("annie.core.llm.OllamaBackend.chat", new_callable=AsyncMock) as model:
+        model.return_value = ModelTurn(content="  ")
+        response = api_client.post("/api/chat", json={"message": "Help me plan.", "mode": "plan"})
+    assert response.status_code == 502
+    assert "returned no answer" in response.json()["detail"]
+
+
+def test_failed_save_reports_error_and_does_not_leave_phantom_goal(api_client):
+    before = api_client.get("/api/knowledge").json()
+    with patch("annie.core.knowledge.os.replace", side_effect=OSError("Disk full")):
+        response = api_client.post("/api/knowledge", json={"kind": "goal", "text": "Keep my draft"})
+    assert response.status_code == 503
+    assert "could not be saved" in response.json()["detail"]
+    assert api_client.get("/api/knowledge").json() == before
+    assert api_client.post("/api/knowledge", json={"kind": "goal", "text": "Keep my draft"}).status_code == 201
+    assert len(api_client.get("/api/knowledge").json()["goals"]) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("planning", [True, False])
+async def test_production_planning_does_not_rewrite_knowledge_records(api_client, planning):
+    state = api_client.app.state.annie
+    service = ChatService(
+        config=state.config,
+        knowledge=FileKnowledgeRepository(state.knowledge),
+        memory=FileMemoryRepository(state.memory),
+        settings_repo=FileSettingsRepository(state.settings, state.config.resolved_settings_path),
+        sessions=state.sessions,
+        cache=state.cache,
+        runtime_settings=state.settings,
+        local_knowledge=state.knowledge,
+        local_memory=state.memory,
+        user_id=uuid4(),
+    )
+    engine, knowledge, memory, _ = await service._build_engine(read_only_tools=planning)
+    with (
+        patch.object(service, "_build_engine", new=AsyncMock(return_value=(engine, knowledge, memory, True))),
+        patch(
+            "annie.core.llm.OllamaBackend.chat", new=AsyncMock(return_value=ModelTurn(content="Take one small step."))
+        ),
+        patch("annie.services.chat_service.persist_knowledge", new_callable=AsyncMock) as save_knowledge,
+        patch("annie.services.chat_service.persist_memory", new_callable=AsyncMock) as save_conversation,
+    ):
+        response = await service.handle_message("What next?", read_only_tools=planning)
+    assert response["reply"] == "Take one small step."
+    if planning:
+        save_knowledge.assert_not_called()
+    else:
+        save_knowledge.assert_awaited_once()
+    save_conversation.assert_awaited_once()

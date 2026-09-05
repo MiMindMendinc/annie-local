@@ -228,6 +228,7 @@ function renderState(state) {
   el.authAccount.hidden = !auth?.token;
   el.accountEmail.textContent = auth?.user?.email || "Authenticated account";
   renderRuntime(session.runtime);
+  companion?.setRuntime(session.runtime);
   companion?.setLocked(authRequired || phase === "thinking");
 }
 
@@ -252,7 +253,7 @@ function addMessage(role, content, options = {}) {
       <button class="copy-button" type="button" aria-label="Copy ${author} message"><svg aria-hidden="true"><use href="#i-copy"></use></svg></button>
     </div>
     <div class="message-content">${formatMessage(content)}</div>
-    ${options.toolEvents?.length ? `<div class="tool-events">${options.toolEvents.map((event) => `✓ ${esc(event)}`).join("<br>")}</div>` : ""}
+    ${options.toolEvents?.length ? `<div class="tool-events">${options.toolEvents.map((event) => `${event.startsWith("Skipped ") ? "↳" : "✓"} ${esc(event)}`).join("<br>")}</div>` : ""}
     ${role === "assistant" ? '<div class="waveform" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' : ""}
     <div class="message-footer">${role === "assistant" ? footerMarkup(options.metrics, options.model) : `<span>${esc(formatClock())}</span>`}</div>`;
   $(".copy-button", article).addEventListener("click", async (event) => {
@@ -594,7 +595,7 @@ function stopCurrentActivity() {
   AnnieState.dispatch("STOPPED");
 }
 
-async function sendMessage() {
+async function sendMessage(mode = "chat") {
   if (AnnieState.get("session").phase === "thinking") return;
   const text = el.input.value.trim();
   if (!text) return;
@@ -613,8 +614,9 @@ async function sendMessage() {
   abortController = new AbortController();
 
   try {
-    const data = await AnnieApi.chat(text, abortController.signal);
-    const reply = data.reply || "[no output]";
+    const data = await AnnieApi.chat(text, abortController.signal, mode);
+    const reply = data.reply?.trim();
+    if (!reply) throw new Error("The model returned no answer. Try again or choose another installed model.");
     AnnieState.dispatch("RESPONSE_READY", { metrics: data.metrics || null });
     addMessage("assistant", reply, {
       metrics: data.metrics,
@@ -841,6 +843,8 @@ AnnieState.subscribe(renderState);
 
 companion = AnnieCompanion.init({
   openDialog, closeDialog, announce, autosize,
+  requestPlan: () => sendMessage("plan"),
+  connectModel: () => { fillSettings(); openDialog(el.settingsDialog, el.model); },
   inspectMemory: () => { openDialog(el.memoryDialog); renderMemory(); },
 });
 

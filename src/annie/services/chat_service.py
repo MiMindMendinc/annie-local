@@ -106,7 +106,9 @@ class ChatService:
             return self.runtime_settings.to_public_dict()
         return await self.settings_repo.load(self.user_id)
 
-    async def _build_engine(self) -> tuple[ChatEngine, LocalKnowledge, LocalMemory, bool]:
+    async def _build_engine(
+        self, *, read_only_tools: bool = False
+    ) -> tuple[ChatEngine, LocalKnowledge, LocalMemory, bool]:
         settings = await self._settings()
         llm = OllamaBackend(settings["ollama_url"], settings["model"])
         production = is_production() and self.user_id is not None
@@ -124,6 +126,7 @@ class ChatService:
                     system_prompt=settings["system_prompt"],
                     temperature=settings["temperature"],
                     tools_enabled=settings["tools_enabled"],
+                    read_only_tools=read_only_tools,
                 ),
                 lk,
                 lm,
@@ -142,21 +145,23 @@ class ChatService:
                 system_prompt=settings["system_prompt"],
                 temperature=settings["temperature"],
                 tools_enabled=settings["tools_enabled"],
+                read_only_tools=read_only_tools,
             ),
             self.local_knowledge,
             self.local_memory,
             False,
         )
 
-    async def handle_message(self, message: str) -> dict:
-        engine, lk, lm, production = await self._build_engine()
+    async def handle_message(self, message: str, *, read_only_tools: bool = False) -> dict:
+        engine, lk, lm, production = await self._build_engine(read_only_tools=read_only_tools)
         started = time.perf_counter()
         try:
             result: ChatResult = await engine.handle(message)
         except LLMBackendError as exc:
             raise RuntimeError(str(exc)) from exc
         if production and self.user_id:
-            await persist_knowledge(self.knowledge, self.user_id, lk)
+            if not read_only_tools:
+                await persist_knowledge(self.knowledge, self.user_id, lk)
             await persist_memory(self.memory, self.user_id, lm, clear_first=result.restart)
         await self.cache.delete(f"knowledge:{self.user_id or 'local'}")
         metrics = (

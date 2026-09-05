@@ -25,6 +25,9 @@ htmlcov/
 
 # Local app data
 .annie/
+.annie-preview/
+.preview-python/
+node_modules/
 annie_memory.jsonl
 *.log
 docs/assets/demo-frames/

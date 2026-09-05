@@ -107,7 +107,7 @@ async def chat(
 ) -> dict:
     message = sanitize_text(request.message)
     try:
-        return await service.handle_message(message)
+        return await service.handle_message(message, read_only_tools=request.mode == "plan")
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -136,7 +136,12 @@ async def add_knowledge_item(
     text = sanitize_text(request.text, max_length=4_000).strip()
     if not text:
         raise HTTPException(status_code=400, detail="Write something to save first.")
-    return await service.add_knowledge_item(request.kind, text)
+    try:
+        return await service.add_knowledge_item(request.kind, text)
+    except OSError as exc:
+        raise HTTPException(
+            status_code=503, detail="Memory could not be saved. Check available disk space and retry."
+        ) from exc
 
 
 @router.patch("/knowledge/goals/{item_id}")
@@ -149,6 +154,10 @@ async def set_goal_state(
         return await service.set_goal_state(item_id, request.done)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Goal not found.") from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=503, detail="Goal could not be saved. Check available disk space and retry."
+        ) from exc
 
 
 @router.post("/knowledge/delete")

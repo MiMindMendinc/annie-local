@@ -23,9 +23,13 @@ v0.3.0 beta. Not a clinical product.
 
 ## Meet your Today workspace
 
+![Annie Today workspace with a saved goal, profile, and memory controls](docs/assets/today-workspace.jpg)
+
+*Actual running page with synthetic test notes and Ollama stopped. Memory and goal controls remain usable; planning becomes available when the configured model is ready.*
+
 1. **Make it yours.** Add a profile note: what to call you, what you are working on, and how you like to be helped.
 2. **Pick a next move.** Add a goal directly to the board. Complete it or reopen it with one click.
-3. **Make it manageable.** Choose **Plan my next step** to prepare a prompt based on your saved goals. Edit it, then send it to your configured model.
+3. **Make it manageable.** Choose **Plan my next step** to ask your configured model for a 15-minute action based on your saved goals. Planning can read context but cannot change saved knowledge or mark goals complete.
 4. **Keep the useful bits.** Save a fact, goal, profile note, or journal entry through **Remember something**. Inspect, export, or delete stored knowledge anytime.
 
 Memory capture and goal controls work without a running model. Chat and generated plans require the configured Ollama model. Saved context is included in future model conversations when **Knowledge tools** is enabled. No personal profile is bundled with the code.
@@ -54,6 +58,8 @@ annie launch
 ```
 
 Open **http://127.0.0.1:8787**.
+
+Already installed from this repository? Stop Annie, run `git pull --ff-only` and `python -m pip install -e .` in your checkout, then run `annie launch` again. The Today workspace opens by default. If no model is available, **Connect model** opens Settings; memory capture and goal controls remain available.
 
 An install helper is available at `scripts/install.sh`. Inspect it locally
 before running it; the documented path above does not pipe code from the
@@ -88,7 +94,7 @@ annie setup     # guided install if something is missing
 
 ## Features
 
-- **Today workspace** — bright green companion interface, saved context, goal board, and editable next-step prompts
+- **Today workspace** — bright green companion interface, saved context, goal board, and model-generated next-step plans
 - **Research Session conversation** — responsive orb, activity states, message metrics, touch-friendly controls
 - **Care engine** — honest, long-term-good doctrine (editable in Settings → cfg)
 - **Adaptive memory** — profile, facts, goals, journal at `~/.annie/knowledge.json`

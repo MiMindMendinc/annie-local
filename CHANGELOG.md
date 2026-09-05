@@ -4,10 +4,12 @@
 
 ### Today companion workspace
 
-- Added a bright green Today view with a goal board, profile preview, memory counts, and editable next-step prompts.
+- Added a bright green Today view with a goal board, profile preview, memory counts, and model-generated next-step plans.
 - Added direct fact, profile, goal, and journal capture without requiring a model request.
 - Added exact-ID goal completion and reopening to file and PostgreSQL repositories, with authenticated API routes and cache invalidation.
-- Preserved drafts on failed writes and when opening a planning prompt; refreshed the board after chat or memory changes.
+- Preserved drafts on failed writes and when requesting a plan; refreshed the board after chat or memory changes.
+- Enforced read-only knowledge tools for planning, with clear model setup guidance when Ollama is unavailable.
+- Made local knowledge saves atomic and rolled back in-memory changes after storage failures. Empty model output now returns an actionable error.
 - Kept bundled assets, existing storage, runtime locality labels, voice preferences, and safety checks.
 - Added persistence, validation, authentication, CORS, and UI interaction tests. Browser layout and real-model plan quality still require operator review.
 

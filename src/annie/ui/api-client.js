@@ -77,7 +77,7 @@
     getSettings: () => request("/api/settings"),
     updateSettings: (body) => request("/api/settings", { method: "PUT", body }),
     resetDoctrine: () => request("/api/settings/reset-doctrine", { method: "POST" }),
-    chat: (message, signal) => request("/api/chat", { method: "POST", body: { message }, signal, retries: 1 }),
+    chat: (message, signal, mode = "chat") => request("/api/chat", { method: "POST", body: { message, mode }, signal, retries: 1 }),
     restartSession: () => request("/api/session/restart", { method: "POST" }),
     getKnowledge: () => request("/api/knowledge"),
     addKnowledge: (kind, text) => request("/api/knowledge", { method: "POST", body: { kind, text } }),

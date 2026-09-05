@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr, Field, StrictBool
 
 class ChatRequest(BaseModel):
     message: Annotated[str, Field(min_length=1, max_length=20_000)]
+    mode: Literal["chat", "plan"] = "chat"
 
 
 class MemorySearchRequest(BaseModel):

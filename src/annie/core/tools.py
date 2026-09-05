@@ -6,6 +6,8 @@ from typing import Any
 
 from annie.core.knowledge import LocalKnowledge
 
+READ_ONLY_TOOLS = frozenset({"get_datetime", "recall", "list_goals"})
+
 TOOL_SPECS: list[dict[str, Any]] = [
     {
         "type": "function",
@@ -99,9 +101,10 @@ TOOL_SPECS: list[dict[str, Any]] = [
 
 
 class ToolRunner:
-    def __init__(self, knowledge: LocalKnowledge, *, memory_enabled: bool = True) -> None:
+    def __init__(self, knowledge: LocalKnowledge, *, memory_enabled: bool = True, read_only: bool = False) -> None:
         self.knowledge = knowledge
         self.memory_enabled = memory_enabled
+        self.read_only = read_only
 
     def run(self, name: str, arguments: str | dict[str, Any] | None) -> dict[str, Any]:
         args = self._parse_args(arguments)
@@ -109,6 +112,8 @@ class ToolRunner:
             return {"now": datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")}
         if not self.memory_enabled:
             return {"skipped": "memory off"}
+        if self.read_only and name not in READ_ONLY_TOOLS:
+            return {"skipped": "planning cannot change saved knowledge"}
         if name == "remember":
             return self.knowledge.remember(str(args.get("fact", "")))
         if name == "recall":
