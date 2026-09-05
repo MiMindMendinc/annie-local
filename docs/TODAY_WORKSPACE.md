@@ -16,6 +16,8 @@ Capture and goal updates work when Ollama is unavailable. Generating a plan need
 
 ## Storage and API
 
+The visual design uses bundled original emerald-glass artwork (`ui/assets/annie-glass.webp`), a green/lime palette, responsive action cards, and a consistent light theme across conversation, memory, and settings. The image is decorative; model readiness is still determined by the runtime badges. Thinking and speaking have restrained motion, with reduced-motion preferences respected. The Python wheel includes the artwork and CI verifies its presence.
+
 There is no second browser database for personal context. Local mode uses the existing knowledge JSON file; production mode uses the authenticated user's PostgreSQL repository and its existing request serialization. The new writes invalidate the user's knowledge cache. No migrations or new runtime dependencies are required.
 
 | Endpoint | Behavior |

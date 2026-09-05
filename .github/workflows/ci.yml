@@ -109,6 +109,7 @@ jobs:
               "annie/ui/styles.css",
               "annie/ui/companion.css",
               "annie/ui/companion.js",
+              "annie/ui/assets/annie-glass.webp",
               "annie/wopr_server.py",
           }
           with ZipFile(wheel) as archive:

@@ -4,6 +4,8 @@
 
 ### Today companion workspace
 
+- Rebuilt the visual design with original emerald-glass artwork, an emerald/lime palette, larger typography, distinct action cards, and redesigned conversation, settings, and memory surfaces. Artwork is bundled for local use and checked in the wheel build.
+
 - Added a bright green Today view with a goal board, profile preview, memory counts, and model-generated next-step plans.
 - Added direct fact, profile, goal, and journal capture without requiring a model request.
 - Added exact-ID goal completion and reopening to file and PostgreSQL repositories, with authenticated API routes and cache invalidation.

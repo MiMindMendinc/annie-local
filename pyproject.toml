@@ -77,7 +77,7 @@ demo = [
 annie = "annie.cli:main"
 
 [tool.setuptools.package-data]
-annie = ["ui/*.html", "ui/*.js", "ui/*.css"]
+annie = ["ui/*.html", "ui/*.js", "ui/*.css", "ui/assets/*.webp"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
