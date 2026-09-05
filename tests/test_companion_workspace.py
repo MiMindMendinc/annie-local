@@ -111,7 +111,7 @@ def test_workspace_writes_require_auth_when_enabled(api_client, method, path, pa
 
 def test_workspace_assets_are_packaged_and_served(api_client):
     html = api_client.get("/").text
-    for name in ("companion.css", "companion.js"):
+    for name in ("companion.css", "companion.js", "assets/annie-glass.webp"):
         path = f"/static/{name}"
         assert path in html
         assert api_client.get(path).status_code == 200

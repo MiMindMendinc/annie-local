@@ -23,6 +23,8 @@ v0.3.0 beta. Not a clinical product.
 
 ## Meet your Today workspace
 
+Annie’s visual identity pairs original emerald-glass artwork with vivid green accents, larger typography, and distinct surfaces for planning, conversation, and memory. The artwork ships inside the app, so the interface needs no image CDN.
+
 ![Annie Today workspace with a saved goal, profile, and memory controls](docs/assets/today-workspace.jpg)
 
 *Actual running page with synthetic test notes and Ollama stopped. Memory and goal controls remain usable; planning becomes available when the configured model is ready.*
