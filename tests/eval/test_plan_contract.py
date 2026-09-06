@@ -27,6 +27,25 @@ def test_invalid_plan_fails_without_placeholder(content):
         render_plan(content)
 
 
+def test_plan_renders_one_unchecked_marker_per_step():
+    content = json.dumps(
+        {
+            "first_action": "Open the notebook.",
+            "checklist": ["[ ] Choose a cover", "- [x] Set up the layout", "1. [ ] Create an index"],
+        }
+    )
+    assert render_plan(content) == (
+        "Open the notebook.\n\n- [ ] Choose a cover\n- [ ] Set up the layout\n- [ ] Create an index"
+    )
+
+
+@pytest.mark.parametrize("empty_item", ["[ ]", "- [ ]", "1. [x]"])
+def test_presentation_marker_is_not_a_checklist_step(empty_item):
+    content = json.dumps({"first_action": "Act", "checklist": ["Sort", "Store", empty_item]})
+    with pytest.raises(LLMBackendError):
+        render_plan(content)
+
+
 def test_plan_contract_against_mock_ollama(api_client):
     path = Path(__file__).parents[2] / "scripts/mock_ollama.py"
     spec = importlib.util.spec_from_file_location("mock_ollama", path)
