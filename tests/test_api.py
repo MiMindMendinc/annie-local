@@ -19,7 +19,7 @@ def test_index_loads(tmp_path) -> None:
     with TestClient(create_app(config)) as client:
         response = client.get("/")
     assert response.status_code == 200
-    assert "Research Session" in response.text
+    assert "Annie session controls" in response.text
 
 
 def test_health_endpoint(tmp_path) -> None:

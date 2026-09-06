@@ -111,6 +111,7 @@ class OllamaBackend:
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.7,
         on_progress: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        response_format: dict[str, Any] | None = None,
     ) -> ModelTurn:
         if not hasattr(self, "_resolved_model"):
             status = await self.health()
@@ -127,6 +128,8 @@ class OllamaBackend:
         }
         if tools:
             payload["tools"] = tools
+        if response_format is not None:
+            payload["format"] = response_format
 
         if on_progress is not None:
             try:

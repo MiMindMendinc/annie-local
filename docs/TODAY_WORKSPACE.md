@@ -66,3 +66,7 @@ The September 5, 2026 verification passed 122 Python tests, 11 Node tests, and 2
 The cloud browser's URL policy blocked the phone preview, so live phone rendering is not claimed. Check narrow widths, reduced motion, and physical voice behavior on the target device. No real Ollama model or live PostgreSQL/Redis services were available in the implementation environment; generated-plan quality and those hardware/service integrations remain to be checked there. Model tests use explicit test doubles, never simulated responses in the shipped app.
 
 Runtime badges retain their previous meaning. Browser speech is locality-unverified. This upgrade adds no cloud model provider, analytics, remote UI assets, bundled personal information, or autonomous background tasks.
+
+## Operator repair candidate
+
+The emerald artwork remains bundled and is dimmed when the model is unavailable. The hero uses the health repair object, with Retry, installed-model settings, and the exact pull command. Drafts and memory remain available while send, microphone, Direction and Clarity are disabled. Network local-route labels explicitly retain isolation uncertainty. Desktop browser checks are recorded in [DEVICE_QA.md](DEVICE_QA.md); physical phone and real-model readiness evidence remain pending.

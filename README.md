@@ -19,13 +19,15 @@
 
 **Annie Local** brings conversations, personal context, and a practical goal board into one bright workspace. Save what matters, choose a goal, and ask Annie to help you take the next step. Default setup talks to Ollama on your hardware. The web UI uses no CDN. Runtime badges show whether model, memory, and voice routes are local, remote, or unverified.
 
-v0.3.0 beta. Not a clinical product.
+v0.4.0 candidate (unreleased). Not a clinical product.
 
 ## Meet your Today workspace
 
 Annie’s visual identity pairs original emerald-glass artwork with vivid green accents, larger typography, and distinct surfaces for planning, conversation, and memory. The artwork ships inside the app, so the interface needs no image CDN.
 
-![Annie Today workspace with a saved goal, profile, and memory controls](docs/assets/today-workspace.jpg)
+![Today workspace in repair mode, with Ollama unavailable](docs/assets/repair-workspace.jpg)
+
+Today workspace in repair mode. The screenshot shows the unavailable-model state. Real-model API checks are recorded in the [readiness report](docs/RELEASE_READINESS.md); a ready-state browser capture is still required.
 
 *Actual running page with synthetic test notes and Ollama stopped. Memory and goal controls remain usable; planning becomes available when the configured model is ready.*
 
@@ -38,16 +40,16 @@ Memory capture and goal controls work without a running model. Chat and generate
 
 See [Today workspace guide and verification](docs/TODAY_WORKSPACE.md).
 
-## Why people use it
+## Capabilities
 
-| You get | You don't get |
-|---------|----------------|
-| Mobile Research Session UI with observable state | Another bare chat box |
-| Memory that stores goals, facts, journal on disk | Cloud memory harvest |
-| Tool calling (remember, recall, goals) | Vendor lock-in |
-| WOPR voice bridge + mic input | Required subscriptions |
-| One command to launch | — |
-| Hardened Compose reference (Postgres, Redis, JWT) | A finished public multi-user service |
+| Capability | Current scope |
+| --- | --- |
+| Mobile conversation UI | Visible model, memory, voice, and network status |
+| Inspectable memory | Goals, facts, profile, and journal stored on disk by default |
+| Tool calling | Remember, recall, goals, journal, and datetime |
+| Optional voice | Local WOPR output; browser voice locality is unverified |
+| Local launch | FastAPI with Ollama on loopback by default |
+| Compose reference | PostgreSQL, Redis, and JWT; public hosting gates remain open |
 
 ## Quick start
 
@@ -97,7 +99,7 @@ annie setup     # guided install if something is missing
 ## Features
 
 - **Today workspace** — bright green companion interface, saved context, goal board, and model-generated next-step plans
-- **Research Session conversation** — responsive orb, activity states, message metrics, touch-friendly controls
+- **Conversation** — responsive orb, activity states, message metrics, touch-friendly controls
 - **Care engine** — honest, long-term-good doctrine (editable in Settings → cfg)
 - **Adaptive memory** — profile, facts, goals, journal at `~/.annie/knowledge.json`
 - **Tool loop** — remember, recall, goals, journal, datetime via Ollama tools
@@ -106,7 +108,7 @@ annie setup     # guided install if something is missing
 - **FastAPI backend** — routers → services → repositories
 - **Production middleware** — JWT, CORS, rate limiting, security headers, structured logging
 - **PostgreSQL + authenticated Redis** — optional Compose path
-- **S3-compatible service foundation** — present in code; attachment API/UI is not claimed in v0.3.0
+- **S3-compatible service foundation** — present in code; attachment API/UI is not enabled in this candidate
 
 ## Local voice on launch (WOPR)
 
@@ -126,7 +128,7 @@ For Piper, set `WOPR_PIPER_MODEL=/path/to/voice.onnx`. Skip auto-start with `ann
 | `~/.annie/knowledge.json` | Profile, facts, goals, journal |
 | `~/.annie/settings.json` | Model, temperature, doctrine |
 
-Delete anytime. It stays on your machine.
+These are the default local storage paths. Saved context can be sent to the configured model endpoint; remote model routes and optional PostgreSQL storage change that boundary. Inspect, export, or delete stored knowledge through the app.
 
 ## Verify before you ship a build
 
@@ -157,7 +159,7 @@ Bind stays on `127.0.0.1` by default.
 
 ## Status
 
-**v0.3.0 — local-first beta with a hardened deployment reference.**
+**v0.4.0 candidate — local-first beta; release gates remain open.**
 
 Not a therapist, crisis line, compliance-certified clinical tool, or finished public multi-user service. See [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), and [docs/STATUS.md](docs/STATUS.md).
 
@@ -167,7 +169,7 @@ Not a therapist, crisis line, compliance-certified clinical tool, or finished pu
 - [Run book](docs/RUNBOOK.md)
 - [Grounding](docs/GROUNDING.md)
 - [Voice](docs/VOICE.md)
-- [Research Session QA](docs/RESEARCH_SESSION_QA.md)
+- [UI QA](docs/RESEARCH_SESSION_QA.md)
 - [Canary results](docs/CANARY_RESULTS.md)
 - [Changelog](CHANGELOG.md)
 - [Roadmap](docs/ROADMAP.md)
@@ -186,3 +188,5 @@ python3 scripts/run_canary_benchmark.py
 MIT — [Michigan MindMend Inc.](LICENSE)
 
 First-run model unavailable? Run `annie doctor` for the configured endpoint and repair commands, or `annie setup` for a download-confirming setup flow. Settings lists installed models and requires an explicit choice to save an unavailable name. See [first-run recovery](docs/GETTING_STARTED.md#repair-a-first-run-model-connection).
+
+The candidate includes operator repair mode, model selection, and cancellable generation. Real local-model checks cover chat, valid Direction and Clarity plans, model recovery, and memory preservation. Text remains buffered for complete-response grounding; immediate token-by-token display is not implemented. Physical phone, accessibility, and ready-state browser evidence remain open. See the [readiness report](docs/RELEASE_READINESS.md) and [device and release QA](docs/DEVICE_QA.md).

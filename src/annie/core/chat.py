@@ -10,7 +10,7 @@ from annie.core._substrate import SubstrateOutcome, evaluate_output
 from annie.core.knowledge import LocalKnowledge
 from annie.core.llm import ChatMessage, LLMBackendError, ModelTurn, OllamaBackend
 from annie.core.memory import LocalMemory
-from annie.core.plan import render_plan
+from annie.core.plan import Plan, render_plan
 from annie.core.session import SessionManager
 from annie.core.tools import READ_ONLY_TOOLS, TOOL_SPECS, ToolRunner
 
@@ -145,12 +145,14 @@ class ChatEngine:
         final_metrics: ChatMetrics | None = None
 
         for _ in range(self.max_tool_rounds):
-            stream_options = {"on_progress": on_progress} if on_progress is not None else {}
+            request_options: dict[str, Any] = {"on_progress": on_progress} if on_progress is not None else {}
+            if self.read_only_tools:
+                request_options["response_format"] = Plan.model_json_schema()
             turn: ModelTurn = await self.llm.chat(
                 messages,
                 tools=tools,
                 temperature=self.temperature,
-                **stream_options,
+                **request_options,
             )
             if turn.content:
                 hit = self._substrate_check(turn.content, user_text)
