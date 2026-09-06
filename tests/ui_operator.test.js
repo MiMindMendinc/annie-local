@@ -29,3 +29,16 @@ test('local route badge remains unverified and remote routes remain disclosed', 
   assert.equal(nodes.networkStatus.label,'Network: remote route');
   assert.equal(nodes.networkStatus.tone,'bad');
 });
+
+test('pressing send offline preserves the draft and repair view', async () => {
+  const input = {value:'Keep drafting offline'};
+  let changedView = false;
+  let notice = '';
+  const context = {el:{input},abortController:null,AnnieState:{get:()=>({phase:'offline',runtime:{model:{availability:'unavailable'}}})},companion:{showView(){changedView=true;}},announce(text){notice=text;}};
+  vm.createContext(context);
+  vm.runInContext(code.slice(code.indexOf('async function sendMessage'),code.indexOf('function memoryGroup')),context);
+  await context.sendMessage();
+  assert.equal(changedView,false);
+  assert.equal(input.value,'Keep drafting offline');
+  assert.match(notice,/draft was kept/);
+});

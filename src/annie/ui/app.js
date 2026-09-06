@@ -581,13 +581,11 @@ async function sendMessage(mode = "chat") {
   if (abortController || AnnieState.get("session").phase === "thinking") return;
   const text = el.input.value.trim();
   if (!text) return;
-  companion?.showView("chat");
   if (AnnieState.get("session").runtime.model?.availability !== "ready") {
-    const detail = "Start Ollama and install a model such as llama3.2, then retry.";
-    addErrorCard("No model available", detail);
-    AnnieState.dispatch("FAILED", { title: "No model available", detail });
+    announce("Model offline. Your draft was kept. Memory still works.");
     return;
   }
+  companion?.showView("chat");
 
   addMessage("user", text);
   el.input.value = "";
@@ -615,7 +613,9 @@ async function sendMessage(mode = "chat") {
     if (data.restart) addSystemMessage("The local session was restarted by Annie's grounding policy. Structured knowledge was kept.");
   } catch (error) {
     if (error.name === "AbortError") {
-      addSystemMessage("Output stopped. The streaming connection was cancelled.");
+      addSystemMessage(mode === "plan"
+        ? "Plan request stopped. The non-streaming model request may finish in the background."
+        : "Output stopped. The streaming connection was cancelled.");
       AnnieState.dispatch("STOPPED");
     } else {
       const detail = error.message || "The configured model did not return a response.";
