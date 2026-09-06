@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### First-run model recovery
+
+- Added actionable health diagnostics, canonical tag resolution used by inference, an authenticated installed-model picker, explicit missing-model save confirmation, and cross-platform setup/doctor repair commands. Real-Ollama release evidence is still required.
+
 ### Today companion workspace
 
 - Rebuilt the visual design with original emerald-glass artwork, an emerald/lime palette, larger typography, distinct action cards, and redesigned conversation, settings, and memory surfaces. Artwork is bundled for local use and checked in the wheel build.

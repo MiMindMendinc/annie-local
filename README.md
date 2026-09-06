@@ -184,3 +184,5 @@ python3 scripts/run_canary_benchmark.py
 ## License
 
 MIT — [Michigan MindMend Inc.](LICENSE)
+
+First-run model unavailable? Run `annie doctor` for the configured endpoint and repair commands, or `annie setup` for a download-confirming setup flow. Settings lists installed models and requires an explicit choice to save an unavailable name. See [first-run recovery](docs/GETTING_STARTED.md#repair-a-first-run-model-connection).

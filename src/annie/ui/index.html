@@ -186,7 +186,10 @@
         <div class="sheet-body">
           <div class="field">
             <label for="model">Model</label>
-            <select id="model"><option value="">Checking Ollama…</option></select>
+            <input id="model" list="installedModels" autocomplete="off" spellcheck="false" aria-describedby="modelHint" />
+            <datalist id="installedModels"></datalist>
+            <small id="modelHint" role="status" aria-live="polite"></small>
+            <label class="toggle-row" for="saveMissingModel"><span>Save anyway (model may be unavailable)</span><input id="saveMissingModel" type="checkbox" /></label>
           </div>
           <div class="field">
             <label for="ollamaUrl">Ollama endpoint</label>

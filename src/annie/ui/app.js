@@ -381,6 +381,9 @@ async function loadSettings() {
 }
 
 function fillSettings() {
+  el.model.value = settings.model || "";
+  $("#saveMissingModel").checked = false;
+  refreshModelPicker();
   el.ollamaUrl.value = settings.ollama_url || "";
   el.voiceUrl.value = settings.voice_url || "";
   el.ollamaUrl.disabled = Boolean(settings.operator_managed_routes);
@@ -419,63 +422,37 @@ function fallbackRuntime(data) {
   };
 }
 
-function modelKey(value) {
-  return String(value || "").trim().toLowerCase().replace(/:latest$/, "");
+async function refreshModelPicker() {
+  const hint = $("#modelHint");
+  try {
+    const data = await AnnieApi.models(el.model.value.trim());
+    const options = $("#installedModels");
+    options.replaceChildren();
+    for (const name of data.model_names || []) {
+      const option = document.createElement("option");
+      option.value = name;
+      options.appendChild(option);
+    }
+    hint.textContent = data.selection?.installed ? "Installed model available."
+      : `Configured "${el.model.value}" is not installed. Installed: ${(data.model_names || []).join(", ") || "none"}.`;
+  } catch {
+    hint.textContent = "Unable to check installed models. Retry after checking the endpoint.";
+  }
 }
 
 function runtimeForSettings(data) {
-  const runtime = data.runtime_status || fallbackRuntime(data);
-  const names = Array.isArray(data.backend?.model_names) ? data.backend.model_names : [];
-  const endpointAvailable = Boolean(data.backend?.ok);
-  const installed = names.some((name) => modelKey(name) === modelKey(settings.model));
-  const ready = endpointAvailable && installed;
-  return {
-    ...runtime,
-    model: {
-      ...(runtime.model || {}),
-      name: settings.model,
-      availability: ready ? "ready" : "unavailable",
-      endpoint_available: endpointAvailable,
-      installed,
-      reason: ready
-        ? "The selected model is available."
-        : endpointAvailable
-          ? "The selected model is not listed by the endpoint."
-          : "The model endpoint is unavailable.",
-    },
-    memory: {
-      ...(runtime.memory || {}),
-      knowledge_tools: settings.tools_enabled ? "enabled" : "disabled",
-    },
-  };
+  return data.runtime_status || fallbackRuntime(data);
 }
 
 async function refreshEngine() {
   try {
     const data = await AnnieApi.health();
-    const names = data.backend?.model_names || [];
-    const previous = el.model.value;
-    el.model.innerHTML = "";
-    if (!names.length) {
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "No model found — pull llama3.2";
-      el.model.appendChild(option);
-    } else {
-      for (const name of names) {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        el.model.appendChild(option);
-      }
-      const selectedName = names.find((name) => modelKey(name) === modelKey(settings.model));
-      if (selectedName) el.model.value = selectedName;
-      else if (previous && names.includes(previous)) el.model.value = previous;
-      else el.model.value = names[0];
+    if (data.runtime_status?.model?.name !== settings.model) {
+      const models = await AnnieApi.models();
+      data.runtime_status = { ...(data.runtime_status || fallbackRuntime(data)), model: models.model_status };
     }
     AnnieState.dispatch("HEALTH_OK", runtimeForSettings(data));
   } catch {
-    el.model.innerHTML = '<option value="">Start Ollama to continue</option>';
     AnnieState.dispatch("HEALTH_LOST");
   }
 }
@@ -699,6 +676,16 @@ async function saveSettings() {
     announce("Settings could not be saved");
     return;
   }
+  let installed = false;
+  try {
+    const models = await AnnieApi.models(payload.model);
+    installed = models.selection?.installed && payload.ollama_url === settings.ollama_url;
+  } catch { /* An unreachable endpoint requires an explicit save-anyway choice. */ }
+  if (!installed && !$("#saveMissingModel").checked) {
+    $("#modelHint").textContent = "This model or endpoint is unverified. Choose an installed model or check Save anyway.";
+    $("#saveMissingModel").focus();
+    return;
+  }
   settings = await AnnieApi.updateSettings(payload);
   AnnieState.set("settings", settings);
   AnnieState.setPrefs({ speak: el.speakToggle.checked });
@@ -870,3 +857,6 @@ async function boot() {
 }
 
 boot();
+
+el.model.addEventListener("input", () => { $("#saveMissingModel").checked = false; });
+el.model.addEventListener("change", refreshModelPicker);
