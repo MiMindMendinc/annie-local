@@ -4,6 +4,7 @@ import logging
 import tempfile
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from contextlib import suppress
 from dataclasses import asdict
 from datetime import UTC, datetime
@@ -152,11 +153,17 @@ class ChatService:
             False,
         )
 
-    async def handle_message(self, message: str, *, read_only_tools: bool = False) -> dict:
+    async def handle_message(
+        self,
+        message: str,
+        *,
+        read_only_tools: bool = False,
+        on_progress: Callable[[dict], Awaitable[None]] | None = None,
+    ) -> dict:
         engine, lk, lm, production = await self._build_engine(read_only_tools=read_only_tools)
         started = time.perf_counter()
         try:
-            result: ChatResult = await engine.handle(message)
+            result: ChatResult = await engine.handle(message, on_progress=on_progress)
         except LLMBackendError as exc:
             raise RuntimeError(str(exc)) from exc
         if production and self.user_id:

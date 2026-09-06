@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from contextlib import suppress
 from dataclasses import asdict
 from typing import Annotated
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from starlette.responses import StreamingResponse
 
 from annie import __version__
 from annie.api.dependencies import AppState, get_chat_service, get_state
@@ -129,6 +132,72 @@ async def chat(
         return await service.handle_message(message, read_only_tools=request.mode == "plan")
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+async def _repair_payload(service: ChatService) -> dict:
+    runtime = await service.get_settings()
+    backend = await OllamaBackend(runtime["ollama_url"], runtime["model"]).health()
+    status = build_runtime_status(mode=get_app_settings().mode, runtime=runtime, backend=backend, voice={})
+    return {"backend": backend, "runtime_status": status}
+
+
+@router.post("/chat/stream")
+async def chat_stream(
+    request: ChatRequest,
+    service: Annotated[ChatService, Depends(get_chat_service)],
+) -> StreamingResponse:
+    if request.mode == "plan":
+        raise HTTPException(status_code=400, detail="Planning uses the non-streaming /api/chat endpoint")
+    repair = await _repair_payload(service)
+    if repair["runtime_status"]["model"]["availability"] != "ready":
+        raise HTTPException(status_code=502, detail=repair)
+
+    async def events():
+        queue: asyncio.Queue = asyncio.Queue(maxsize=8)
+
+        async def progress(data):
+            await queue.put(("progress", data))
+
+        async def generate():
+            try:
+                result = await service.handle_message(sanitize_text(request.message), on_progress=progress)
+                # Preserve the existing complete-response grounding boundary.
+                # Never put unchecked provider text in a browser-visible event.
+                await queue.put(("delta", {"text": result["reply"]}))
+                await queue.put(("done", result))
+            except Exception:
+                failure = repair
+                with suppress(Exception):
+                    failure = await _repair_payload(service)
+                await queue.put(
+                    (
+                        "error",
+                        {
+                            "message": "Model request failed. Retry health or choose an installed model.",
+                            **failure,
+                        },
+                    )
+                )
+
+        task = asyncio.create_task(generate())
+        try:
+            while True:
+                try:
+                    event, data = await asyncio.wait_for(queue.get(), timeout=15)
+                except TimeoutError:
+                    yield ": keepalive\n\n"
+                    continue
+                yield f"event: {event}\ndata: {json.dumps(data)}\n\n"
+                if event in {"done", "error"}:
+                    break
+        finally:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+    return StreamingResponse(
+        events(), media_type="text/event-stream", headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
+    )
 
 
 @router.post("/session/restart")
