@@ -59,7 +59,7 @@ const PHASE_VIEW = {
   listening: { label: "Listening", copy: "Browser voice input is active; locality is not verified." },
   thinking: { label: "Thinking", copy: "The configured model is working on your request." },
   speaking: { label: "Speaking", copy: "Voice output is playing. Use Stop at any time." },
-  offline: { label: "Model offline", copy: "The app is open, but the configured model is unavailable." },
+  offline: { label: "Model offline", copy: "Connect a model to chat. You can still save notes and manage goals." },
   error: { label: "Error", copy: "The last operation failed. Details are in the session." },
 };
 
@@ -372,12 +372,12 @@ function exportSession() {
   const safeDate = new Date().toISOString().replace(/[:.]/g, "-");
   downloadJson(`annie-research-session-${safeDate}.json`, {
     format: "annie-research-session/v1",
-    title: "Research Session",
+    title: "Annie conversation",
     exported_at: new Date().toISOString(),
     runtime_status: AnnieState.get("session").runtime,
     messages,
   });
-  announce("Research session exported");
+  announce("Conversation exported");
 }
 
 async function loadSettings() {
@@ -796,7 +796,7 @@ el.clearBtn.addEventListener("click", async () => {
   await AnnieApi.restartSession();
   messages = [];
   el.stream.innerHTML = "";
-  addSystemMessage("New research session started. Structured knowledge was kept.");
+  addSystemMessage("New conversation started. Saved knowledge was kept.");
   closeDialog(el.menuDialog);
 });
 $$('[data-close]').forEach((button) => button.addEventListener("click", () => closeDialog(document.getElementById(button.dataset.close))));

@@ -220,7 +220,7 @@
         await AnnieApi.addKnowledge("goal", input.value.trim());
         input.value = "";
         const refreshed = await refresh().then(() => true, () => false);
-        if (refreshed) notice("Goal saved. Let’s give it a next step.");
+        if (refreshed) notice("Goal saved.");
       } catch (error) {
         notice(error.message || "Could not save the goal. Your draft was kept.", true);
       } finally {
@@ -251,7 +251,7 @@
       }
     });
     const hour = new Date().getHours();
-    find("dayGreeting").textContent = hour < 12 ? "Good morning · let’s begin" : hour < 18 ? "Good afternoon · room for a little progress" : "Good evening · space for your ideas";
+    find("dayGreeting").textContent = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
     return { refresh, showView, setLocked, setRuntime };
   }
   global.AnnieCompanion = { init };

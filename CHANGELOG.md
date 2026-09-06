@@ -2,6 +2,8 @@
 
 ## 0.4.0 candidate — unreleased
 
+- Simplified product copy, replaced leftover Research Session labels, and made the connection heading actionable while retaining truthful diagnostics.
+
 - Added the server-driven operator repair hero, offline composer gating, conservative local-route badge wording, 44px controls, reduced-motion overrides, and visual-viewport sizing. Real-Ollama and phone evidence remain outstanding; no release tag was created.
 
 ### Guarded streaming and plan contracts
