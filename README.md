@@ -19,13 +19,15 @@
 
 **Annie Local** brings conversations, personal context, and a practical goal board into one bright workspace. Save what matters, choose a goal, and ask Annie to help you take the next step. Default setup talks to Ollama on your hardware. The web UI uses no CDN. Runtime badges show whether model, memory, and voice routes are local, remote, or unverified.
 
-v0.3.0 beta. Not a clinical product.
+v0.4.0 candidate (unreleased). Not a clinical product.
 
 ## Meet your Today workspace
 
 Annie’s visual identity pairs original emerald-glass artwork with vivid green accents, larger typography, and distinct surfaces for planning, conversation, and memory. The artwork ships inside the app, so the interface needs no image CDN.
 
-![Annie Today workspace with a saved goal, profile, and memory controls](docs/assets/today-workspace.jpg)
+![Today workspace in repair mode, with Ollama unavailable](docs/assets/repair-workspace.jpg)
+
+Today workspace in repair mode. Ready-state evidence from real Ollama is still required; artwork does not indicate model readiness.
 
 *Actual running page with synthetic test notes and Ollama stopped. Memory and goal controls remain usable; planning becomes available when the configured model is ready.*
 
@@ -157,7 +159,7 @@ Bind stays on `127.0.0.1` by default.
 
 ## Status
 
-**v0.3.0 — local-first beta with a hardened deployment reference.**
+**v0.4.0 candidate — local-first beta; release gates remain open.**
 
 Not a therapist, crisis line, compliance-certified clinical tool, or finished public multi-user service. See [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), and [docs/STATUS.md](docs/STATUS.md).
 
@@ -186,3 +188,5 @@ python3 scripts/run_canary_benchmark.py
 MIT — [Michigan MindMend Inc.](LICENSE)
 
 First-run model unavailable? Run `annie doctor` for the configured endpoint and repair commands, or `annie setup` for a download-confirming setup flow. Settings lists installed models and requires an explicit choice to save an unavailable name. See [first-run recovery](docs/GETTING_STARTED.md#repair-a-first-run-model-connection).
+
+The candidate includes operator repair mode, model selection and cancellable generation. Text remains buffered for complete-response grounding; immediate token-by-token display is not implemented. Real Ollama and phone evidence remain release blockers. See [device and release QA](docs/DEVICE_QA.md).

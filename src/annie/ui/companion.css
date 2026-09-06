@@ -173,8 +173,8 @@ button:disabled { cursor: not-allowed; opacity: .57; }
  .composer-shell { padding-inline: 12px; }
 }
 @media (max-width: 480px) {
- .topbar { grid-template-columns: 44px minmax(54px,1fr) repeat(4,40px); gap: 2px; padding-inline: 8px; }
- .topbar .icon-button, .topbar .top-action { min-width: 40px; }
+ .topbar { grid-template-columns: 44px minmax(54px,1fr) repeat(4,44px); gap: 2px; padding-inline: 8px; }
+ .topbar .icon-button, .topbar .top-action { min-width: 44px; }
  .session-heading h1 { font-size: 1.7rem; white-space: nowrap; overflow: hidden; }
  .session-heading .brand-period { display: inline; }
  .presence { display: grid; grid-template-columns: 1fr; padding: 24px 22px 18px; border-radius: 24px; }
@@ -197,8 +197,8 @@ button:disabled { cursor: not-allowed; opacity: .57; }
  .model-setup { align-items: flex-start; flex-direction: column; gap: 0; padding: 12px; }
  .workspace-card { padding: 22px 18px; }
  .card-heading h3 { font-size: 1.2rem; }
- .composer { padding: 5px; gap: 3px; grid-template-columns: 40px minmax(0,1fr) 40px 44px; border-radius: 17px; }
- .composer-button { min-width: 40px; }
+ .composer { padding: 5px; gap: 3px; grid-template-columns: 44px minmax(0,1fr) 44px 44px; border-radius: 17px; }
+ .composer-button { min-width: 44px; }
  .send-button { min-width: 44px; }
  .composer-note { font-size: .75rem; }
  #main[data-view="chat"] .presence { grid-template-columns: minmax(0,1fr) 72px; padding: 16px; }
@@ -208,3 +208,17 @@ button:disabled { cursor: not-allowed; opacity: .57; }
 }
 @media (prefers-contrast: more) { :root { --text: #092f20; --muted: #244736; --dim: #345541; --line: #7a9f87; } .hero-description, .presence-copy { color: #244736; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+/* Operator recovery keeps the same visual identity and a usable draft surface. */
+.repair-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+.repair-actions button { min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
+#repairTitle { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.08; }
+#repairDetail { overflow-wrap: anywhere; }
+.orb[data-model-ready="false"] .hero-art { opacity: .45; filter: saturate(.65); animation: none; }
+.status-badge, .composer-button, .icon-button { min-height: 44px; min-width: 44px; }
+.status-badge { white-space: normal; text-align: left; }
+@media (prefers-reduced-motion: reduce) {
+  .quick-action:hover:not(:disabled), .hero-art, .orb { transform: none !important; }
+}
+
+.app-shell { position: fixed; top: var(--annie-viewport-top, 0px); left: 0; right: 0; }

@@ -40,3 +40,15 @@ Annie Local is being hardened from a cool local AI interface prototype into a cl
 ## Review Before Sensitive Use
 
 Before using Annie Local with sensitive emotional, youth, medical, or regulated content, the deployment needs privacy, security, and safety review. The project should remain honest about prototype status until those controls exist.
+
+## v0.4 candidate release gates
+
+- [x] Actionable repair contract and installed-model picker
+- [x] Explicit setup downloads and doctor repair commands
+- [x] Offline drafting with send/mic gating and memory retained
+- [x] Cancellable provider stream with complete-response grounding
+- [x] Plan schema and write-tool rejection tests
+- [ ] Immediate token text delivery compatible with grounding
+- [ ] Real Ollama ready-state evidence and physical phone QA
+- [ ] Tag v0.4.0 only after all acceptance gates
+- [ ] Begin Layer B only after proven v0.4.0 is on main

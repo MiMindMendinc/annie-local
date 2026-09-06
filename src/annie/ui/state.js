@@ -137,7 +137,7 @@
         state.session.runtime = {
           ...state.session.runtime,
           api: "unavailable",
-          model: { ...state.session.runtime.model, availability: "unavailable" },
+          model: { ...state.session.runtime.model, availability: "unavailable", repair: null },
         };
         if (!ACTIVE_PHASES.has(state.session.phase)) setPhase("offline");
         break;

@@ -2,7 +2,9 @@
 
 ## Current Status
 
-**v0.3.0 — local-first beta with a hardened deployment reference and an evidence-based runtime UI.**
+**v0.4.0 candidate — unreleased.**
+
+Repair diagnostics, model picker, doctor/setup recovery, guarded cancellable streaming, plan validation, and offline composer gating are implemented in a stacked PR series. Real Ollama, ready-state/phone screenshots, assistive-technology QA, and immediate token text delivery remain outstanding. This is not yet an Excellent release; v1.0 work is gated. See [DEVICE_QA.md](DEVICE_QA.md).
 
 Annie Local combines a mobile Research Session interface, Ollama chat, structured memory, tool calling, optional voice, and session control. Runtime badges distinguish model availability, storage backend, configured routes, and network verification instead of making unconditional offline claims.
 

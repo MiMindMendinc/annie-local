@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 candidate — unreleased
+
+- Added the server-driven operator repair hero, offline composer gating, conservative local-route badge wording, 44px controls, reduced-motion overrides, and visual-viewport sizing. Real-Ollama and phone evidence remain outstanding; no release tag was created.
 
 ### Guarded streaming and plan contracts
 

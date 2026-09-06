@@ -93,7 +93,7 @@ def model_repair(name: str, url: str, backend: dict[str, Any]) -> dict[str, Any]
     reachable = backend.get("endpoint_available", backend.get("ok", False))
     if not reachable:
         code, title = "endpoint_down", "Ollama is not reachable"
-        detail = f"Nothing answered successfully at {url}/api/tags. Check the endpoint and start Ollama."
+        detail = f'Configured "{name}" at {url}. Nothing answered successfully at {url}/api/tags. Check the endpoint and start Ollama.'
     elif match["installed"]:
         code, title = "ready", "Your model is ready"
         detail = f"{match['resolved_name']} is available at {url}."

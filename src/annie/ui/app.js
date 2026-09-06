@@ -189,7 +189,10 @@ function renderRuntime(runtime) {
   el.memoryDetail.textContent = memoryDetail;
 
   const remoteConfigured = network.claim === "remote_configured";
-  const networkLabel = remoteConfigured ? "Network: remote route" : "Network: not verified";
+  const routes = Object.values(network.routes || {});
+  const localRoutes = routes.length > 0 && routes.every(route => ["loopback", "container", "host"].includes(route));
+  const networkLabel = remoteConfigured ? "Network: remote route"
+    : network.claim === "not_verified" && localRoutes ? "Network: local routes, isolation unverified" : "Network: not verified";
   setBadge(el.networkStatus, networkLabel, remoteConfigured ? "bad" : "warn", network.reason || "Offline operation has not been verified.");
   el.networkDetail.textContent = network.reason || "Offline operation has not been verified.";
 
@@ -214,9 +217,11 @@ function renderState(state) {
   el.voicePill.setAttribute("aria-label", `Annie state: ${view.label}`);
   el.presenceCopy.textContent = session.error?.detail || view.copy;
   el.stop.disabled = authRequired || !session.canStop;
-  el.send.disabled = authRequired || phase === "thinking";
+  const modelUnavailable = session.runtime.model?.availability !== "ready";
+  el.send.disabled = authRequired || phase === "thinking" || modelUnavailable;
+  el.input.placeholder = modelUnavailable ? "Model offline — save a note or connect a model" : "Message Annie…";
   el.input.disabled = authRequired || phase === "thinking";
-  el.mic.disabled = authRequired || !micSupported || ["thinking", "speaking"].includes(phase);
+  el.mic.disabled = authRequired || modelUnavailable || !micSupported || ["thinking", "speaking"].includes(phase);
   el.modelBtn.disabled = authRequired;
   el.cfgBtn.disabled = authRequired;
   el.openMemoryBtn.disabled = authRequired;
@@ -311,7 +316,7 @@ function openDialog(dialog, focusTarget) {
     dialogReturnTargets.set(dialog, returnTarget);
   }
   if (!dialog.open) dialog.showModal();
-  window.setTimeout(() => (focusTarget || $("button, input, select, textarea", dialog))?.focus(), 20);
+  (focusTarget || $("button, input, select, textarea", dialog))?.focus();
 }
 
 function closeDialog(dialog) {
@@ -396,7 +401,7 @@ function fillSettings() {
 }
 
 function fallbackRuntime(data) {
-  const backendReady = Boolean(data.backend?.ok);
+  const backendReady = false; // No runtime evidence means no readiness claim.
   return {
     api: "ready",
     model: {
@@ -577,7 +582,7 @@ async function sendMessage(mode = "chat") {
   const text = el.input.value.trim();
   if (!text) return;
   companion?.showView("chat");
-  if (!el.model.value) {
+  if (AnnieState.get("session").runtime.model?.availability !== "ready") {
     const detail = "Start Ollama and install a model such as llama3.2, then retry.";
     addErrorCard("No model available", detail);
     AnnieState.dispatch("FAILED", { title: "No model available", detail });
@@ -836,6 +841,11 @@ companion = AnnieCompanion.init({
   openDialog, closeDialog, announce, autosize,
   requestPlan: () => sendMessage("plan"),
   connectModel: () => { fillSettings(); openDialog(el.settingsDialog, el.model); },
+  retryHealth: refreshEngine,
+  copyCommand: async (command) => {
+    try { await navigator.clipboard.writeText(command); announce("Pull command copied"); }
+    catch { announce(`Copy unavailable. Command: ${command}`); }
+  },
   inspectMemory: () => { openDialog(el.memoryDialog); renderMemory(); },
 });
 
@@ -864,3 +874,14 @@ boot();
 
 el.model.addEventListener("input", () => { $("#saveMissingModel").checked = false; });
 el.model.addEventListener("change", refreshModelPicker);
+
+// Keep the fixed app shell inside the visible viewport when a mobile keyboard opens.
+if (window.visualViewport) {
+  const fitViewport = () => {
+    document.documentElement.style.setProperty("--annie-viewport-height", `${window.visualViewport.height}px`);
+    document.documentElement.style.setProperty("--annie-viewport-top", `${window.visualViewport.offsetTop}px`);
+  };
+  window.visualViewport.addEventListener("resize", fitViewport);
+  window.visualViewport.addEventListener("scroll", fitViewport);
+  fitViewport();
+}
