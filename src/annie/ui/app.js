@@ -573,7 +573,7 @@ function stopCurrentActivity() {
 }
 
 async function sendMessage(mode = "chat") {
-  if (AnnieState.get("session").phase === "thinking") return;
+  if (abortController || AnnieState.get("session").phase === "thinking") return;
   const text = el.input.value.trim();
   if (!text) return;
   companion?.showView("chat");
@@ -591,7 +591,11 @@ async function sendMessage(mode = "chat") {
   abortController = new AbortController();
 
   try {
-    const data = await AnnieApi.chat(text, abortController.signal, mode);
+    const data = mode === "plan"
+      ? await AnnieApi.chat(text, abortController.signal, mode)
+      : await AnnieApi.streamChat(text, abortController.signal, (event) => {
+          if (event === "progress") el.presenceCopy.textContent = "Receiving the model response. Checking it before display…";
+        });
     const reply = data.reply?.trim();
     if (!reply) throw new Error("The model returned no answer. Try again or choose another installed model.");
     AnnieState.dispatch("RESPONSE_READY", { metrics: data.metrics || null });
@@ -606,7 +610,7 @@ async function sendMessage(mode = "chat") {
     if (data.restart) addSystemMessage("The local session was restarted by Annie's grounding policy. Structured knowledge was kept.");
   } catch (error) {
     if (error.name === "AbortError") {
-      addSystemMessage("Output stopped. The local model may finish its current non-streaming request in the background.");
+      addSystemMessage("Output stopped. The streaming connection was cancelled.");
       AnnieState.dispatch("STOPPED");
     } else {
       const detail = error.message || "The configured model did not return a response.";

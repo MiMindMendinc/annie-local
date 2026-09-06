@@ -58,12 +58,20 @@ class OllamaDemoHandler(BaseHTTPRequestHandler):
             delay = max(delay, 1.5)
         if delay:
             time.sleep(delay)
+        reply = REPLY
+        if any("Planning mode:" in str(m.get("content", "")) for m in (messages or []) if m.get("role") == "system"):
+            reply = json.dumps(
+                {
+                    "first_action": "Write the next concrete step.",
+                    "checklist": ["Name the goal", "Choose one small action", "Review what happened"],
+                }
+            )
         self._json(
             200,
             {
                 "model": request.get("model") or MODEL,
                 "created_at": datetime.now(UTC).isoformat(),
-                "message": {"role": "assistant", "content": REPLY},
+                "message": {"role": "assistant", "content": reply},
                 "done": True,
                 "done_reason": "stop",
                 "total_duration": 1_150_000_000,

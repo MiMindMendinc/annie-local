@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -108,6 +110,7 @@ class OllamaBackend:
         *,
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.7,
+        on_progress: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
     ) -> ModelTurn:
         if not hasattr(self, "_resolved_model"):
             status = await self.health()
@@ -119,11 +122,47 @@ class OllamaBackend:
         payload: dict[str, Any] = {
             "model": self._resolved_model,
             "messages": [message.to_payload() for message in messages],
-            "stream": False,
+            "stream": on_progress is not None,
             "options": {"temperature": temperature},
         }
         if tools:
             payload["tools"] = tools
+
+        if on_progress is not None:
+            try:
+                async with (
+                    httpx.AsyncClient(timeout=self.timeout, trust_env=trust_environment_proxy(self.base_url)) as client,
+                    client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response,
+                ):
+                    response.raise_for_status()
+                    parts, calls = [], []
+                    raw = {}
+                    completed = False
+                    size = 0
+                    async for line in response.aiter_lines():
+                        if not line.strip():
+                            continue
+                        raw = json.loads(line)
+                        if raw.get("error"):
+                            raise LLMBackendError("Ollama reported a generation error")
+                        message = raw.get("message") or {}
+                        content = message.get("content") or ""
+                        if not isinstance(content, str):
+                            raise LLMBackendError("Invalid streamed model content")
+                        size += len(content)
+                        if size > 200_000:
+                            raise LLMBackendError("Model response exceeds the supported size")
+                        parts.append(content)
+                        calls.extend(message.get("tool_calls") or [])
+                        await on_progress({"phase": "generating", "characters_received": size})
+                        if raw.get("done"):
+                            completed = True
+                            break
+                    if not completed:
+                        raise LLMBackendError("Ollama stream ended before completion")
+                    return ModelTurn(content="".join(parts).strip(), tool_calls=calls, raw=raw)
+            except (httpx.HTTPError, ValueError, TypeError) as exc:
+                raise LLMBackendError("Ollama streaming request failed") from exc
 
         try:
 

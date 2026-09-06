@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Guarded streaming and plan contracts
+
+- Added cancellable Ollama streaming with SSE generation progress; complete-response grounding remains before text delivery. Stop closes the provider connection. Incremental unchecked text is deliberately not displayed.
+- Added validated model-generated plans (first action at most 240 characters, 3-7 checklist items), fail-closed write-tool rejection, and mock-server contract evaluations.
+
 ### First-run model recovery
 
 - Added actionable health diagnostics, canonical tag resolution used by inference, an authenticated installed-model picker, explicit missing-model save confirmation, and cross-platform setup/doctor repair commands. Real-Ollama release evidence is still required.
