@@ -5,7 +5,7 @@ from dataclasses import asdict
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from annie import __version__
 from annie.api.dependencies import AppState, get_chat_service, get_state
@@ -79,6 +79,25 @@ async def public_config(state: Annotated[AppState, Depends(get_state)]) -> dict:
 @router.get("/settings")
 async def get_settings_route(service: Annotated[ChatService, Depends(get_chat_service)]) -> dict:
     return await service.get_settings()
+
+
+@router.get("/models")
+async def get_models(
+    service: Annotated[ChatService, Depends(get_chat_service)],
+    name: Annotated[str | None, Query(max_length=200)] = None,
+) -> dict:
+    runtime = await service.get_settings()
+    backend = await OllamaBackend(runtime["ollama_url"], runtime["model"]).health()
+    from annie.core.runtime_status import match_model
+
+    return {
+        **backend,
+        "configured_name": runtime["model"],
+        "selection": match_model(name or runtime["model"], backend["model_names"]),
+        "model_status": build_runtime_status(mode=get_app_settings().mode, runtime=runtime, backend=backend, voice={})[
+            "model"
+        ],
+    }
 
 
 @router.put("/settings")

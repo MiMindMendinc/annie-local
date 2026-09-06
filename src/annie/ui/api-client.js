@@ -74,6 +74,7 @@
 
   global.AnnieApi = {
     health: () => request("/api/health"),
+    models: (name = "") => request(`/api/models?name=${encodeURIComponent(name)}`),
     getSettings: () => request("/api/settings"),
     updateSettings: (body) => request("/api/settings", { method: "PUT", body }),
     resetDoctrine: () => request("/api/settings/reset-doctrine", { method: "POST" }),

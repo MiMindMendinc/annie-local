@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 
-from annie.core.runtime_status import trust_environment_proxy
+from annie.core.runtime_status import match_model, public_endpoint, trust_environment_proxy
 from annie.utils.http_retry import with_retry
 
 
@@ -48,27 +48,59 @@ class OllamaBackend:
         self.timeout = timeout
 
     async def health(self) -> dict[str, Any]:
-        try:
-
-            async def _fetch() -> dict[str, Any]:
-                async with httpx.AsyncClient(
-                    timeout=5.0,
-                    trust_env=trust_environment_proxy(self.base_url),
-                ) as client:
-                    response = await client.get(f"{self.base_url}/api/tags")
-                    response.raise_for_status()
-                    return response.json()
-
-            data = await with_retry(_fetch, attempts=2, base_delay=0.2)
-        except Exception as exc:  # pragma: no cover - network dependent
-            return {"ok": False, "backend": "ollama", "error": str(exc)}
-        models = data.get("models", [])
-        return {
-            "ok": True,
+        base = {
             "backend": "ollama",
-            "models": models,
-            "model_names": [m.get("name") for m in models if m.get("name")],
+            "base_url": public_endpoint(self.base_url),
+            "model_names": [],
+            "models": [],
+            "suggested_pull": self.model,
+            "nearest_installed": None,
+            "endpoint_available": False,
         }
+        try:
+            async with httpx.AsyncClient(timeout=5.0, trust_env=trust_environment_proxy(self.base_url)) as client:
+                response = await client.get(f"{self.base_url}/api/tags")
+                response.raise_for_status()
+                data = response.json()
+            models = data.get("models")
+            if not isinstance(models, list) or any(not isinstance(m, dict) for m in models):
+                raise ValueError("Invalid Ollama tags response")
+            names = sorted(
+                {
+                    m.get("name") or m.get("model")
+                    for m in models
+                    if isinstance(m.get("name") or m.get("model"), str) and (m.get("name") or m.get("model"))
+                }
+            )
+            match = match_model(self.model, names)
+            return {
+                **base,
+                "ok": True,
+                "endpoint_available": True,
+                "models": models,
+                "model_names": names,
+                **match,
+                "error_class": None if names else "empty_tags",
+                "error": None if names else "No installed models",
+            }
+        except Exception as exc:
+            if isinstance(exc, httpx.TimeoutException):
+                error_class, error = "timeout", "Ollama health request timed out"
+            elif isinstance(exc, httpx.HTTPStatusError):
+                error_class, error = "http", f"Ollama returned HTTP {exc.response.status_code}"
+            elif isinstance(exc, httpx.ConnectError):
+                error_class, error = "unreachable", "Could not connect to Ollama"
+            else:
+                error_class, error = "unknown", "Invalid endpoint or Ollama tags response"
+            return {
+                **base,
+                "ok": False,
+                "installed": False,
+                "resolved_name": None,
+                "candidates": [],
+                "error_class": error_class,
+                "error": error,
+            }
 
     async def chat(
         self,
@@ -77,8 +109,15 @@ class OllamaBackend:
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.7,
     ) -> ModelTurn:
+        if not hasattr(self, "_resolved_model"):
+            status = await self.health()
+            if not status.get("installed"):
+                raise LLMBackendError(
+                    f"Model unavailable: {self.model}. {status.get('error') or 'Choose an installed model.'}"
+                )
+            self._resolved_model = status["resolved_name"]
         payload: dict[str, Any] = {
-            "model": self.model,
+            "model": self._resolved_model,
             "messages": [message.to_payload() for message in messages],
             "stream": False,
             "options": {"temperature": temperature},
