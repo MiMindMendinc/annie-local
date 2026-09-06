@@ -192,7 +192,7 @@ function renderRuntime(runtime) {
   const routes = Object.values(network.routes || {});
   const localRoutes = routes.length > 0 && routes.every(route => ["loopback", "container", "host"].includes(route));
   const networkLabel = remoteConfigured ? "Network: remote route"
-    : network.claim === "not_verified" && localRoutes ? "Network: local routes, isolation unverified" : "Network: not verified";
+    : network.claim === "not_verified" && localRoutes ? "Local only · isolation not verified" : "Network: not verified";
   setBadge(el.networkStatus, networkLabel, remoteConfigured ? "bad" : "warn", network.reason || "Offline operation has not been verified.");
   el.networkDetail.textContent = network.reason || "Offline operation has not been verified.";
 
@@ -370,7 +370,7 @@ function downloadJson(filename, value) {
 
 function exportSession() {
   const safeDate = new Date().toISOString().replace(/[:.]/g, "-");
-  downloadJson(`annie-research-session-${safeDate}.json`, {
+  downloadJson(`annie-conversation-${safeDate}.json`, {
     format: "annie-research-session/v1",
     title: "Annie conversation",
     exported_at: new Date().toISOString(),

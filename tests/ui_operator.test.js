@@ -23,11 +23,14 @@ test('local route badge remains unverified and remote routes remain disclosed', 
   vm.createContext(context);
   vm.runInContext(code.slice(code.indexOf('function renderRuntime'),code.indexOf('function renderState')),context);
   context.renderRuntime({network:{claim:'not_verified',routes:{model:'loopback',voice:'container'}}});
-  assert.equal(nodes.networkStatus.label,'Network: local routes, isolation unverified');
+  assert.equal(nodes.networkStatus.label,'Local only · isolation not verified');
   assert.equal(nodes.networkStatus.tone,'warn');
   context.renderRuntime({network:{claim:'remote_configured',routes:{model:'remote'}}});
   assert.equal(nodes.networkStatus.label,'Network: remote route');
   assert.equal(nodes.networkStatus.tone,'bad');
+  context.renderRuntime({network:{claim:'not_verified',routes:{model:'lan',voice:'loopback'}}});
+  assert.equal(nodes.networkStatus.label,'Network: not verified');
+  assert.equal(nodes.networkStatus.tone,'warn');
 });
 
 test('pressing send offline preserves the draft and repair view', async () => {

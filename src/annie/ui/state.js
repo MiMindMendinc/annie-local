@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Small deterministic state machine for the Research Session interface.
+ * Small deterministic state machine for the Annie interface.
  * Operational state is intentionally ephemeral; only user preferences and
  * authentication survive a reload.
  */

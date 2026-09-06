@@ -2,6 +2,8 @@
 
 ## 0.4.0 candidate — unreleased
 
+- Removed setup-screen taglines, kept product name/state and Model offline visible, and changed the local-route badge to “Local only · isolation not verified” without changing its warning state or verification policy.
+
 - Simplified product copy, replaced leftover Research Session labels, and made the connection heading actionable while retaining truthful diagnostics.
 
 - Added the server-driven operator repair hero, offline composer gating, conservative local-route badge wording, 44px controls, reduced-motion overrides, and visual-viewport sizing. Real-Ollama and phone evidence remain outstanding; no release tag was created.
