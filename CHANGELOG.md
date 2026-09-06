@@ -6,16 +6,20 @@
 
 - Simplified product copy, replaced leftover Research Session labels, and made the connection heading actionable while retaining truthful diagnostics.
 
-- Added the server-driven operator repair hero, offline composer gating, conservative local-route badge wording, 44px controls, reduced-motion overrides, and visual-viewport sizing. Real-Ollama and phone evidence remain outstanding; no release tag was created.
+- Added the server-driven operator repair hero, offline composer gating, conservative local-route badge wording, 44px controls, reduced-motion overrides, and visual-viewport sizing. Physical phone and accessibility evidence remain outstanding; no release tag was created.
 
 ### Guarded streaming and plan contracts
+
+- Fixed real llama3.2 Direction/Clarity failures by sending the validated Plan JSON schema to Ollama. Free-form chat, grounding checks, and planning write-tool rejection retain their existing behavior.
+- Normalized model-generated list prefixes so plans render one unchecked marker per item; marker-only entries are rejected.
+- Recorded real local-model chat, planning, recovery, and memory-preservation checks with exact source/model details in `docs/RELEASE_READINESS.md`.
 
 - Added cancellable Ollama streaming with SSE generation progress; complete-response grounding remains before text delivery. Stop closes the provider connection. Incremental unchecked text is deliberately not displayed.
 - Added validated model-generated plans (first action at most 240 characters, 3-7 checklist items), fail-closed write-tool rejection, and mock-server contract evaluations.
 
 ### First-run model recovery
 
-- Added actionable health diagnostics, canonical tag resolution used by inference, an authenticated installed-model picker, explicit missing-model save confirmation, and cross-platform setup/doctor repair commands. Real-Ollama release evidence is still required.
+- Added actionable health diagnostics, canonical tag resolution used by inference, an authenticated installed-model picker, explicit missing-model save confirmation, and cross-platform setup/doctor repair commands. Physical target-device release evidence is still required.
 
 ### Today companion workspace
 

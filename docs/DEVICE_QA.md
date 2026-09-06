@@ -23,15 +23,22 @@ Checks below must be recorded on the actual target devices before release.
 
 ## First-run acceptance on real Ollama
 
-- [ ] Record hardware, operating system, Ollama version, and `ollama list`.
-- [ ] With Ollama stopped, capture repair mode: send/mic off, memory capture works.
-- [ ] Pull llama3.2, retry health, capture Model: local and enabled planning/chat.
+- [x] Record the Linux CPU environment, Ollama version, and `ollama list` in the [readiness report](RELEASE_READINESS.md).
+- [x] With Ollama stopped, verify unavailable health, repair response, and working notes/goals APIs.
+- [x] Pull llama3.2, verify default-name resolution to llama3.2:latest, and complete real chat.
+- [x] Capture actual unavailable and ready `/api/health` JSON.
+- [x] Check real Direction and Clarity outputs against the plan contract and preserve saved knowledge.
+- [x] Verify missing-model diagnostics, installed-tag selection, and memory retention after model loss through the API.
+- [ ] Verify repair mode in the target browser: send/mic off and memory capture works.
+- [ ] Verify ready mode in the target browser: Model: local and enabled planning/chat.
 - [ ] With only llama3.1:8b installed and llama3.2 configured, select the installed tag and save.
-- [ ] Attach actual `/api/health` JSON and both ready/repair screenshots to the PR.
-- [ ] Check real model Direction and Clarity outputs against the plan contract.
+- [ ] Attach ready and repair screenshots from the actual target setup to the PR.
 
-The automated mock-server evaluation tests schema and tool enforcement, not real-model
-quality. Ollama is absent in the execution environment used for this candidate.
+The recorded run uses ASGI TestClient with real loopback HTTP requests to Ollama
+and synthetic notes/goals. It does not establish browser microphone/speaker behavior,
+physical phone behavior, assistive-technology support, or network isolation. The
+cloud browser could not open this run's local preview. Automated mock-server tests
+separately exercise schema and tool enforcement; they are not real-model evidence.
 
 ## Streaming acceptance limitation
 
