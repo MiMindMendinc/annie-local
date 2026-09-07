@@ -12,6 +12,7 @@ from annie.core.llm import ChatMessage, LLMBackendError, ModelTurn, OllamaBacken
 from annie.core.memory import LocalMemory
 from annie.core.plan import Plan, render_plan
 from annie.core.session import SessionManager
+from annie.core.stream_guard import DisplayPrefixGuard
 from annie.core.tools import READ_ONLY_TOOLS, TOOL_SPECS, ToolRunner
 
 
@@ -128,7 +129,12 @@ class ChatEngine:
         )
 
     async def handle(
-        self, user_text: str, *, on_progress: Callable[[dict[str, Any]], Awaitable[None]] | None = None
+        self,
+        user_text: str,
+        *,
+        on_progress: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        on_delta: Callable[[str], Awaitable[None]] | None = None,
+        on_reset: Callable[[], Awaitable[None]] | None = None,
     ) -> ChatResult:
         self.memory.append("user", user_text)
         recent = self.memory.read_recent(limit=12)
@@ -146,6 +152,15 @@ class ChatEngine:
 
         for _ in range(self.max_tool_rounds):
             request_options: dict[str, Any] = {"on_progress": on_progress} if on_progress is not None else {}
+            guard = DisplayPrefixGuard()
+
+            async def display_prefix(content: str, guard: DisplayPrefixGuard = guard) -> None:
+                delta = guard.feed(content)
+                if delta and on_delta is not None:
+                    await on_delta(delta)
+
+            if on_delta is not None and not self.read_only_tools:
+                request_options["on_content"] = display_prefix
             if self.read_only_tools:
                 request_options["response_format"] = Plan.model_json_schema()
             turn: ModelTurn = await self.llm.chat(
@@ -160,6 +175,9 @@ class ChatEngine:
                     return self._apply_grounding(hit, user_text)
 
             if turn.tool_calls:
+                # A provider's tool preamble is provisional, not the final reply.
+                if on_reset is not None:
+                    await on_reset()
                 messages.append(
                     ChatMessage(
                         role="assistant",

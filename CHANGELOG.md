@@ -14,7 +14,10 @@
 - Normalized model-generated list prefixes so plans render one unchecked marker per item; marker-only entries are rejected.
 - Recorded real local-model chat, planning, recovery, and memory-preservation checks with exact source/model details in `docs/RELEASE_READINESS.md`.
 
-- Added cancellable Ollama streaming with SSE generation progress; complete-response grounding remains before text delivery. Stop closes the provider connection. Incremental unchecked text is deliberately not displayed.
+- Added admitted text deltas before provider completion, partial-expression holdback, provisional text-only rendering, and final grounding before committing replies. Real HTTP timing/cancellation evidence covers llama3.2 and llama3.1:8b; physical and working target-browser acceptance remain open.
+- Prevented late completions and late voice responses from rendering or starting speech after Stop, and kept terminal SSE completion independent of connection close.
+- Fixed Tab escaping the settings dialog, with forward/reverse wrapping and Escape focus return verified in cloud Chrome.
+- Replaced the repeat-grounding signal's jokey harm wording with a plain reset message; trigger rules, audit, restart, and saved-knowledge behavior remain covered.
 - Added validated model-generated plans (first action at most 240 characters, 3-7 checklist items), fail-closed write-tool rejection, and mock-server contract evaluations.
 
 ### First-run model recovery

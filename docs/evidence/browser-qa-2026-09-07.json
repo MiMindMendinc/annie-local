@@ -1,0 +1,110 @@
+{
+  "browser": "Cloud Chrome",
+  "viewport": [
+    1363,
+    936
+  ],
+  "physical_device": false,
+  "checks": [
+    {
+      "name": "Offline Enter preserves draft",
+      "result": "Model offline — save a note or connect a model",
+      "dom": {
+        "draft": "Synthetic QA draft: keep this through model repair.",
+        "micDisabled": true,
+        "sendDisabled": true
+      }
+    },
+    {
+      "name": "Model picker focus",
+      "observed": {
+        "active": "model",
+        "tag": "INPUT"
+      }
+    },
+    {
+      "name": "Picker reverse Tab reaches close",
+      "focus": "Close settings"
+    },
+    {
+      "name": "Picker reverse Tab before fix",
+      "result": "Failed: focus left the dialog for the document body"
+    },
+    {
+      "name": "Picker forward Tab before fix",
+      "result": "Failed: focus left the dialog"
+    },
+    {
+      "name": "Escape restores picker opener",
+      "focus": "chooseModelBtn"
+    },
+    {
+      "name": "Alternate model save keeps draft and goal",
+      "dom": {
+        "dialogOpen": false,
+        "draft": "Synthetic QA draft: keep this through model repair.",
+        "goal": "Organize the synthetic test desk in fifteen minutes.Plan ↗",
+        "model": "Model: local"
+      }
+    },
+    {
+      "name": "Picker reverse Tab after fix",
+      "focus": {
+        "id": "saveCfg",
+        "inDialog": true,
+        "text": "Save and apply"
+      }
+    },
+    {
+      "name": "Picker forward Tab after fix",
+      "focus": {
+        "inDialog": true,
+        "label": "Close settings"
+      }
+    },
+    {
+      "name": "Settings Escape after fix",
+      "focus": "Open settings"
+    },
+    {
+      "name": "Ready desktop layout",
+      "dom": {
+        "horizontalOverflow": false,
+        "images": [
+          {
+            "complete": true,
+            "src": "/static/assets/annie-glass.webp",
+            "width": 1536
+          }
+        ],
+        "viewport": [
+          1363,
+          936
+        ]
+      }
+    },
+    {
+      "name": "First browser chat attempt",
+      "result": "Model runner unavailable in preview; no browser-streaming pass claimed"
+    },
+    {
+      "name": "Real-model generation in cloud preview",
+      "result": "Blocked by preview runtime; API real-model tests run separately"
+    },
+    {
+      "name": "Browser zoom shortcut",
+      "result": "No zoom change observed; 200% text enlargement remains unverified"
+    },
+    {
+      "name": "Skip link",
+      "focus": {
+        "id": "main",
+        "tag": "MAIN"
+      }
+    },
+    {
+      "name": "Visible Today controls at desktop size",
+      "result": "No enabled visible button smaller than 44 by 44 CSS pixels in this view"
+    }
+  ]
+}

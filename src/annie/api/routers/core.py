@@ -158,12 +158,20 @@ async def chat_stream(
         async def progress(data):
             await queue.put(("progress", data))
 
+        async def delta(text):
+            await queue.put(("delta", {"text": text}))
+
+        async def reset():
+            await queue.put(("reset", {}))
+
         async def generate():
             try:
-                result = await service.handle_message(sanitize_text(request.message), on_progress=progress)
-                # Preserve the existing complete-response grounding boundary.
-                # Never put unchecked provider text in a browser-visible event.
-                await queue.put(("delta", {"text": result["reply"]}))
+                result = await service.handle_message(
+                    sanitize_text(request.message), on_progress=progress, on_delta=delta, on_reset=reset
+                )
+                # Complete-response grounding is authoritative. Replace any
+                # provisional prefix; never concatenate a redirect onto it.
+                await queue.put(("replace", {"text": result["reply"]}))
                 await queue.put(("done", result))
             except Exception:
                 failure = repair

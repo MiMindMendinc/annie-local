@@ -295,6 +295,38 @@ function addSystemMessage(text) {
   announce(text);
 }
 
+function createReplyPreview() {
+  let card = null;
+  let content = null;
+  return {
+    append(text) {
+      if (!text) return;
+      if (!card) {
+        card = document.createElement("article");
+        card.className = "message-card assistant stream-preview";
+        card.setAttribute("aria-busy", "true");
+        const heading = document.createElement("div");
+        heading.className = "message-head";
+        heading.textContent = "Annie · replying…";
+        content = document.createElement("div");
+        content.className = "message-content";
+        content.style.whiteSpace = "pre-wrap";
+        card.append(heading, content);
+        el.stream.appendChild(card);
+      }
+      // Plain text only until completion: no partial Markdown/HTML, copy
+      // action, export entry, or speech for a provisional response.
+      content.textContent += text;
+      scrollToLatest();
+    },
+    reset() {
+      card?.remove();
+      card = null;
+      content = null;
+    },
+  };
+}
+
 function addErrorCard(title, detail) {
   companion?.showView("chat");
   const card = document.createElement("div");
@@ -317,6 +349,26 @@ function openDialog(dialog, focusTarget) {
   }
   if (!dialog.open) dialog.showModal();
   (focusTarget || $("button, input, select, textarea", dialog))?.focus();
+}
+
+function trapDialogFocus(event) {
+  if (event.key !== "Tab") return;
+  const dialog = event.currentTarget;
+  const controls = Array.from(dialog.querySelectorAll('a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]'))
+    .filter(node => !node.disabled && node.tabIndex >= 0 && node.getClientRects().length && getComputedStyle(node).visibility !== "hidden");
+  const first = controls[0];
+  const last = controls[controls.length - 1];
+  const active = document.activeElement;
+  if (!first) {
+    event.preventDefault();
+    dialog.focus();
+  } else if (event.shiftKey && (active === first || !controls.includes(active))) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && (active === last || !controls.includes(active))) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 function closeDialog(dialog) {
@@ -544,23 +596,26 @@ function speakInBrowser(text) {
   });
 }
 
-async function speakReply(text) {
+async function speakReply(text, requestSignal = null) {
   const clip = cleanVoiceText(text);
+  if (requestSignal?.aborted) return;
   if (!clip || !AnnieState.get("prefs")?.speak) {
     AnnieState.dispatch("RESPONSE_RENDERED");
     return;
   }
-  voiceAbortController = new AbortController();
+  const controller = new AbortController();
+  voiceAbortController = controller;
   try {
-    const payload = await AnnieApi.speak(clip, voiceAbortController.signal);
+    const payload = await AnnieApi.speak(clip, controller.signal);
+    if (controller.signal.aborted || requestSignal?.aborted) return;
     await playBridgeAudio(payload);
   } catch (error) {
-    if (error.name === "AbortError") return;
+    if (error.name === "AbortError" || controller.signal.aborted || requestSignal?.aborted) return;
     AnnieState.dispatch("VOICE_FALLBACK");
     announce("Using browser-managed voice; locality is unverified");
     await speakInBrowser(clip);
   } finally {
-    voiceAbortController = null;
+    if (voiceAbortController === controller) voiceAbortController = null;
   }
 }
 
@@ -591,16 +646,24 @@ async function sendMessage(mode = "chat") {
   el.input.value = "";
   autosize();
   AnnieState.dispatch("REQUEST_STARTED");
-  abortController = new AbortController();
+  const controller = new AbortController();
+  abortController = controller;
+  const preview = createReplyPreview();
+  controller.signal.addEventListener("abort", () => preview.reset(), {once: true});
 
   try {
     const data = mode === "plan"
-      ? await AnnieApi.chat(text, abortController.signal, mode)
-      : await AnnieApi.streamChat(text, abortController.signal, (event) => {
-          if (event === "progress") el.presenceCopy.textContent = "Receiving the model response. Checking it before display…";
+      ? await AnnieApi.chat(text, controller.signal, mode)
+      : await AnnieApi.streamChat(text, controller.signal, (event, payload) => {
+          if (controller.signal.aborted) return;
+          if (event === "progress") el.presenceCopy.textContent = "Annie is replying…";
+          if (event === "delta") preview.append(payload.text);
+          if (event === "reset" || event === "replace") preview.reset();
         });
+    if (controller.signal.aborted) throw new DOMException("Request stopped", "AbortError");
     const reply = data.reply?.trim();
     if (!reply) throw new Error("The model returned no answer. Try again or choose another installed model.");
+    preview.reset();
     AnnieState.dispatch("RESPONSE_READY", { metrics: data.metrics || null });
     addMessage("assistant", reply, {
       metrics: data.metrics,
@@ -609,9 +672,10 @@ async function sendMessage(mode = "chat") {
     });
     announce("Annie replied");
     companion?.refresh().catch(() => {});
-    await speakReply(reply);
+    await speakReply(reply, controller.signal);
     if (data.restart) addSystemMessage("The local session was restarted by Annie's grounding policy. Structured knowledge was kept.");
   } catch (error) {
+    preview.reset();
     if (error.name === "AbortError") {
       addSystemMessage(mode === "plan"
         ? "Plan request stopped. The non-streaming model request may finish in the background."
@@ -624,7 +688,8 @@ async function sendMessage(mode = "chat") {
       await refreshEngine();
     }
   } finally {
-    abortController = null;
+    preview.reset();
+    if (abortController === controller) abortController = null;
     if (AnnieState.get("session").phase === "thinking") AnnieState.dispatch("RESPONSE_RENDERED");
     el.input.focus();
   }
@@ -761,6 +826,7 @@ document.addEventListener("keydown", (event) => {
     stopCurrentActivity();
   }
 });
+$$('dialog').forEach(dialog => dialog.addEventListener("keydown", trapDialogFocus));
 el.stop.addEventListener("click", stopCurrentActivity);
 el.mic.addEventListener("click", () => {
   if (!recognition) return;

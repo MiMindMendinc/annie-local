@@ -1,9 +1,41 @@
 # v0.4.0 candidate readiness
 
-**Unreleased; the PR stack remains draft.** The real-model checks below passed,
-but the physical-device, accessibility, ready-state browser, and immediate text
-streaming requirements are still open. This report does not certify the whole
-project as finished or establish public hosting readiness.
+**Unreleased; the PR stack remains draft.** The follow-up below implements early
+text delivery with grounding and adds real HTTP proof. Physical-device,
+accessibility, and successful generation/streaming in a working target browser
+remain open. This report does not certify the whole project as finished or
+establish public hosting readiness.
+
+## Current follow-up — 2026-09-07
+
+- Guarded text prefixes now flow through the API into a provisional browser reply.
+  Whole-response validation remains the commit boundary. See [STREAMING_DESIGN.md](STREAMING_DESIGN.md).
+- The local automated suite passes **211 Python tests and 25 Node tests** with
+  no failures or skips, plus all 20 grounding canaries. Lint, formatting,
+  dependency audit, and static security checks pass. Current GitHub CI must also
+  be green on the published candidate head before merge.
+- Real Uvicorn HTTP/SSE tests pass for Ollama 0.33.3 with `llama3.2:latest` and
+  `llama3.1:8b`, including first text before provider completion and disconnect
+  cancellation without a saved assistant reply. Actual timings and source hashes
+  are in the linked [default](evidence/live-streaming-llama32-2026-09-07.json) and
+  [alternate](evidence/live-streaming-llama31-2026-09-07.json) records. Cold model
+  startup is substantially slower than a warmed request; these are observations.
+- The exact alternate inventory/picker scenario passed in cloud Chrome; a draft
+  and saved goal survived recovery. New repair and ready captures are in DEVICE_QA.
+- Browser QA found Tab escaping the settings dialog; wrapping and focus return
+  now pass after the fix. A late-response/voice cancellation race was also fixed.
+- The old repeat-trigger signal wording was replaced with a plain reset message;
+  trigger logic, audit, restart, and knowledge preservation remain tested.
+
+**Still blocks the requested merge:** physical Safari/iPhone, the remaining
+accessibility checks, and successful real-model browser chat/planning plus
+first-text/Stop/Esc acceptance. The cloud preview's inference backend failed to
+load; its ready display is not a successful generation result. Review the full
+#17 → #18 → #19 stack, explicitly accept the provisional-display grounding
+boundary, and check current CI before changing draft state. No independent PR
+approval is recorded at the time of this verification.
+
+The sections below retain the original 2026-09-06 evidence at its stated source.
 
 ## Verified source and environment
 
@@ -104,15 +136,15 @@ and `settings_path`, leaving existing user data untouched.
   safe-area behavior.
 - Keyboard, assistive technology, enlarged text, contrast, reduced motion, and
   cancellation behavior on the target setup.
-- Actual ready-state and repair-state browser captures. The historical desktop
-  repair screenshot is not a ready-state screenshot or physical-device result.
-- The specific alternate-installed-model scenario in DEVICE_QA.md.
-- Immediate first-token text display with a reviewed grounding design. Current
-  streaming reports provider progress but waits for whole-response grounding
-  before delivering text.
+- Actual ready-state and repair-state captures on the physical target device.
+  New cloud Chrome captures and alternate-model recovery are available; they
+  do not establish a physical-device pass.
+- Real-model browser chat/planning, first-text delivery, and Stop/Esc acceptance.
+  The guarded implementation and actual HTTP timing/cancellation evidence now
+  exist; the restricted cloud browser setup could not load its inference backend.
 - Review the complete #17 → #18 → #19 stack and evidence before merge and tag.
 
-The cloud browser could not open this run's local preview, so no new browser
-result is inferred from the API checks. Optional public multi-user operations
+The historical 2026-09-06 run had no browser pass. The 2026-09-07 cloud browser
+observations are recorded separately above. Optional public multi-user operations
 remain tracked separately in
 [issue #6](https://github.com/MiMindMendinc/annie-local/issues/6).

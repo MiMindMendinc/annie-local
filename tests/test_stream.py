@@ -7,7 +7,7 @@ import pytest
 
 from annie.api.routers.core import chat_stream
 from annie.api.schemas import ChatRequest
-from annie.core.llm import ModelTurn, OllamaBackend
+from annie.core.llm import LLMBackendError, ModelTurn, OllamaBackend
 
 
 class Chunks(httpx.AsyncByteStream):
@@ -66,6 +66,24 @@ async def test_cancel_closes_provider_stream(monkeypatch):
     assert stream.closed
 
 
+@pytest.mark.parametrize(
+    "event",
+    [[], {"message": []}, {"message": {"content": 0}}, {"done": "false"}, {"message": {"tool_calls": ["bad"]}}],
+)
+async def test_malformed_provider_event_closes_without_delivering_content(monkeypatch, event):
+    class InvalidChunk(Chunks):
+        async def __aiter__(self):
+            yield (json.dumps(event) + "\n").encode()
+
+    stream = InvalidChunk()
+    setup_transport(monkeypatch, stream)
+    content = AsyncMock()
+    with pytest.raises(LLMBackendError):
+        await OllamaBackend("http://localhost:11434", "llama3.2").chat([], on_content=content)
+    content.assert_not_awaited()
+    assert stream.closed
+
+
 def test_offline_stream_returns_repair_before_sse(api_client):
     with patch.object(OllamaBackend, "health", AsyncMock(return_value={"ok": False, "model_names": []})):
         response = api_client.post("/api/chat/stream", json={"message": "Hello"})
@@ -94,7 +112,7 @@ async def test_response_disconnect_cancels_generation():
     cancelled = asyncio.Event()
     service = AsyncMock()
 
-    async def handle(message, *, on_progress):
+    async def handle(message, *, on_progress, on_delta, on_reset):
         try:
             await on_progress({"phase": "generating"})
             await asyncio.Event().wait()
