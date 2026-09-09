@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -9,11 +10,14 @@ from annie.core.config import DEFAULT_DOCTRINE, AnnieConfig
 from annie.utils.private_files import ensure_private_directory, ensure_private_file
 
 _BANNED_PUBLIC_PLACE_MARKERS = ("ovid", "owosso", "48866", "shiawassee")
+_BANNED_PUBLIC_PLACE_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(marker) for marker in _BANNED_PUBLIC_PLACE_MARKERS) + r")\b",
+    flags=re.I,
+)
 
 
 def _public_safe_prompt(prompt: str, fallback: str) -> str:
-    hay = prompt.casefold()
-    if any(marker in hay for marker in _BANNED_PUBLIC_PLACE_MARKERS):
+    if _BANNED_PUBLIC_PLACE_RE.search(prompt):
         return fallback
     return prompt
 

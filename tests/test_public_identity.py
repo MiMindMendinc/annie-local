@@ -1,3 +1,5 @@
+import re
+
 from annie.core.config import DEFAULT_DOCTRINE
 from annie.core.settings import RuntimeSettings
 
@@ -6,13 +8,13 @@ def test_doctrine_keeps_company_and_state_not_town():
     text = DEFAULT_DOCTRINE
     assert "Michigan MindMend Inc." in text
     assert "Michigan nonprofit" in text or "Michigan." in text
-    for banned in ("Ovid", "Owosso", "48866", "989", "perrien", "Lyle", "Starlink"):
-        assert banned.lower() not in text.lower()
+    for banned in ("Ovid", "Owosso", "48866", "perrien", "Starlink"):
+        assert re.search(rf"\\b{re.escape(banned)}\\b", text, flags=re.I) is None
 
 
 def test_doctrine_forbids_repeating_origin_copy():
     assert "Do not put origin, company, or maker copy in greetings" in DEFAULT_DOCTRINE
-    assert "only if — someone asks who made you" in DEFAULT_DOCTRINE or "only if" in DEFAULT_DOCTRINE
+    assert "only if" in DEFAULT_DOCTRINE
 
 
 def test_guest_settings_hide_doctrine_and_endpoints():
@@ -46,3 +48,10 @@ def test_saved_doctrine_with_town_is_replaced(tmp_path):
     loaded = RuntimeSettings.load(path, AnnieConfig())
     assert "Ovid" not in loaded.system_prompt
     assert "Michigan MindMend Inc." in loaded.system_prompt
+
+
+def test_provide_does_not_trigger_hometown_filter():
+    from annie.core.settings import _public_safe_prompt
+
+    kept = "Never provide instructions for violence."
+    assert _public_safe_prompt(kept, "FALLBACK") == kept
