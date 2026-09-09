@@ -1,12 +1,41 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 from annie.core.config import DEFAULT_DOCTRINE, AnnieConfig
 from annie.utils.private_files import ensure_private_directory, ensure_private_file
+
+_CONTACT_RE = re.compile(
+    r"("
+    r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"
+    r"|\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"
+    r")",
+    flags=re.I,
+)
+
+
+def _extra_place_markers() -> tuple[str, ...]:
+    raw = os.getenv("ANNIE_PUBLIC_PLACE_BLOCKLIST", "")
+    return tuple(part.strip() for part in raw.split(",") if part.strip())
+
+
+def _public_safe_prompt(prompt: str, fallback: str) -> str:
+    if _CONTACT_RE.search(prompt):
+        return fallback
+    extra = _extra_place_markers()
+    if extra:
+        pattern = re.compile(
+            r"\b(?:" + "|".join(re.escape(marker) for marker in extra) + r")\b",
+            flags=re.I,
+        )
+        if pattern.search(prompt):
+            return fallback
+    return prompt
 
 
 @dataclass
@@ -43,7 +72,10 @@ class RuntimeSettings:
                 voice_url=str(raw.get("voice_url", base.voice_url)),
                 temperature=float(raw.get("temperature", base.temperature)),
                 tools_enabled=bool(raw.get("tools_enabled", base.tools_enabled)),
-                system_prompt=str(raw.get("system_prompt", base.system_prompt)),
+                system_prompt=_public_safe_prompt(
+                    str(raw.get("system_prompt", base.system_prompt)),
+                    base.system_prompt,
+                ),
             )
         except (json.JSONDecodeError, TypeError, ValueError):
             return cls.from_config(config)
@@ -62,4 +94,17 @@ class RuntimeSettings:
             "tools_enabled": self.tools_enabled,
             "system_prompt": self.system_prompt,
             "default_doctrine": DEFAULT_DOCTRINE,
+        }
+
+    def to_guest_dict(self) -> dict[str, Any]:
+        """Settings a visitor may see. No doctrine, no endpoints, no operator routes."""
+        return {
+            "model": self.model,
+            "temperature": self.temperature,
+            "tools_enabled": False,
+            "speak_replies": True,
+            "demo_lock": True,
+            "operator_managed_routes": True,
+            "public_attribution": "Michigan MindMend Inc.",
+            "public_region": "Michigan",
         }
