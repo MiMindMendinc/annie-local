@@ -8,6 +8,15 @@ from typing import Any
 from annie.core.config import DEFAULT_DOCTRINE, AnnieConfig
 from annie.utils.private_files import ensure_private_directory, ensure_private_file
 
+_BANNED_PUBLIC_PLACE_MARKERS = ("ovid", "owosso", "48866", "shiawassee")
+
+
+def _public_safe_prompt(prompt: str, fallback: str) -> str:
+    hay = prompt.casefold()
+    if any(marker in hay for marker in _BANNED_PUBLIC_PLACE_MARKERS):
+        return fallback
+    return prompt
+
 
 @dataclass
 class RuntimeSettings:
@@ -43,7 +52,10 @@ class RuntimeSettings:
                 voice_url=str(raw.get("voice_url", base.voice_url)),
                 temperature=float(raw.get("temperature", base.temperature)),
                 tools_enabled=bool(raw.get("tools_enabled", base.tools_enabled)),
-                system_prompt=str(raw.get("system_prompt", base.system_prompt)),
+                system_prompt=_public_safe_prompt(
+                    str(raw.get("system_prompt", base.system_prompt)),
+                    base.system_prompt,
+                ),
             )
         except (json.JSONDecodeError, TypeError, ValueError):
             return cls.from_config(config)
@@ -62,4 +74,17 @@ class RuntimeSettings:
             "tools_enabled": self.tools_enabled,
             "system_prompt": self.system_prompt,
             "default_doctrine": DEFAULT_DOCTRINE,
+        }
+
+    def to_guest_dict(self) -> dict[str, Any]:
+        """Settings a visitor may see. No doctrine, no endpoints, no operator routes."""
+        return {
+            "model": self.model,
+            "temperature": self.temperature,
+            "tools_enabled": False,
+            "speak_replies": True,
+            "demo_lock": True,
+            "operator_managed_routes": True,
+            "public_attribution": "Michigan MindMend Inc.",
+            "public_region": "Michigan",
         }
