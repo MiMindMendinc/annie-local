@@ -86,7 +86,15 @@ def create_app(config: AnnieConfig | None = None) -> FastAPI:
         if hasattr(app.state, "db_engine"):
             await app.state.db_engine.dispose()
 
-    app = FastAPI(title="Annie Local", version=__version__, lifespan=lifespan)
+    docs_enabled = settings.mode == "local" and not settings.demo_lock
+    app = FastAPI(
+        title="Annie Local",
+        version=__version__,
+        lifespan=lifespan,
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
+    )
     register_error_handlers(app)
     configure_cors(app)
     app.add_middleware(RateLimitMiddleware)

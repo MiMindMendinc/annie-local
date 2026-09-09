@@ -87,6 +87,7 @@ class AppSettings:
     ollama_url: str
     voice_url: str
     default_model: str
+    demo_lock: bool
     worker_concurrency: int
     http_retry_attempts: int
     http_retry_base_delay: float
@@ -124,6 +125,7 @@ def get_settings() -> AppSettings:
         ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
         voice_url=os.getenv("VOICE_URL", "http://127.0.0.1:8123"),
         default_model=os.getenv("DEFAULT_MODEL", "llama3.2"),
+        demo_lock=_bool("ANNIE_DEMO_LOCK", False),
         worker_concurrency=_int("WORKER_CONCURRENCY", 2),
         http_retry_attempts=_int("HTTP_RETRY_ATTEMPTS", 4),
         http_retry_base_delay=_float("HTTP_RETRY_BASE_DELAY", 0.5),
@@ -191,3 +193,7 @@ def validate_app_settings(settings: AppSettings) -> None:
 
 def is_production() -> bool:
     return get_settings().mode == "production"
+
+
+def is_demo_lock() -> bool:
+    return get_settings().demo_lock
