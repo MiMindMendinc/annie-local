@@ -26,6 +26,7 @@ from annie.middleware import (
     configure_cors,
     register_error_handlers,
 )
+from annie.middleware.local_request_guard import LocalRequestGuardMiddleware
 from annie.services.cache_service import CacheService
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,14 @@ def create_app(config: AnnieConfig | None = None) -> FastAPI:
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(StructuredLoggingMiddleware)
+    if settings.mode == "local":
+        # Outermost: validate raw Host before URL parsing, logging or side effects.
+        app.add_middleware(
+            LocalRequestGuardMiddleware,
+            host=config.host,
+            port=config.port,
+            cors_origins=settings.cors_origins,
+        )
 
     app.include_router(auth_router)
     app.include_router(core_router)

@@ -14,5 +14,5 @@ def api_client(tmp_path):
         knowledge_path=str(tmp_path / "knowledge.json"),
         settings_path=str(tmp_path / "settings.json"),
     )
-    with TestClient(create_app(config)) as client:
+    with TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client:
         yield client

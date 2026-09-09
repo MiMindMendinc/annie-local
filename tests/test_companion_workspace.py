@@ -24,7 +24,7 @@ def test_capture_without_model_persists_after_restart(api_client, kind, collecti
         assert response.status_code == 201
         current = api_client.get("/api/knowledge").json()
         model.assert_not_called()
-    with TestClient(create_app(api_client.app.state.annie.config)) as restarted:
+    with TestClient(create_app(api_client.app.state.annie.config), base_url="http://127.0.0.1:8787") as restarted:
         assert restarted.get("/api/knowledge").json() == current
     if kind == "profile":
         assert current[collection] == "Keep this useful detail"
@@ -118,7 +118,7 @@ def test_workspace_assets_are_packaged_and_served(api_client):
 
 
 def test_goal_update_preflight_respects_configured_origins(api_client):
-    for origin, expected in [(get_settings().cors_origins[0], 200), ("https://untrusted.invalid", 400)]:
+    for origin, expected in [(get_settings().cors_origins[0], 200), ("https://untrusted.invalid", 403)]:
         response = api_client.options(
             "/api/knowledge/goals/test-goal",
             headers={
