@@ -108,6 +108,13 @@ annie setup     # guided install if something is missing
 - **PostgreSQL + authenticated Redis** — optional Compose path
 - **S3-compatible service foundation** — present in code; attachment API/UI is not claimed in v0.3.0
 
+## Guest demo
+
+Run `ANNIE_DEMO_LOCK=true annie launch` for a separate guest page with temporary
+conversations isolated per visitor. Operator settings, memory, knowledge, and API
+documentation are unavailable to guests. Normal local mode remains the default.
+See [guest boundaries, expiry, and limitations](docs/DEMO_LOCK.md).
+
 ## Local voice on launch (WOPR)
 
 ```bash

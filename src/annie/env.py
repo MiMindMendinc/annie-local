@@ -14,11 +14,14 @@ _DEVELOPMENT_SECRETS = {
 }
 
 
-def _bool(name: str, default: bool = False) -> bool:
+def _bool(name: str, default: bool = False, *, strict: bool = False) -> bool:
     raw = os.getenv(name)
     if raw is None:
         return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
+    value = raw.strip().lower()
+    if strict and value not in {"1", "true", "yes", "on", "0", "false", "no", "off"}:
+        raise ValueError(f"{name} must be a boolean (true or false)")
+    return value in {"1", "true", "yes", "on"}
 
 
 def _int(name: str, default: int) -> int:
@@ -125,7 +128,7 @@ def get_settings() -> AppSettings:
         ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
         voice_url=os.getenv("VOICE_URL", "http://127.0.0.1:8123"),
         default_model=os.getenv("DEFAULT_MODEL", "llama3.2"),
-        demo_lock=_bool("ANNIE_DEMO_LOCK", False),
+        demo_lock=_bool("ANNIE_DEMO_LOCK", False, strict=True),
         worker_concurrency=_int("WORKER_CONCURRENCY", 2),
         http_retry_attempts=_int("HTTP_RETRY_ATTEMPTS", 4),
         http_retry_base_delay=_float("HTTP_RETRY_BASE_DELAY", 0.5),
@@ -160,6 +163,9 @@ def validate_app_settings(settings: AppSettings) -> None:
     if settings.mode == "local" and not settings.auth_disabled:
         errors.append("local mode requires AUTH_DISABLED=true")
 
+    if settings.demo_lock and settings.mode != "local":
+        errors.append("ANNIE_DEMO_LOCK requires ANNIE_MODE=local; it cannot replace production authentication")
+
     if settings.mode == "production":
         if settings.auth_disabled:
             errors.append("production mode requires AUTH_DISABLED=false")
@@ -193,7 +199,3 @@ def validate_app_settings(settings: AppSettings) -> None:
 
 def is_production() -> bool:
     return get_settings().mode == "production"
-
-
-def is_demo_lock() -> bool:
-    return get_settings().demo_lock

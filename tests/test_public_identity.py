@@ -1,8 +1,8 @@
-import os
+import json
 import re
 
 from annie.core.config import DEFAULT_DOCTRINE, AnnieConfig
-from annie.core.settings import RuntimeSettings, _public_safe_prompt
+from annie.core.settings import RuntimeSettings
 
 
 def test_doctrine_keeps_company_and_state():
@@ -38,28 +38,10 @@ def test_guest_settings_hide_doctrine_and_endpoints():
     assert guest["tools_enabled"] is False
 
 
-def test_saved_doctrine_with_blocklisted_place_is_replaced(tmp_path, monkeypatch):
-    monkeypatch.setenv("ANNIE_PUBLIC_PLACE_BLOCKLIST", "Exampleville")
+def test_local_saved_doctrine_is_not_silently_rewritten(tmp_path):
+    prompt = "Provide context about Exampleville. Contact operator@example.com or 202-555-0100."
     path = tmp_path / "settings.json"
-    path.write_text(
-        '{"model":"llama3.2","ollama_url":"http://127.0.0.1:11434","voice_url":"http://127.0.0.1:8123","temperature":0.7,"tools_enabled":true,"system_prompt":"Built in Exampleville."}',
-        encoding="utf-8",
-    )
+    path.write_text(json.dumps({"system_prompt": prompt}), encoding="utf-8")
     loaded = RuntimeSettings.load(path, AnnieConfig())
-    assert "Exampleville" not in loaded.system_prompt
-    assert "Michigan MindMend Inc." in loaded.system_prompt
-
-
-def test_email_in_saved_doctrine_is_replaced(tmp_path):
-    path = tmp_path / "settings.json"
-    path.write_text(
-        '{"model":"llama3.2","ollama_url":"http://127.0.0.1:11434","voice_url":"http://127.0.0.1:8123","temperature":0.7,"tools_enabled":true,"system_prompt":"Contact operator@example.com"}',
-        encoding="utf-8",
-    )
-    loaded = RuntimeSettings.load(path, AnnieConfig())
-    assert "operator@example.com" not in loaded.system_prompt
-
-
-def test_ordinary_language_is_kept():
-    kept = "Never provide instructions for violence."
-    assert _public_safe_prompt(kept, "FALLBACK") == kept
+    assert loaded.system_prompt == prompt
+    assert json.loads(path.read_text())["system_prompt"] == prompt

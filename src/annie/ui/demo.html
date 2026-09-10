@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#eaf6ef" />
+    <title>Annie Local · Guest demo</title>
+    <link rel="stylesheet" href="/static/demo.css" />
+    <script src="/static/demo.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#message">Skip to conversation</a>
+    <div class="shell">
+      <header>
+        <h1>annie<span>.</span><small>GUEST DEMO · BETA</small></h1>
+        <div class="actions">
+          <button id="newChat" type="button" disabled>Start chat</button>
+          <button id="endChat" type="button" class="quiet" disabled>End chat</button>
+        </div>
+      </header>
+      <main>
+        <section class="intro" aria-labelledby="welcome">
+          <p class="eyebrow">A little space to think</p>
+          <h2 id="welcome">A conversation.<br>Just for this visit.</h2>
+          <p>Bring a question, work through an idea, or find your next step.</p>
+          <img src="/static/assets/annie-glass.webp" alt="" width="1536" height="1024" />
+          <div class="privacy">
+            <strong>Your own temporary conversation</strong>
+            <p>Recent messages are kept on this demo host for your visit. End chat to clear them. Inactive chats expire after 30 minutes.</p>
+            <p id="network">Checking where the model runs…</p>
+            <p>Host network isolation is not verified.</p>
+          </div>
+        </section>
+        <section class="conversation" aria-label="Guest conversation">
+          <div class="conversation-heading">
+            <h2>Let’s talk<span>.</span></h2>
+            <span id="modelStatus">Checking model</span>
+          </div>
+          <p id="notice" role="status" aria-live="polite">Checking the demo…</p>
+          <div id="messages" role="log" aria-label="Messages" aria-live="polite" aria-relevant="additions"></div>
+          <form id="chatForm">
+            <label for="message">Your message</label>
+            <textarea id="message" rows="3" maxlength="20000" placeholder="What’s on your mind?" required disabled></textarea>
+            <div class="composer-actions">
+              <label class="voice-option"><input id="readAloud" type="checkbox" checked /> Read replies aloud</label>
+              <button id="send" type="submit" disabled>Send <span aria-hidden="true">↗</span></button>
+            </div>
+            <p id="voiceStatus" class="fine">Audio uses the demo’s configured voice service.</p>
+          </form>
+        </section>
+      </main>
+      <footer>Michigan MindMend Inc. <span>Michigan · Local-first AI</span></footer>
+    </div>
+  </body>
+</html>
