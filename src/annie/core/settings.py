@@ -63,3 +63,16 @@ class RuntimeSettings:
             "system_prompt": self.system_prompt,
             "default_doctrine": DEFAULT_DOCTRINE,
         }
+
+    def to_guest_dict(self) -> dict[str, Any]:
+        """Settings a visitor may see. No doctrine, no endpoints, no operator routes."""
+        return {
+            "model": "operator-managed",
+            "temperature": self.temperature,
+            "tools_enabled": False,
+            "speak_replies": True,
+            "demo_lock": True,
+            "operator_managed_routes": True,
+            "public_attribution": "Michigan MindMend Inc.",
+            "public_region": "Michigan",
+        }
