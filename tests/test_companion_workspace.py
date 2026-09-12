@@ -146,9 +146,8 @@ def test_planning_uses_saved_context_and_enforces_read_only_tools(api_client):
             ModelTurn(content="Sketch one screen, then check that the main action is clear."),
         ]
         response = api_client.post("/api/chat", json={"message": "Plan a next step.", "mode": "plan"})
-        assert response.status_code == 200
-        assert "Sketch one screen" in response.json()["reply"]
-        assert all(event.startswith("Skipped ") for event in response.json()["tool_events"])
+        assert response.status_code == 502
+        assert "attempted a write" in response.json()["detail"]
         first_call = model.call_args_list[0]
         assert "I prefer concise checklists." in first_call.args[0][0].content
         assert {tool["function"]["name"] for tool in first_call.kwargs["tools"]} == {
@@ -198,13 +197,24 @@ async def test_production_planning_does_not_rewrite_knowledge_records(api_client
     with (
         patch.object(service, "_build_engine", new=AsyncMock(return_value=(engine, knowledge, memory, True))),
         patch(
-            "annie.core.llm.OllamaBackend.chat", new=AsyncMock(return_value=ModelTurn(content="Take one small step."))
+            "annie.core.llm.OllamaBackend.chat",
+            new=AsyncMock(
+                return_value=ModelTurn(
+                    content=(
+                        '{"first_action":"Take one small step.","checklist":["Choose","Try","Review"]}'
+                        if planning
+                        else "Take one small step."
+                    )
+                )
+            ),
         ),
         patch("annie.services.chat_service.persist_knowledge", new_callable=AsyncMock) as save_knowledge,
         patch("annie.services.chat_service.persist_memory", new_callable=AsyncMock) as save_conversation,
     ):
         response = await service.handle_message("What next?", read_only_tools=planning)
-    assert response["reply"] == "Take one small step."
+    assert response["reply"] == (
+        "Take one small step.\n\n- [ ] Choose\n- [ ] Try\n- [ ] Review" if planning else "Take one small step."
+    )
     if planning:
         save_knowledge.assert_not_called()
     else:

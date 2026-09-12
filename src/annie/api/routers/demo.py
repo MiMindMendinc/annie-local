@@ -69,7 +69,11 @@ async def health(request: Request) -> dict:
         OllamaBackend(runtime.ollama_url, runtime.model).health(), get_voice_status(runtime.voice_url)
     )
     status = build_runtime_status(mode="local", runtime=runtime.to_public_dict(), backend=backend, voice=asdict(voice))
-    status["model"]["name"] = "operator-managed"
+    # Operator repair diagnostics contain model names, commands and endpoints.
+    # Project only the coarse fields guests need, including for unavailable models.
+    status["model"] = {key: status["model"][key] for key in ("availability", "route", "locality", "reason")} | {
+        "name": "operator-managed"
+    }
     status["memory"] = {
         "backend": "temporary",
         "location": "demo_host",

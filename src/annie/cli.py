@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -19,6 +21,8 @@ from annie import __version__
 from annie.core._substrate import verify_log
 from annie.core.config import AnnieConfig, validate_config
 from annie.core.grounding_audit import format_doctor_block, read_events, summary
+from annie.core.llm import OllamaBackend
+from annie.core.runtime_status import model_repair
 from annie.core.settings import RuntimeSettings
 from annie.core.voice import is_wopr_health_payload
 from annie.server import create_app
@@ -95,29 +99,27 @@ def run_doctor() -> int:
     ollama_bin = shutil.which("ollama") is not None
     all_ok &= _check("Ollama CLI", ollama_bin, "install from https://ollama.com" if not ollama_bin else "")
 
-    models: list[str] = []
-    try:
-        response = httpx.get("http://127.0.0.1:11434/api/tags", timeout=3.0, trust_env=False)
-        ollama_up = response.status_code == 200
-        if ollama_up:
-            data = response.json()
-            models = [m["name"] for m in data.get("models", []) if m.get("name")]
-    except (httpx.HTTPError, KeyError, TypeError, ValueError):
-        ollama_up = False
-
-    all_ok &= _check("Ollama daemon", ollama_up, "run: ollama serve" if not ollama_up else f"{len(models)} model(s)")
-    if models:
-        for name in models[:5]:
-            print(f"      · {name}")
-        if len(models) > 5:
-            print(f"      · … and {len(models) - 5} more")
-
-    recommended = any("llama3.2" in m or "llama3.1" in m for m in models)
-    if ollama_up and models:
-        _check("Tool-capable model", recommended, "llama3.2 recommended" if not recommended else "")
-
-    wopr_ok = _voice_bridge_online("http://127.0.0.1:8123")
-    _check("WOPR voice bridge (optional)", wopr_ok, "http://127.0.0.1:8123" if not wopr_ok else "online")
+    runtime = RuntimeSettings.load(config.resolved_settings_path, config)
+    backend = asyncio.run(OllamaBackend(runtime.ollama_url, runtime.model).health())
+    installed = bool(backend.get("installed"))
+    all_ok &= installed
+    repair = model_repair(runtime.model, runtime.ollama_url, backend)
+    print("\nMODEL")
+    print(f"  configured : {runtime.model}")
+    print(f"  endpoint   : {runtime.ollama_url}")
+    print(f"  reachable  : {'YES' if backend.get('endpoint_available') else 'NO'}")
+    print(f"  installed  : {'YES' if installed else 'NO'}")
+    if installed:
+        print(f"  resolved   : {backend['resolved_name']}")
+        print("  repair     : none")
+    else:
+        print("  repair     : ollama serve")
+        print(f"               {repair['actions'][2]['command']}")
+        if backend.get("model_names"):
+            print(f"  installed tags: {', '.join(backend['model_names'])}")
+        print("  Start serve in a separate terminal; run pull against the configured Ollama host.")
+    wopr_ok = _voice_bridge_online(runtime.voice_url)
+    _check("WOPR voice bridge (optional)", wopr_ok, runtime.voice_url if not wopr_ok else "online")
 
     data_dir = config.resolved_root
     _check("Data directory", True, str(data_dir))
@@ -132,16 +134,11 @@ def run_doctor() -> int:
     print("  Session reset keeps: knowledge, settings, grounding log")
     print()
 
-    if all_ok and models:
+    if all_ok:
         print("  Ready. Run: annie launch\n")
         return 0
-    if not ollama_up:
-        print("  Fix: ollama serve && ollama pull llama3.2\n")
-    elif not models:
-        print("  Fix: ollama pull llama3.2\n")
-    else:
-        print("  Fix issues above, then: annie launch\n")
-    return 1 if not all_ok else 0
+    print("  Resolve the checks above, then run annie doctor again.\n")
+    return 1
 
 
 def run_grounding(args: argparse.Namespace) -> int:
@@ -180,18 +177,39 @@ def run_grounding(args: argparse.Namespace) -> int:
 
 def run_setup() -> int:
     print(BANNER)
-    print("  Running install script …\n")
-    from pathlib import Path
-
-    repo = Path(__file__).resolve().parents[2]
-    install = repo / "scripts" / "install.sh"
-    if not install.exists():
-        install = Path.cwd() / "scripts" / "install.sh"
-    if install.exists():
-        result = subprocess.run(["bash", str(install)], check=False)
-        return result.returncode
-    print("  install.sh not found. Try: pip install -e '.[dev]'\n")
-    return 1
+    binary = shutil.which("ollama")
+    if not binary:
+        print("Install Ollama from https://ollama.com/download, then run annie setup again.")
+        return 1
+    config = AnnieConfig()
+    runtime = RuntimeSettings.load(config.resolved_settings_path, config)
+    backend = asyncio.run(OllamaBackend(runtime.ollama_url, runtime.model).health())
+    if not backend.get("endpoint_available"):
+        print(f"Start Ollama at {runtime.ollama_url}: ollama serve (in a separate terminal).")
+        return 1
+    if not backend.get("installed"):
+        print(f"Configured model: {runtime.model} at {runtime.ollama_url}")
+        print(f"Installed: {', '.join(backend.get('model_names', [])) or 'none'}")
+        try:
+            answer = input(f"Download {runtime.model} to this Ollama endpoint? Type yes: ")
+        except (EOFError, KeyboardInterrupt):
+            return 1
+        if answer.strip().lower() != "yes":
+            print("No download or settings change made.")
+            return 1
+        result = subprocess.run(
+            [binary, "pull", runtime.model], env={**os.environ, "OLLAMA_HOST": runtime.ollama_url}, check=False
+        )
+        if result.returncode:
+            print("Pull failed. Settings were not changed.")
+            return 1
+        backend = asyncio.run(OllamaBackend(runtime.ollama_url, runtime.model).health())
+    if not backend.get("installed"):
+        print("Model did not resolve to one installed tag. Settings were not changed.")
+        return 1
+    runtime.model = backend["resolved_name"]
+    runtime.save(config.resolved_settings_path)
+    return run_launch(build_parser().parse_args(["launch"]))
 
 
 def _voice_health_url(voice_url: str) -> str:
@@ -308,13 +326,20 @@ def run_launch(args: argparse.Namespace) -> int:
         speed_kernel_backend=args.speed_kernel_backend,
     )
     validate_config(config)
-    runtime_voice_url = RuntimeSettings.load(config.resolved_settings_path, config).voice_url
+    runtime = RuntimeSettings.load(config.resolved_settings_path, config)
+    runtime_voice_url = runtime.voice_url
     app = create_app(config)
     url = f"http://{config.host}:{config.port}"
 
     print(BANNER)
     print(f"  → {url}")
-    print(f"  → model: {config.model}")
+    print(f"  → model: {runtime.model}")
+    backend = asyncio.run(OllamaBackend(runtime.ollama_url, runtime.model).health())
+    if not backend.get("installed"):
+        command = model_repair(runtime.model, runtime.ollama_url, backend)["actions"][2]["command"]
+        print(
+            f"Model unavailable ({runtime.model} @ {runtime.ollama_url}). UI will open in repair mode. Run: {command}"
+        )
     print(f"  → memory: {config.resolved_memory_path}")
     print(f"  → knowledge: {config.resolved_knowledge_path}")
     print(f"  → settings: {config.resolved_settings_path}")

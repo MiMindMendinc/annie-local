@@ -1,0 +1,206 @@
+{
+  "date_utc": "2026-09-07T06:31:17.878104+00:00",
+  "environment": {
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+    "python": "3.12.13",
+    "cpus": 9
+  },
+  "method": "Real Ollama, real Uvicorn HTTP/SSE, temporary synthetic memory; tools disabled for timing runs",
+  "runtime_sha256": {
+    "src/annie/__init__.py": "8a7bd44e9e5f3dfdee35e70e887b911f1dcaa0bf18ffdc0443c37c1677efc341",
+    "src/annie/api/db.py": "c9742fa868f6bc280db7e1b1ad588ce23c9db0112becb4efeeb58cfc161a4968",
+    "src/annie/api/dependencies.py": "02f579aa709920f06b541aa84e556b2d51fc625a8f9238709aa9e1908f1bcc0f",
+    "src/annie/api/deps/auth.py": "08c350b5f5b63e25fdc96d33710597e6779b53e5bac1009033d5f684569e8d92",
+    "src/annie/api/routers/__init__.py": "ccb1d71b92d449257a4a5a150471c9dbd6f9953949f5cd72df7baab5208d51d5",
+    "src/annie/api/routers/auth.py": "9875436085ad6f75953f7270da9dd6a972f0115cbb8dc6756280aa33148a229e",
+    "src/annie/api/routers/core.py": "598dcdffb923b64bed191f3fd129e8a598049cf38dca3cf99308ee9e31a4dea9",
+    "src/annie/api/schemas.py": "f5a4389f78653da17479711c1fc8877d978297b7aa6325fcd110a1d2efa37631",
+    "src/annie/cli.py": "c4b8873155fb5698ca7ebe5c8193d551aa28bd58471ebcb86cd6a1a3ab094a26",
+    "src/annie/core/__init__.py": "1b2a49b3f5882fd14a3a253e93921589c108ab817342e5a94aa86a98a689d694",
+    "src/annie/core/_substrate.py": "d875e77010d6aed4a278477ccbaf9c3776e28cff323b38e170d150b43cf67680",
+    "src/annie/core/chat.py": "5255599f418a9ea142c56968473e4acd7842b005f0c6d17ace173a6a32b335d4",
+    "src/annie/core/config.py": "bde6d9c1770ef139975f5d3814ad6b0e38f3a278c6075a91357e23f7b41c2fb2",
+    "src/annie/core/grounding_audit.py": "109698ba2f5b4f07325513c63caf44d182368190d1eab5e7bd6eca6ece4761cc",
+    "src/annie/core/knowledge.py": "6c799e974a0c4eff04bd93ce194b922a93c70930fffe95de6fd7654abc5d4bc8",
+    "src/annie/core/llm.py": "7ad5b0617009c023c384f2150cef901fe76764b58db70bfc2c7812374bb3a8df",
+    "src/annie/core/memory.py": "c46c4a8bca8f32a8009cf310fb09e3fcbc39dac2cad6d370558b6b90239e6496",
+    "src/annie/core/plan.py": "7ebfee1be7eb54e63a0d3821cc0592ef6585654e73732e4f523227c64765ac35",
+    "src/annie/core/runtime_status.py": "9db29b0c6ebde89aeb2f031de86c882169a3bcb91c6a950dbda2c1fcb439fac1",
+    "src/annie/core/session.py": "5104dd2d31d6bc8a8f1fbbe590f8053413b6baed5b2f7603b57feb0ef86160da",
+    "src/annie/core/settings.py": "194db6ef256ebe931ecbce49b1184d4d133f99fec6be05eac411c727b6b04a60",
+    "src/annie/core/speed_kernel.py": "5fd6509da7ba5d9c370e8d38b07ff37d75fb4dc8c1ce512a31a51097f3c8daa6",
+    "src/annie/core/stream_guard.py": "cf37f0888e88c61e9ffb2d8688608a7041fcae2d3c43b5ed283180b33f0a95f6",
+    "src/annie/core/tools.py": "956f973822993cc222e59adf500407d2d35a4e6b9e617dc2a313897edf648b0a",
+    "src/annie/core/vision.py": "964ea30eea5dabc6421015587658770b0a0e6f73c26a0e47a1ca366b63541c20",
+    "src/annie/core/voice.py": "254d95e6aab71944397af128c10f6f84b1148da48c9ba4eea7ae2ae697e931db",
+    "src/annie/db/__init__.py": "52c31dc4bdf9d5c09911c8aadf82defa7cb538a3ec713d72b1bd6c455d0662ac",
+    "src/annie/db/engine.py": "648db594bcb2e3395ae5827dfbe0367e56b9e34477adebdcf9fff91899e9f694",
+    "src/annie/db/models.py": "b11f08a32ed1ca6fefd4d218699acaa8b71d4a9f3afa750d0b8530bf78a305ea",
+    "src/annie/env.py": "e9b07186b6f8adc5976bd6bb8e86e1045506214f8502256b8b5df4d744dc24b5",
+    "src/annie/middleware/__init__.py": "b1fbaa071f4797388e193dc04f248a18883a5c06a95a17217de30bc15976bf4a",
+    "src/annie/middleware/auth.py": "efb736c5b70cb0e60f3f5c36e925f9d59f906b381afe8fe44343c3007574d92b",
+    "src/annie/middleware/cors.py": "41e1e032ec33118891257e2dde4cb045da48c2141cf3592f4cb94bfd86bc26c2",
+    "src/annie/middleware/error_handlers.py": "939703aefb004cdf8926a7730246e1c9cef75159657e3aea797e4aba0f032d61",
+    "src/annie/middleware/logging.py": "19a74b4d87d15f7c7d1ca07ca0208231967195a34ff719137e6ac0a6bb8078cb",
+    "src/annie/middleware/rate_limit.py": "e0cb4950e2bd6edb7f4bdb286cb2c4f5d1a0e22de634bfa1cdf1b5acb5452b5e",
+    "src/annie/middleware/security_headers.py": "ca8fbb86a8b9f823f272a52635dcb3182edada062d045f042606d35f811f0d83",
+    "src/annie/repositories/__init__.py": "dee8a04622459dcc6367e68b40cb48cbf86221aeb3fac4b0c950b1e047035eeb",
+    "src/annie/repositories/base.py": "06f846b1783cafa32f456b39541211018cfd075d4ff5d59dee141d249ae94796",
+    "src/annie/repositories/file_adapters.py": "40987f068986c76be2286f2c85fea45c74298442cfd92d9479265e9393ed56c5",
+    "src/annie/repositories/knowledge_repository.py": "868b00a0d7c1bb42d230d427e242ffad8998776b07806f70cd01beafdf9f500b",
+    "src/annie/repositories/memory_repository.py": "48ed93a80aca16a681442c0d7ef3b77284a37a8bdc26f32fe809107a9e0910f4",
+    "src/annie/repositories/session_repository.py": "31eccd4d0400e28d17357dd77af9cbac81cfc6ab3ac960c17cfb5e5f04f189fb",
+    "src/annie/repositories/settings_repository.py": "a7ad9398621588eb46968b51d61564d7c883d30a40de8367f133cfaf5460951f",
+    "src/annie/repositories/user_repository.py": "1e02228d24e0762473e845b51cf1c3b181378a170f3c2059e55de155030145f5",
+    "src/annie/server.py": "2badffc9eea11f10e4c6476213975879f23c9161818b253bb885cbc01aa10fa2",
+    "src/annie/services/__init__.py": "7eb8d2375eb0e6409edd250045eb3c4ac59f8c983b662cf9235ba2fb469e8777",
+    "src/annie/services/auth_service.py": "44095a173a55d2dfa7d316675fdc88dd3665d8005cb6a2b37d1c09eb4009c0ad",
+    "src/annie/services/cache_service.py": "0ed22453fab60ab3d41b1ef4befb8326a4232b214e06fcef4d6813c048b3caa6",
+    "src/annie/services/chat_service.py": "3736c5d81a8f7bbc359e46e2ff62cf0a9d5a712aeba6547eb8cac1f7daebb5c4",
+    "src/annie/services/production_bridge.py": "54570c4eb6a63a000aecff4175ba91030965a482fcf7ea349f325e77e90d932d",
+    "src/annie/services/storage_service.py": "8040915c808d3c444d415e3d3d72129310aa3cf0e4657a83cc1986c228d7716d",
+    "src/annie/ui/api-client.js": "00026ac4c60deaeb4681dd58556569bbd9f8e48b8fa354321f277d2bc69182a2",
+    "src/annie/ui/app.js": "f9c152f1b57e0e19de268dec273993ae5e6c118dafb286bc564439a0fdd44fc8",
+    "src/annie/ui/companion.css": "07520c5b76092255d95216ea8506c765240a2f5b221d61bad089b294112a46fe",
+    "src/annie/ui/companion.js": "f3e66f1f64cf022faf6d40a0e6c58e9d1bbbf8df045354790376c4a811faf28e",
+    "src/annie/ui/index.html": "f3209b93af129d0b6bee9af57096f539a5ab3588647d75a29d10205af7b2f57c",
+    "src/annie/ui/state.js": "16c7642e8c2c8cc81204b7691883f209e2a3aca07ae7fab083f290a23d039959",
+    "src/annie/ui/styles.css": "a1e9e78d30ad3a40c3490ad2cf16b2ec16180562352dee8b90dfea5667502b17",
+    "src/annie/ui/validators.js": "fd0ebf522a236de9d271e548eda1f76862fe8f576b9736f172dd5ce792e28485",
+    "src/annie/utils/__init__.py": "5d58b386dfd80998089604049384cfc1c7a200d5ed234c5141fe1cfb90314069",
+    "src/annie/utils/http_retry.py": "a21526e5baea217c45b7931777bee29f7de224d7f2b6da6a7053d520238b4f0a",
+    "src/annie/utils/private_files.py": "b7e604cffda396f2b788216744a95e006df660bbd0f39cfc6240acf59045aeb1",
+    "src/annie/utils/sanitize.py": "bb695bb323dc6bdb84b080251dc84285e451683ece79e2e928259ed0a9121930",
+    "src/annie/wopr_server.py": "3e59954fe8cc1e16a73f6d767f7fde1272772ebb1fd86238e5bd918133e88b2e",
+    "src/annie/workers/__init__.py": "08ca6691485c30cf246789310ff8460c07bd016d0a0176bd6c921bbf92d5c879",
+    "src/annie/workers/tasks.py": "613ab4d0cb4f531c571100a47fbe6ec4b54bc2179e7bd2af2591e89e214ed601"
+  },
+  "checks": [
+    {
+      "name": "exclusive alternate model recovery via API",
+      "pass": true
+    },
+    {
+      "name": "cold streaming",
+      "pass": true,
+      "first_text_ms": 35089.33,
+      "first_text": "Hello",
+      "text_events": 69,
+      "first_provider_content_ms": 35082.08,
+      "provider_to_first_text_ms": 7.25,
+      "provider_complete_ms": 49700.03,
+      "done_ms": 49716.64,
+      "reply": "Hello! To organize a desk, start by clearing everything off the surface and sorting items into categories, such as papers to file, items to throw away, and things to keep on the desk. Then, assign a designated spot for each item, like a tray for pens and a folder for important documents, to create a tidy and functional workspace.",
+      "first_text_before_provider_complete": true
+    },
+    {
+      "name": "warm streaming",
+      "pass": true,
+      "first_text_ms": 1144.57,
+      "first_text": "Hello",
+      "text_events": 70,
+      "first_provider_content_ms": 1139.56,
+      "provider_to_first_text_ms": 5.0,
+      "provider_complete_ms": 15635.3,
+      "done_ms": 15661.53,
+      "reply": "Hello! Clearing your desk of clutter is a great first step, so gather everything and sort items into categories like papers to file, items to throw away, and things to keep on the desk. Next, assign a designated spot for each item, like a tray for pens and a folder for important documents, to create a tidy and functional workspace.",
+      "first_text_before_provider_complete": true
+    },
+    {
+      "name": "HTTP cancellation without assistant memory commit",
+      "pass": true,
+      "first_text_ms": 3430.42,
+      "first_text": "Hello",
+      "text_events": 1,
+      "provider_cancelled": true
+    }
+  ],
+  "ollama": {
+    "version": "0.33.3"
+  },
+  "inventory": {
+    "models": [
+      {
+        "name": "llama3.1:8b",
+        "model": "llama3.1:8b",
+        "modified_at": "2026-09-06T23:02:12.205112154-07:00",
+        "size": 4920753328,
+        "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "llama",
+          "families": [
+            "llama"
+          ],
+          "parameter_size": "8.0B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 131072,
+          "embedding_length": 4096
+        },
+        "capabilities": [
+          "completion",
+          "tools"
+        ]
+      }
+    ]
+  },
+  "alternate_before": {
+    "availability": "unavailable",
+    "name": "llama3.2",
+    "route": "loopback",
+    "locality": "device",
+    "endpoint_available": true,
+    "installed": false,
+    "repair": {
+      "code": "name_mismatch",
+      "title": "Choose an installed model",
+      "detail": "Configured \"llama3.2\" does not resolve to one installed tag at http://127.0.0.1:11434.",
+      "actions": [
+        {
+          "id": "retry",
+          "label": "Retry health"
+        },
+        {
+          "id": "open_settings",
+          "label": "Choose installed model"
+        },
+        {
+          "id": "copy_pull",
+          "label": "Copy: ollama pull llama3.2",
+          "command": "ollama pull llama3.2"
+        }
+      ]
+    },
+    "reason": "The configured model is not listed by the endpoint."
+  },
+  "alternate_after": {
+    "availability": "ready",
+    "name": "llama3.1:8b",
+    "route": "loopback",
+    "locality": "device",
+    "endpoint_available": true,
+    "installed": true,
+    "repair": {
+      "code": "ready",
+      "title": "Your model is ready",
+      "detail": "llama3.1:8b is available at http://127.0.0.1:11434.",
+      "actions": [
+        {
+          "id": "retry",
+          "label": "Retry health"
+        },
+        {
+          "id": "open_settings",
+          "label": "Choose installed model"
+        },
+        {
+          "id": "copy_pull",
+          "label": "Copy: ollama pull llama3.1:8b",
+          "command": "ollama pull llama3.1:8b"
+        }
+      ]
+    },
+    "reason": "The configured model is available."
+  }
+}

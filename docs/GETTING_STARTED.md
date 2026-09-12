@@ -135,3 +135,59 @@ Or use **mem** → **Wipe all** for knowledge only. **clr** clears the current c
 
 - Read [CHANGELOG.md](../CHANGELOG.md)
 - Run `./scripts/canary_test.sh` before distributing a custom build
+
+## Repair a first-run model connection
+
+`annie doctor` reads your saved model and endpoint and prints a MODEL repair block.
+`annie setup` detects the Ollama executable, checks the configured endpoint, and asks
+for an explicit `yes` before downloading a missing model. It writes settings only
+when the configured name resolves to one installed tag, then launches Annie.
+If Ollama is missing, install it from https://ollama.com/download.
+
+### Windows PowerShell
+
+Start the daemon in one terminal (if the Ollama desktop app is not already running):
+
+```powershell
+ollama serve
+```
+
+In another PowerShell terminal, from the repository:
+
+```powershell
+ollama pull llama3.2
+python -m pip install -e .
+annie doctor
+annie launch
+```
+
+In a third terminal, while Annie runs:
+
+```powershell
+curl.exe -s http://127.0.0.1:8787/api/health
+```
+
+### Linux
+
+Use the same `ollama pull`, `annie doctor`, and `annie launch` commands after
+installing the package with `python -m pip install -e .`. Start `ollama serve` in
+a separate terminal if your Ollama service is stopped. Inspect health with
+`curl -s http://127.0.0.1:8787/api/health`.
+
+### Container API with Ollama on the Windows host
+
+```text
+API in container + Ollama on Windows host
+  ollama_url = http://host.docker.internal:11434
+```
+
+Container loopback points to the container, not Windows. Configure the operator's
+Ollama endpoint accordingly; the host daemon must accept traffic from the container
+network. Keep access restricted to that network. Pull models on the host, or set
+`OLLAMA_HOST` to the configured endpoint when using the Ollama CLI. The production
+Compose file remains a deployment reference, not a finished public multi-user service.
+
+Settings now lists installed tags and accepts a manually entered name. A missing
+name requires **Save anyway**. An untagged family with one installed variant resolves
+to that variant; multiple variants require choosing an explicit tag. Local routes
+are not proof of host network isolation.

@@ -158,3 +158,22 @@ test("failed refresh clears stale private context instead of presenting it as cu
   assert.equal(w.get("profilePreview").textContent, "Saved context could not be loaded.");
   assert.equal(w.get("planDayBtn").disabled, true);
 });
+
+test('repair hero uses server copy, gates plans, and leaves memory and drafts intact', async () => {
+  const h = workspace();
+  h.get('input').value = 'Keep this draft';
+  h.companion.setRuntime({ model: { availability: 'unavailable', repair: {
+    title: 'Choose the installed tag', detail: 'Configured llama3.2 at http://localhost:11434 is ambiguous.',
+    actions: [{id:'retry',label:'Retry health now'},{id:'open_settings',label:'Choose installed model'},{id:'copy_pull',label:'Copy exact command',command:'ollama pull llama3.2'}]
+  }}});
+  assert.equal(h.get('repairTitle').textContent, 'Choose the installed tag');
+  assert.match(h.get('repairDetail').textContent, /ambiguous/);
+  assert.equal(h.get('retryHealthBtn').textContent, 'Retry health now');
+  assert.equal(h.get('planDayBtn').attributes['aria-disabled'], 'true');
+  assert.equal(h.get('unstickBtn').disabled, true);
+  assert.equal(h.get('attachBtn').disabled, false);
+  assert.equal(h.get('captureBtn').disabled, false);
+  await h.get('retryHealthBtn').fire('click');
+  assert.equal(h.get('input').value, 'Keep this draft');
+  assert.equal(h.get('modelAvailabilityAnnouncement').textContent, 'Model offline. Memory still works.');
+});

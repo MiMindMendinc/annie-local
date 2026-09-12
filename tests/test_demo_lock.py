@@ -160,13 +160,14 @@ def test_demo_cannot_replace_production_auth(demo_config):
         validate_app_settings(replace(get_settings(), mode="production"))
 
 
-def test_guest_health_drops_backend_internals(demo_client, monkeypatch):
+@pytest.mark.parametrize("names", [["llama3.2", "OPERATOR_MODEL"], ["OPERATOR_MODEL"], []])
+def test_guest_health_drops_backend_internals(demo_client, monkeypatch, names):
     monkeypatch.setattr(
         "annie.core.llm.OllamaBackend.health",
         AsyncMock(
             return_value={
                 "ok": True,
-                "model_names": ["llama3.2", "OPERATOR_MODEL"],
+                "model_names": names,
                 "models": [{"name": "OPERATOR_MODEL", "path": "/private/model"}],
                 "error": "http://operator:secret@private.example.com",
             }
@@ -178,10 +179,12 @@ def test_guest_health_drops_backend_internals(demo_client, monkeypatch):
     )
     response = demo_client.get("/api/health")
     assert response.status_code == 200
-    assert response.json()["runtime_status"]["model"]["availability"] == "ready"
+    model = response.json()["runtime_status"]["model"]
+    assert model["availability"] == ("ready" if "llama3.2" in names else "unavailable")
+    assert set(model) == {"availability", "route", "locality", "reason", "name"}
     assert response.json()["runtime_status"]["memory"]["conversation_persistence"] == "temporary_per_visitor"
     assert response.json()["runtime_status"]["network"]["offline_verified"] is False
-    for secret in ("OPERATOR", "private", "SECRET_NOTE", "llama3.2", "bridge_url", "session_id"):
+    for secret in ("OPERATOR", "private", "SECRET_NOTE", "llama3.2", "bridge_url", "session_id", "127.0.0.1:11434"):
         assert secret not in response.text
     assert response.headers["Cache-Control"] == "no-store"
 
