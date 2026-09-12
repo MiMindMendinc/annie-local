@@ -44,6 +44,8 @@ npm run dev
 
 On Windows use `.venv\\Scripts\\python.exe` for the install command. The wrapper uses a separate, git-ignored `.annie-preview` directory and local mode with authentication disabled for this isolated development instance. Keep this preview on a trusted development machine; use the normal deployment configuration for shared service operation. It launches FastAPI internally on port 18787 and forwards Vite CLI flags unchanged. It does not start or simulate Ollama.
 
+The preview allows browser origins `http://127.0.0.1:5173` and `http://localhost:5173` by default. For another port or a supervised proxy hostname, set `CORS_ORIGINS` to the exact browser origin before starting the preview, for example `CORS_ORIGINS=http://localhost:5174 npm run dev -- --port 5174` in a POSIX shell. Local mode rejects wildcard origins and unconfigured hostnames; forwarding headers do not grant access.
+
 For a supervised Linux preview restricted to the checkout, run `.venv/bin/python scripts/prepare_preview.py` first. This copies the active interpreter and standard library into `.preview-python` so the sandbox can access them; installed dependencies remain in the checkout's virtual environment. The copied runtime and preview data are ignored by git and excluded from the Python package. The ordinary `.venv` path remains the default when no copied runtime is present.
 
 ## Verification

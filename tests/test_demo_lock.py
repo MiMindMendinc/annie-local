@@ -139,7 +139,7 @@ def test_demo_off_preserves_local_settings_and_memory(demo_config, monkeypatch):
     model = AsyncMock(return_value=ModelTurn(content="Local reply."))
     monkeypatch.setattr("annie.core.llm.OllamaBackend.chat", model)
     before = json.loads(demo_config.resolved_settings_path.read_text())
-    with TestClient(create_app(demo_config)) as client:
+    with TestClient(create_app(demo_config), base_url="http://127.0.0.1:8787") as client:
         settings = client.get("/api/settings").json()
         assert settings["system_prompt"] == before["system_prompt"]
         assert settings["tools_enabled"] is True
@@ -191,7 +191,7 @@ def test_guest_never_initializes_operator_storage(demo_config):
         patch("annie.server.LocalMemory", side_effect=AssertionError("operator memory opened")),
         patch("annie.server.LocalKnowledge", side_effect=AssertionError("operator knowledge opened")),
         patch("annie.server.SessionManager", side_effect=AssertionError("operator session opened")),
-        TestClient(create_app(demo_config)) as client,
+        TestClient(create_app(demo_config), base_url="http://127.0.0.1:8787") as client,
     ):
         assert client.get("/api/settings").status_code == 200
         assert not hasattr(client.app.state, "annie")
@@ -246,7 +246,7 @@ def test_expired_deleted_and_invented_tokens_never_create_sessions(demo_client):
 
 
 def test_shutdown_cleans_all_visitor_files(demo_config):
-    with TestClient(create_app(demo_config)) as client:
+    with TestClient(create_app(demo_config), base_url="http://127.0.0.1:8787") as client:
         start(client)
         start(client)
         roots = [s.root for s in client.app.state.demo_sessions._sessions.values()]
