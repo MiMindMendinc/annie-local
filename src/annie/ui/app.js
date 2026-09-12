@@ -59,7 +59,7 @@ const PHASE_VIEW = {
   listening: { label: "Listening", copy: "Browser voice input is active; locality is not verified." },
   thinking: { label: "Thinking", copy: "The configured model is working on your request." },
   speaking: { label: "Speaking", copy: "Voice output is playing. Use Stop at any time." },
-  offline: { label: "Model offline", copy: "The app is open, but the configured model is unavailable." },
+  offline: { label: "Model offline", copy: "Connect a model to chat. You can still save notes and manage goals." },
   error: { label: "Error", copy: "The last operation failed. Details are in the session." },
 };
 
@@ -189,7 +189,10 @@ function renderRuntime(runtime) {
   el.memoryDetail.textContent = memoryDetail;
 
   const remoteConfigured = network.claim === "remote_configured";
-  const networkLabel = remoteConfigured ? "Network: remote route" : "Network: not verified";
+  const routes = Object.values(network.routes || {});
+  const localRoutes = routes.length > 0 && routes.every(route => ["loopback", "container", "host"].includes(route));
+  const networkLabel = remoteConfigured ? "Network: remote route"
+    : network.claim === "not_verified" && localRoutes ? "Local only · isolation not verified" : "Network: not verified";
   setBadge(el.networkStatus, networkLabel, remoteConfigured ? "bad" : "warn", network.reason || "Offline operation has not been verified.");
   el.networkDetail.textContent = network.reason || "Offline operation has not been verified.";
 
@@ -214,9 +217,11 @@ function renderState(state) {
   el.voicePill.setAttribute("aria-label", `Annie state: ${view.label}`);
   el.presenceCopy.textContent = session.error?.detail || view.copy;
   el.stop.disabled = authRequired || !session.canStop;
-  el.send.disabled = authRequired || phase === "thinking";
+  const modelUnavailable = session.runtime.model?.availability !== "ready";
+  el.send.disabled = authRequired || phase === "thinking" || modelUnavailable;
+  el.input.placeholder = modelUnavailable ? "Model offline — save a note or connect a model" : "Message Annie…";
   el.input.disabled = authRequired || phase === "thinking";
-  el.mic.disabled = authRequired || !micSupported || ["thinking", "speaking"].includes(phase);
+  el.mic.disabled = authRequired || modelUnavailable || !micSupported || ["thinking", "speaking"].includes(phase);
   el.modelBtn.disabled = authRequired;
   el.cfgBtn.disabled = authRequired;
   el.openMemoryBtn.disabled = authRequired;
@@ -290,6 +295,38 @@ function addSystemMessage(text) {
   announce(text);
 }
 
+function createReplyPreview() {
+  let card = null;
+  let content = null;
+  return {
+    append(text) {
+      if (!text) return;
+      if (!card) {
+        card = document.createElement("article");
+        card.className = "message-card assistant stream-preview";
+        card.setAttribute("aria-busy", "true");
+        const heading = document.createElement("div");
+        heading.className = "message-head";
+        heading.textContent = "Annie · replying…";
+        content = document.createElement("div");
+        content.className = "message-content";
+        content.style.whiteSpace = "pre-wrap";
+        card.append(heading, content);
+        el.stream.appendChild(card);
+      }
+      // Plain text only until completion: no partial Markdown/HTML, copy
+      // action, export entry, or speech for a provisional response.
+      content.textContent += text;
+      scrollToLatest();
+    },
+    reset() {
+      card?.remove();
+      card = null;
+      content = null;
+    },
+  };
+}
+
 function addErrorCard(title, detail) {
   companion?.showView("chat");
   const card = document.createElement("div");
@@ -311,7 +348,27 @@ function openDialog(dialog, focusTarget) {
     dialogReturnTargets.set(dialog, returnTarget);
   }
   if (!dialog.open) dialog.showModal();
-  window.setTimeout(() => (focusTarget || $("button, input, select, textarea", dialog))?.focus(), 20);
+  (focusTarget || $("button, input, select, textarea", dialog))?.focus();
+}
+
+function trapDialogFocus(event) {
+  if (event.key !== "Tab") return;
+  const dialog = event.currentTarget;
+  const controls = Array.from(dialog.querySelectorAll('a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]'))
+    .filter(node => !node.disabled && node.tabIndex >= 0 && node.getClientRects().length && getComputedStyle(node).visibility !== "hidden");
+  const first = controls[0];
+  const last = controls[controls.length - 1];
+  const active = document.activeElement;
+  if (!first) {
+    event.preventDefault();
+    dialog.focus();
+  } else if (event.shiftKey && (active === first || !controls.includes(active))) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && (active === last || !controls.includes(active))) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 function closeDialog(dialog) {
@@ -365,14 +422,14 @@ function downloadJson(filename, value) {
 
 function exportSession() {
   const safeDate = new Date().toISOString().replace(/[:.]/g, "-");
-  downloadJson(`annie-research-session-${safeDate}.json`, {
+  downloadJson(`annie-conversation-${safeDate}.json`, {
     format: "annie-research-session/v1",
-    title: "Research Session",
+    title: "Annie conversation",
     exported_at: new Date().toISOString(),
     runtime_status: AnnieState.get("session").runtime,
     messages,
   });
-  announce("Research session exported");
+  announce("Conversation exported");
 }
 
 async function loadSettings() {
@@ -396,7 +453,7 @@ function fillSettings() {
 }
 
 function fallbackRuntime(data) {
-  const backendReady = Boolean(data.backend?.ok);
+  const backendReady = false; // No runtime evidence means no readiness claim.
   return {
     api: "ready",
     model: {
@@ -539,23 +596,26 @@ function speakInBrowser(text) {
   });
 }
 
-async function speakReply(text) {
+async function speakReply(text, requestSignal = null) {
   const clip = cleanVoiceText(text);
+  if (requestSignal?.aborted) return;
   if (!clip || !AnnieState.get("prefs")?.speak) {
     AnnieState.dispatch("RESPONSE_RENDERED");
     return;
   }
-  voiceAbortController = new AbortController();
+  const controller = new AbortController();
+  voiceAbortController = controller;
   try {
-    const payload = await AnnieApi.speak(clip, voiceAbortController.signal);
+    const payload = await AnnieApi.speak(clip, controller.signal);
+    if (controller.signal.aborted || requestSignal?.aborted) return;
     await playBridgeAudio(payload);
   } catch (error) {
-    if (error.name === "AbortError") return;
+    if (error.name === "AbortError" || controller.signal.aborted || requestSignal?.aborted) return;
     AnnieState.dispatch("VOICE_FALLBACK");
     announce("Using browser-managed voice; locality is unverified");
     await speakInBrowser(clip);
   } finally {
-    voiceAbortController = null;
+    if (voiceAbortController === controller) voiceAbortController = null;
   }
 }
 
@@ -576,28 +636,34 @@ async function sendMessage(mode = "chat") {
   if (abortController || AnnieState.get("session").phase === "thinking") return;
   const text = el.input.value.trim();
   if (!text) return;
-  companion?.showView("chat");
-  if (!el.model.value) {
-    const detail = "Start Ollama and install a model such as llama3.2, then retry.";
-    addErrorCard("No model available", detail);
-    AnnieState.dispatch("FAILED", { title: "No model available", detail });
+  if (AnnieState.get("session").runtime.model?.availability !== "ready") {
+    announce("Model offline. Your draft was kept. Memory still works.");
     return;
   }
+  companion?.showView("chat");
 
   addMessage("user", text);
   el.input.value = "";
   autosize();
   AnnieState.dispatch("REQUEST_STARTED");
-  abortController = new AbortController();
+  const controller = new AbortController();
+  abortController = controller;
+  const preview = createReplyPreview();
+  controller.signal.addEventListener("abort", () => preview.reset(), {once: true});
 
   try {
     const data = mode === "plan"
-      ? await AnnieApi.chat(text, abortController.signal, mode)
-      : await AnnieApi.streamChat(text, abortController.signal, (event) => {
-          if (event === "progress") el.presenceCopy.textContent = "Receiving the model response. Checking it before display…";
+      ? await AnnieApi.chat(text, controller.signal, mode)
+      : await AnnieApi.streamChat(text, controller.signal, (event, payload) => {
+          if (controller.signal.aborted) return;
+          if (event === "progress") el.presenceCopy.textContent = "Annie is replying…";
+          if (event === "delta") preview.append(payload.text);
+          if (event === "reset" || event === "replace") preview.reset();
         });
+    if (controller.signal.aborted) throw new DOMException("Request stopped", "AbortError");
     const reply = data.reply?.trim();
     if (!reply) throw new Error("The model returned no answer. Try again or choose another installed model.");
+    preview.reset();
     AnnieState.dispatch("RESPONSE_READY", { metrics: data.metrics || null });
     addMessage("assistant", reply, {
       metrics: data.metrics,
@@ -606,11 +672,14 @@ async function sendMessage(mode = "chat") {
     });
     announce("Annie replied");
     companion?.refresh().catch(() => {});
-    await speakReply(reply);
+    await speakReply(reply, controller.signal);
     if (data.restart) addSystemMessage("The local session was restarted by Annie's grounding policy. Structured knowledge was kept.");
   } catch (error) {
+    preview.reset();
     if (error.name === "AbortError") {
-      addSystemMessage("Output stopped. The streaming connection was cancelled.");
+      addSystemMessage(mode === "plan"
+        ? "Plan request stopped. The non-streaming model request may finish in the background."
+        : "Output stopped. The streaming connection was cancelled.");
       AnnieState.dispatch("STOPPED");
     } else {
       const detail = error.message || "The configured model did not return a response.";
@@ -619,7 +688,8 @@ async function sendMessage(mode = "chat") {
       await refreshEngine();
     }
   } finally {
-    abortController = null;
+    preview.reset();
+    if (abortController === controller) abortController = null;
     if (AnnieState.get("session").phase === "thinking") AnnieState.dispatch("RESPONSE_RENDERED");
     el.input.focus();
   }
@@ -756,6 +826,7 @@ document.addEventListener("keydown", (event) => {
     stopCurrentActivity();
   }
 });
+$$('dialog').forEach(dialog => dialog.addEventListener("keydown", trapDialogFocus));
 el.stop.addEventListener("click", stopCurrentActivity);
 el.mic.addEventListener("click", () => {
   if (!recognition) return;
@@ -791,7 +862,7 @@ el.clearBtn.addEventListener("click", async () => {
   await AnnieApi.restartSession();
   messages = [];
   el.stream.innerHTML = "";
-  addSystemMessage("New research session started. Structured knowledge was kept.");
+  addSystemMessage("New conversation started. Saved knowledge was kept.");
   closeDialog(el.menuDialog);
 });
 $$('[data-close]').forEach((button) => button.addEventListener("click", () => closeDialog(document.getElementById(button.dataset.close))));
@@ -836,6 +907,11 @@ companion = AnnieCompanion.init({
   openDialog, closeDialog, announce, autosize,
   requestPlan: () => sendMessage("plan"),
   connectModel: () => { fillSettings(); openDialog(el.settingsDialog, el.model); },
+  retryHealth: refreshEngine,
+  copyCommand: async (command) => {
+    try { await navigator.clipboard.writeText(command); announce("Pull command copied"); }
+    catch { announce(`Copy unavailable. Command: ${command}`); }
+  },
   inspectMemory: () => { openDialog(el.memoryDialog); renderMemory(); },
 });
 
@@ -864,3 +940,14 @@ boot();
 
 el.model.addEventListener("input", () => { $("#saveMissingModel").checked = false; });
 el.model.addEventListener("change", refreshModelPicker);
+
+// Keep the fixed app shell inside the visible viewport when a mobile keyboard opens.
+if (window.visualViewport) {
+  const fitViewport = () => {
+    document.documentElement.style.setProperty("--annie-viewport-height", `${window.visualViewport.height}px`);
+    document.documentElement.style.setProperty("--annie-viewport-top", `${window.visualViewport.offsetTop}px`);
+  };
+  window.visualViewport.addEventListener("resize", fitViewport);
+  window.visualViewport.addEventListener("scroll", fitViewport);
+  fitViewport();
+}

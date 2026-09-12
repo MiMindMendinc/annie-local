@@ -3,13 +3,15 @@
 /* The Today workspace uses the same authenticated knowledge store as chat.
  * It never saves profile or goal content in browser storage. */
 (function companionWorkspace(global) {
-  function init({ openDialog, closeDialog, inspectMemory, announce, autosize, requestPlan, connectModel }) {
+  function init({ openDialog, closeDialog, inspectMemory, announce, autosize, requestPlan, connectModel, retryHealth = async () => {}, copyCommand = async () => {} }) {
     const find = (id) => document.getElementById(id);
     let knowledge = null;
     let locked = false;
     let refreshing = 0;
     let mutating = false;
     let modelReady = false;
+    let pullCommand = "";
+    let retrying = false;
 
     function notice(text, failed = false) {
       find("todayNotice").textContent = text;
@@ -33,16 +35,51 @@
       find("planDayBtn").disabled = locked || mutating || !modelReady || !knowledge?.goals?.some((goal) => !goal.done);
       find("unstickBtn").disabled = locked || !modelReady;
       find("connectModelBtn").disabled = locked;
+      find("retryHealthBtn").disabled = locked || retrying;
+      find("chooseModelBtn").disabled = locked;
+      find("copyPullBtn").disabled = locked || !pullCommand;
+      for (const id of ["planDayBtn", "unstickBtn"]) {
+        find(id).setAttribute("aria-disabled", String(Boolean(find(id).disabled)));
+      }
       document.querySelectorAll(".goal-toggle").forEach((button) => { button.disabled = locked || mutating; });
       document.querySelectorAll(".goal-plan").forEach((button) => { button.disabled = locked || mutating || !modelReady; });
     }
 
     function setRuntime(runtime) {
+      const wasReady = modelReady;
       modelReady = runtime?.model?.availability === "ready";
+      const repair = runtime?.model?.repair;
+      find("heroBrand").hidden = !modelReady;
+      find("heroDescription").hidden = !modelReady;
+      find("repairTitle").hidden = modelReady;
+      find("repairDetail").hidden = modelReady;
+      find("repairActions").hidden = modelReady;
+      find("orb").dataset.modelReady = String(modelReady);
+      find("repairTitle").textContent = repair?.title || "Checking the model connection";
+      find("repairDetail").textContent = repair?.detail || "Health is unavailable. Retry to get current model diagnostics.";
+      const actions = repair?.actions || [];
+      for (const [id, actionId] of [["retryHealthBtn", "retry"], ["chooseModelBtn", "open_settings"], ["copyPullBtn", "copy_pull"]]) {
+        const action = actions.find(item => item.id === actionId);
+        if (action) find(id).textContent = action.label;
+      }
+      pullCommand = actions.find(item => item.id === "copy_pull")?.command || "";
+      find("directionReason").textContent = modelReady ? "Make your open goals manageable" : "Connect model to plan. Memory still works.";
+      find("clarityReason").textContent = modelReady ? "Give an unfinished idea some shape" : "Connect model to think it through. Memory still works.";
+      const announcement = modelReady ? "Model ready. Chat and planning are available." : "Model offline. Memory still works.";
+      if (wasReady !== modelReady || !find("modelAvailabilityAnnouncement").textContent) find("modelAvailabilityAnnouncement").textContent = announcement;
       find("modelSetup").hidden = modelReady;
       find("planningStatus").textContent = modelReady ? "" : "Connect an installed Ollama model to plan and chat. You can save memories and manage goals now.";
       setLocked(locked);
     }
+
+    find("retryHealthBtn").addEventListener("click", async () => {
+      if (locked || retrying) return;
+      retrying = true;
+      setLocked(locked);
+      try { await retryHealth(); } finally { retrying = false; setLocked(locked); }
+    });
+    find("chooseModelBtn").addEventListener("click", () => { if (!locked) connectModel(); });
+    find("copyPullBtn").addEventListener("click", async () => { if (!locked && pullCommand) await copyCommand(pullCommand); });
 
     async function plan(text) {
       if (locked || mutating || !modelReady) return;
@@ -183,7 +220,7 @@
         await AnnieApi.addKnowledge("goal", input.value.trim());
         input.value = "";
         const refreshed = await refresh().then(() => true, () => false);
-        if (refreshed) notice("Goal saved. Let’s give it a next step.");
+        if (refreshed) notice("Goal saved.");
       } catch (error) {
         notice(error.message || "Could not save the goal. Your draft was kept.", true);
       } finally {
@@ -214,7 +251,7 @@
       }
     });
     const hour = new Date().getHours();
-    find("dayGreeting").textContent = hour < 12 ? "Good morning · let’s begin" : hour < 18 ? "Good afternoon · room for a little progress" : "Good evening · space for your ideas";
+    find("dayGreeting").textContent = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
     return { refresh, showView, setLocked, setRuntime };
   }
   global.AnnieCompanion = { init };
