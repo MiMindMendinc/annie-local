@@ -27,7 +27,9 @@ const api = spawn(python, ["-m", "uvicorn", "annie.server:create_app", "--factor
   env: {
     ...process.env,
     ANNIE_MODE: "local",
+    ANNIE_PORT: "18787",
     AUTH_DISABLED: "true",
+    CORS_ORIGINS: process.env.CORS_ORIGINS || "http://127.0.0.1:5173,http://localhost:5173",
     ANNIE_DATA_DIR: resolve(".annie-preview"),
     ...(runtime ? {
       PYTHONPATH: [resolve("src"), resolve(runtime.sitePackages)].join(delimiter),

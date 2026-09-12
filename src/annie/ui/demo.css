@@ -1,0 +1,59 @@
+:root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #153d30; background: #eaf6ef; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(ellipse at top left, #fff 0, transparent 65%); }
+button, textarea, input { font: inherit; }
+button { min-height: 46px; padding: .65rem 1.1rem; color: #fff; background: #146544; border: 1px solid #146544; border-radius: 24px; font-weight: 650; cursor: pointer; }
+button:hover:not(:disabled) { background: #0a4f33; }
+button:disabled { cursor: default; opacity: .45; }
+button.quiet { background: transparent; color: #194f38; border-color: #8aac98; }
+button.quiet:hover:not(:disabled) { background: #d9ecdf; }
+:focus-visible { outline: 3px solid #996b00; outline-offset: 4px; }
+.skip { position: absolute; left: 1rem; top: -5rem; background: #fff; color: #153d30; padding: 1rem; z-index: 2; }
+.skip:focus { top: 1rem; }
+.shell { max-width: 1320px; padding: 32px clamp(20px, 4vw, 64px) max(24px, env(safe-area-inset-bottom)); margin: auto; }
+header, .actions, .conversation-heading, .composer-actions, footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+header { padding-bottom: 26px; border-bottom: 1px solid #c2d9c9; }
+h1 { font-size: 52px; letter-spacing: -.07em; margin: 0; line-height: 1; }
+h1 span, h2 span { color: #218443; }
+h1 small { display: block; font-size: 10px; letter-spacing: .15em; margin: 12px 0 0 3px; }
+main { display: grid; grid-template-columns: .9fr 1.1fr; align-items: start; gap: clamp(30px, 5vw, 72px); margin: 40px 0; }
+.eyebrow { font-size: 11px; letter-spacing: .15em; text-transform: uppercase; font-weight: 700; }
+.intro h2 { font-size: clamp(30px, 3.5vw, 46px); font-weight: 650; letter-spacing: -.045em; line-height: 1.1; margin: 16px 0; }
+p { line-height: 1.55; }
+.intro > p:not(.eyebrow) { max-width: 32ch; color: #3d6351; }
+.intro img { width: 100%; height: 190px; object-fit: cover; border-radius: 24px; margin: 16px 0; }
+.privacy { font-size: 13px; max-width: 51ch; }
+.privacy p { margin: 8px 0; color: #3d6351; }
+.conversation { min-width: 0; background: #fff; border: 1px solid #ccdfd2; border-radius: 28px; padding: 26px; box-shadow: 0 18px 55px #245c3410; }
+.conversation-heading { flex-wrap: wrap; }
+.conversation h2 { font-size: 24px; letter-spacing: -.045em; margin: 0; }
+#modelStatus { font-size: 11px; font-weight: 650; padding: 7px 11px; background: #eef4ef; border-radius: 16px; }
+#notice { font-size: 13px; min-height: 2.8em; color: #456452; }
+#messages { min-height: 180px; max-height: 340px; overflow-y: auto; overflow-wrap: anywhere; padding: 3px; }
+.bubble { background: #eef5ef; padding: 12px 16px; border-radius: 18px; margin: 0 0 14px; white-space: pre-wrap; font-size: 14px; }
+.bubble.user { background: #185a3e; color: #fff; margin-left: 24px; }
+.bubble strong { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+form { margin-top: 18px; }
+form > label { display: block; font-size: 12px; font-weight: 650; margin-bottom: 8px; }
+textarea { width: 100%; min-height: 92px; resize: vertical; border: 1px solid #93b3a0; border-radius: 16px; padding: 13px; color: #183d2d; background: #fbfdfb; }
+textarea:disabled { background: #f2f5f2; }
+.composer-actions { margin-top: 12px; }
+.voice-option { display: flex; align-items: center; min-height: 44px; gap: 8px; font-size: 12px; }
+input { accent-color: #146544; min-width: 18px; min-height: 18px; }
+.fine { font-size: 11px; color: #456452; margin-bottom: 0; }
+footer { font-size: 12px; border-top: 1px solid #c2d9c9; padding-top: 20px; color: #456452; flex-wrap: wrap; }
+@media (max-width: 740px) {
+  .shell { padding-top: 22px; }
+  h1 { font-size: 42px; }
+  header { align-items: flex-start; }
+  .actions { gap: 7px; }
+  button { padding: .6rem .9rem; font-size: 13px; }
+  main { grid-template-columns: 1fr; gap: 24px; margin: 28px 0; }
+  .intro img { display: none; }
+  .intro h2 { font-size: 32px; }
+  .intro > p:not(.eyebrow) { max-width: none; }
+  .privacy { font-size: 12px; }
+  .conversation { padding: 20px; border-radius: 22px; }
+  #messages { min-height: 110px; max-height: 310px; }
+}
+@media (max-width: 360px) { header { flex-wrap: wrap; } .composer-actions { flex-wrap: wrap; } }

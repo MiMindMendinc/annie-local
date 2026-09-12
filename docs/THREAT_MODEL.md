@@ -71,12 +71,21 @@ Mitigations:
 ### Local API Exposure
 
 Risk: local server binds too broadly, exposing chat or memory endpoints to other devices.
+Browser requests also need validation: loopback binding and CORS response headers alone are not an access boundary. See GitHub Security Lab's [localhost and DNS rebinding analysis](https://github.blog/security/application-security/localhost-dangers-cors-and-dns-rebinding/).
 
 Mitigations:
 
 - bind to `127.0.0.1` by default
 - document network binding risks
 - avoid exposing local memory routes publicly
+- in local mode, reject unknown or malformed `Host` headers before URL parsing or endpoint execution
+- reject supplied browser `Origin` headers unless they match the configured local address or an exact `CORS_ORIGINS` entry; reject duplicate headers and `Origin: null`
+
+The default host allowlist contains `127.0.0.1`, `localhost`, and `::1`. A concrete configured bind host and the hosts in explicit `CORS_ORIGINS` entries are also allowed. Binding to `0.0.0.0` or `::` does not authorize every hostname. Forwarded headers and DNS resolution do not add trusted hosts. Origin-free local CLI requests remain supported; local processes with access to the listener are still trusted.
+
+This guard runs only in local mode. The authenticated deployment reference retains its JWT and operator-managed CORS configuration. The separate WOPR listener and model endpoint have their own boundaries. These checks do not establish network isolation, protect against malicious local processes, or qualify public multi-user hosting.
+
+Run `python -m pytest -q tests/test_local_request_guard.py` to verify the request boundary, offline memory operations, and normal local requests. The suite includes a real Uvicorn HTTP check using a temporary loopback socket and synthetic data. It does not claim an end-to-end browser DNS rebinding test.
 
 ### Prompt Injection / Unsafe Model Output
 

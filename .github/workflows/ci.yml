@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, fix/first-run-model-path, feat/stream-and-cancel]
 
 permissions:
   contents: read
