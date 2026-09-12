@@ -49,6 +49,11 @@ def test_research_session_controls_are_accessible_and_local() -> None:
     assert parser.elements["voicePill"][1].get("aria-live") == "polite"
     assert parser.elements["input"][0] == "textarea"
     assert parser.external_assets == []
+    assert "<title>Annie Local · beta</title>" in html
+    assert '<span class="art-caption">' not in html
+    assert "research session" not in html.lower()
+    assert "research session" not in _ui_text("app.js").lower()
+    assert "downloadJson(`annie-conversation-${safeDate}.json`" in _ui_text("app.js")
 
 
 def test_ui_does_not_hardcode_unverified_privacy_claims() -> None:

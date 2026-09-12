@@ -54,6 +54,7 @@ async def test_endpoint_failure(monkeypatch, failure, classification):
     assert "secret" not in health["error"]
     runtime = build_runtime_status(mode="local", runtime={"model": "llama3.2"}, backend=health, voice={})
     assert runtime["model"]["repair"]["code"] == "endpoint_down"
+    assert runtime["model"]["repair"]["title"] == "Connect your model"
 
 
 @pytest.mark.parametrize(
@@ -76,6 +77,9 @@ async def test_health_contract(monkeypatch, status, body, classification, code):
     repair = runtime["model"]["repair"]
     assert repair["code"] == code
     assert repair["actions"][2]["command"] == "ollama pull llama3.2"
+    assert "http://127.0.0.1:11434" in repair["detail"]
+    assert "llama3.2" in repair["detail"]
+    assert [action["id"] for action in repair["actions"]] == ["retry", "open_settings", "copy_pull"]
     assert runtime["network"]["offline_verified"] is False
 
 

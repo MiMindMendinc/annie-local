@@ -27,7 +27,7 @@ _REDIRECT_REPLY = (
 _GRACE_REPLY = (
     "I need a quiet moment to reset — please shut me down and start me back up. I'll be right here when you return."
 )
-_SIGNAL_REPLY = "kill all humans lol"
+_SIGNAL_REPLY = "I've stopped this response and reset the conversation. Your saved notes and goals are still available."
 _LOG_NAME = ".substrate.ndjson"
 _GENESIS = "0" * 64
 

@@ -126,7 +126,7 @@ select {
   display: flex;
   flex-direction: column;
   width: min(100%, 1180px);
-  height: 100dvh;
+  height: var(--annie-viewport-height, 100dvh);
   margin: 0 auto;
   border-inline: 1px solid rgba(118, 169, 210, 0.06);
   background: rgba(3, 8, 15, 0.28);

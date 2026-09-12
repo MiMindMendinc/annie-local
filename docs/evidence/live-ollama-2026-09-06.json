@@ -1,0 +1,524 @@
+{
+  "source_commit": "10742443c98a720cd819bd288d85b42053eaee74",
+  "platform": {
+    "os": "Linux",
+    "architecture": "x86_64",
+    "cpus": 9
+  },
+  "method": "ASGI TestClient with real Ollama HTTP requests; synthetic notes and goals; no browser or physical-device result",
+  "checks": [
+    {
+      "name": "Model unavailable before Ollama starts",
+      "passed": true,
+      "detail": {
+        "availability": "unavailable",
+        "name": "llama3.2",
+        "route": "loopback",
+        "locality": "device",
+        "endpoint_available": false,
+        "installed": false,
+        "repair": {
+          "code": "endpoint_down",
+          "title": "Connect your model",
+          "detail": "Ollama is unavailable at http://127.0.0.1:11434. Selected model: \"llama3.2\". Start Ollama or check the endpoint, then retry.",
+          "actions": [
+            {
+              "id": "retry",
+              "label": "Retry health"
+            },
+            {
+              "id": "open_settings",
+              "label": "Choose installed model"
+            },
+            {
+              "id": "copy_pull",
+              "label": "Copy: ollama pull llama3.2",
+              "command": "ollama pull llama3.2"
+            }
+          ]
+        },
+        "reason": "The model endpoint is unavailable."
+      }
+    },
+    {
+      "name": "Offline streaming returns a repair response",
+      "passed": true,
+      "detail": {
+        "status_code": 502
+      }
+    },
+    {
+      "name": "Notes and goals save with model down",
+      "passed": true,
+      "detail": {
+        "note_status": 201,
+        "goal_status": 201
+      }
+    },
+    {
+      "name": "Default model resolves to installed llama3.2:latest",
+      "passed": true,
+      "detail": {
+        "availability": "ready",
+        "name": "llama3.2",
+        "route": "loopback",
+        "locality": "device",
+        "endpoint_available": true,
+        "installed": true,
+        "repair": {
+          "code": "ready",
+          "title": "Your model is ready",
+          "detail": "llama3.2:latest is available at http://127.0.0.1:11434.",
+          "actions": [
+            {
+              "id": "retry",
+              "label": "Retry health"
+            },
+            {
+              "id": "open_settings",
+              "label": "Choose installed model"
+            },
+            {
+              "id": "copy_pull",
+              "label": "Copy: ollama pull llama3.2",
+              "command": "ollama pull llama3.2"
+            }
+          ]
+        },
+        "reason": "The configured model is available."
+      }
+    },
+    {
+      "name": "Real streamed chat completes with a reply",
+      "passed": true,
+      "detail": {
+        "status_code": 200,
+        "elapsed_seconds": 20.5
+      }
+    },
+    {
+      "name": "Real Direction output satisfies plan contract",
+      "passed": true,
+      "detail": {
+        "status_code": 200,
+        "response": {
+          "reply": "clear the workspace\n\n- [ ] Gather supplies\n- [ ] Clear everything from the desk\n- [ ] Put away items that are out of place",
+          "restart": false,
+          "tool_events": [],
+          "model": "llama3.2",
+          "session": {
+            "session_id": "393c9a2b36a6464d9d80d88c754fb145",
+            "epoch": 0,
+            "restarted_at": 1788674641.6640282,
+            "grounding_strikes": 0
+          },
+          "metrics": {
+            "token_count": 37,
+            "tokens_per_second": 19.82,
+            "model_duration_ms": 5351.8,
+            "provider_completed_at": "2026-09-06T06:04:29.398658941Z",
+            "source": "ollama",
+            "scope": "final_turn",
+            "latency_ms": 5375.71,
+            "completed_at": "2026-09-06T06:04:29.400697+00:00"
+          }
+        }
+      }
+    },
+    {
+      "name": "Real Clarity output satisfies plan contract",
+      "passed": true,
+      "detail": {
+        "status_code": 200,
+        "response": {
+          "reply": "Get a notebook\n\n- [ ] Buy a notebook\n- [ ] Choose a storage location for notebook\n- [ ] Set up a system for organizing notebook contents",
+          "restart": false,
+          "tool_events": [
+            "recall({'first_action': 'recall query \"small home project notebook\"', 'checklist': ['[ ] Decide on notebook size and type', '[ ] Choose a storage location for notebook', '[ ] Set up a system for organizing notebook contents']})"
+          ],
+          "model": "llama3.2",
+          "session": {
+            "session_id": "393c9a2b36a6464d9d80d88c754fb145",
+            "epoch": 0,
+            "restarted_at": 1788674641.6640282,
+            "grounding_strikes": 0
+          },
+          "metrics": {
+            "token_count": 41,
+            "tokens_per_second": 18.39,
+            "model_duration_ms": 3470.97,
+            "provider_completed_at": "2026-09-06T06:04:38.256377688Z",
+            "source": "ollama",
+            "scope": "final_turn",
+            "latency_ms": 8840.05,
+            "completed_at": "2026-09-06T06:04:38.260365+00:00"
+          }
+        }
+      }
+    },
+    {
+      "name": "Planning preserves saved goals and facts",
+      "passed": true,
+      "detail": {
+        "goal_count": 1,
+        "fact_count": 1
+      }
+    },
+    {
+      "name": "Missing configured model is not ready",
+      "passed": true,
+      "detail": {
+        "availability": "unavailable",
+        "name": "annie-acceptance-missing-model",
+        "route": "loopback",
+        "locality": "device",
+        "endpoint_available": true,
+        "installed": false,
+        "repair": {
+          "code": "name_mismatch",
+          "title": "Choose an installed model",
+          "detail": "Configured \"annie-acceptance-missing-model\" does not resolve to one installed tag at http://127.0.0.1:11434.",
+          "actions": [
+            {
+              "id": "retry",
+              "label": "Retry health"
+            },
+            {
+              "id": "open_settings",
+              "label": "Choose installed model"
+            },
+            {
+              "id": "copy_pull",
+              "label": "Copy: ollama pull annie-acceptance-missing-model",
+              "command": "ollama pull annie-acceptance-missing-model"
+            }
+          ]
+        },
+        "reason": "The configured model is not listed by the endpoint."
+      }
+    },
+    {
+      "name": "Selecting an installed tag restores readiness",
+      "passed": true,
+      "detail": {
+        "selected_tag": "llama3.2:latest"
+      }
+    },
+    {
+      "name": "Model loss preserves saved notes and goals",
+      "passed": true,
+      "detail": {
+        "availability": "unavailable"
+      }
+    }
+  ],
+  "offline_health": {
+    "ok": true,
+    "app": "annie-local",
+    "version": "0.4.0",
+    "backend": {
+      "backend": "ollama",
+      "base_url": "http://127.0.0.1:11434",
+      "model_names": [],
+      "models": [],
+      "suggested_pull": "llama3.2",
+      "nearest_installed": null,
+      "endpoint_available": false,
+      "ok": false,
+      "installed": false,
+      "resolved_name": null,
+      "candidates": [],
+      "error_class": "unreachable",
+      "error": "Could not connect to Ollama"
+    },
+    "speed_kernel": {
+      "enabled": false,
+      "available": false,
+      "backend": "dominus-ultra",
+      "mode": "disabled",
+      "note": "Optional backend is disabled by default."
+    },
+    "voice": {
+      "enabled": true,
+      "bridge_url": "http://127.0.0.1:8123",
+      "bridge_ok": false,
+      "stt_engine": "browser",
+      "tts_engine": "browser",
+      "note": "WOPR bridge offline. Browser voice fallback is available; locality is unverified."
+    },
+    "vision": {
+      "enabled": false,
+      "engine": "planned",
+      "note": "Vision adapters are scaffolded but not enabled in v0.1.0."
+    },
+    "session": {
+      "session_id": "393c9a2b36a6464d9d80d88c754fb145",
+      "epoch": 0,
+      "restarted_at": 1788674641.6640282,
+      "grounding_strikes": 0
+    },
+    "runtime_status": {
+      "model": {
+        "availability": "unavailable",
+        "name": "llama3.2",
+        "route": "loopback",
+        "locality": "device",
+        "endpoint_available": false,
+        "installed": false,
+        "repair": {
+          "code": "endpoint_down",
+          "title": "Connect your model",
+          "detail": "Ollama is unavailable at http://127.0.0.1:11434. Selected model: \"llama3.2\". Start Ollama or check the endpoint, then retry.",
+          "actions": [
+            {
+              "id": "retry",
+              "label": "Retry health"
+            },
+            {
+              "id": "open_settings",
+              "label": "Choose installed model"
+            },
+            {
+              "id": "copy_pull",
+              "label": "Copy: ollama pull llama3.2",
+              "command": "ollama pull llama3.2"
+            }
+          ]
+        },
+        "reason": "The model endpoint is unavailable."
+      },
+      "memory": {
+        "backend": "jsonl",
+        "location": "device",
+        "conversation_persistence": "enabled",
+        "knowledge_tools": "enabled"
+      },
+      "voice": {
+        "input": "browser_managed_unverified",
+        "output": "browser_managed_unverified",
+        "bridge_available": false,
+        "route": "loopback"
+      },
+      "assets": {
+        "source": "bundled",
+        "remote_dependencies": false
+      },
+      "network": {
+        "claim": "not_verified",
+        "routes": {
+          "model": "loopback",
+          "voice": "loopback"
+        },
+        "reason": "Configured service routes are local; host network isolation is not verified.",
+        "offline_verified": false
+      }
+    }
+  },
+  "ollama_version": "0.33.3",
+  "ollama_tags": {
+    "models": [
+      {
+        "name": "llama3.2:latest",
+        "model": "llama3.2:latest",
+        "modified_at": "2026-09-06T05:45:42.670930357Z",
+        "size": 2019393189,
+        "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "llama",
+          "families": [
+            "llama"
+          ],
+          "parameter_size": "3.2B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 131072,
+          "embedding_length": 3072
+        },
+        "capabilities": [
+          "completion",
+          "tools"
+        ]
+      }
+    ]
+  },
+  "ollama_list": "NAME               ID              SIZE      MODIFIED       \nllama3.2:latest    a80c4f17acd5    2.0 GB    18 minutes ago    \n",
+  "ready_health": {
+    "ok": true,
+    "app": "annie-local",
+    "version": "0.4.0",
+    "backend": {
+      "backend": "ollama",
+      "base_url": "http://127.0.0.1:11434",
+      "model_names": [
+        "llama3.2:latest"
+      ],
+      "models": [
+        {
+          "name": "llama3.2:latest",
+          "model": "llama3.2:latest",
+          "modified_at": "2026-09-06T05:45:42.670930357Z",
+          "size": 2019393189,
+          "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "llama",
+            "families": [
+              "llama"
+            ],
+            "parameter_size": "3.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 3072
+          },
+          "capabilities": [
+            "completion",
+            "tools"
+          ]
+        }
+      ],
+      "suggested_pull": "llama3.2",
+      "nearest_installed": "llama3.2:latest",
+      "endpoint_available": true,
+      "ok": true,
+      "installed": true,
+      "resolved_name": "llama3.2:latest",
+      "candidates": [
+        "llama3.2:latest"
+      ],
+      "error_class": null,
+      "error": null
+    },
+    "speed_kernel": {
+      "enabled": false,
+      "available": false,
+      "backend": "dominus-ultra",
+      "mode": "disabled",
+      "note": "Optional backend is disabled by default."
+    },
+    "voice": {
+      "enabled": true,
+      "bridge_url": "http://127.0.0.1:8123",
+      "bridge_ok": false,
+      "stt_engine": "browser",
+      "tts_engine": "browser",
+      "note": "WOPR bridge offline. Browser voice fallback is available; locality is unverified."
+    },
+    "vision": {
+      "enabled": false,
+      "engine": "planned",
+      "note": "Vision adapters are scaffolded but not enabled in v0.1.0."
+    },
+    "session": {
+      "session_id": "393c9a2b36a6464d9d80d88c754fb145",
+      "epoch": 0,
+      "restarted_at": 1788674641.6640282,
+      "grounding_strikes": 0
+    },
+    "runtime_status": {
+      "model": {
+        "availability": "ready",
+        "name": "llama3.2",
+        "route": "loopback",
+        "locality": "device",
+        "endpoint_available": true,
+        "installed": true,
+        "repair": {
+          "code": "ready",
+          "title": "Your model is ready",
+          "detail": "llama3.2:latest is available at http://127.0.0.1:11434.",
+          "actions": [
+            {
+              "id": "retry",
+              "label": "Retry health"
+            },
+            {
+              "id": "open_settings",
+              "label": "Choose installed model"
+            },
+            {
+              "id": "copy_pull",
+              "label": "Copy: ollama pull llama3.2",
+              "command": "ollama pull llama3.2"
+            }
+          ]
+        },
+        "reason": "The configured model is available."
+      },
+      "memory": {
+        "backend": "jsonl",
+        "location": "device",
+        "conversation_persistence": "enabled",
+        "knowledge_tools": "enabled"
+      },
+      "voice": {
+        "input": "browser_managed_unverified",
+        "output": "browser_managed_unverified",
+        "bridge_available": false,
+        "route": "loopback"
+      },
+      "assets": {
+        "source": "bundled",
+        "remote_dependencies": false
+      },
+      "network": {
+        "claim": "not_verified",
+        "routes": {
+          "model": "loopback",
+          "voice": "loopback"
+        },
+        "reason": "Configured service routes are local; host network isolation is not verified.",
+        "offline_verified": false
+      }
+    }
+  },
+  "chat_elapsed_seconds": 20.5,
+  "chat_events": ": keepalive\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 0}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 0}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 1}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 5}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 10}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 14}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 23}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 28}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 34}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 40}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 44}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 50}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 51}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 57}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 61}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 66}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 69}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 72}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 79}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 81}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 91}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 95}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 99}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 102}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 109}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 113}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 120}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 121}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 124}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 130}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 134}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 139}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 142}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 145}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 153}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 156}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 161}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 167}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 171}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 176}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 180}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 189}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 195}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 201}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 205}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 207}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 212}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 215}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 221}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 224}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 234}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 235}\n\nevent: progress\ndata: {\"phase\": \"generating\", \"characters_received\": 235}\n\nevent: delta\ndata: {\"text\": \"I can help you organize your saved notes and goals. Would you like me to create a checklist for you to review and update, or would you like me to categorize your notes and help you identify areas where you'd like to focus on improving?\"}\n\nevent: done\ndata: {\"reply\": \"I can help you organize your saved notes and goals. Would you like me to create a checklist for you to review and update, or would you like me to categorize your notes and help you identify areas where you'd like to focus on improving?\", \"restart\": false, \"tool_events\": [\"recall({'query': 'saved notes and goals'})\"], \"model\": \"llama3.2\", \"session\": {\"session_id\": \"393c9a2b36a6464d9d80d88c754fb145\", \"epoch\": 0, \"restarted_at\": 1788674641.6640282, \"grounding_strikes\": 0}, \"metrics\": {\"token_count\": 51, \"tokens_per_second\": 21.67, \"model_duration_ms\": 3051.35, \"provider_completed_at\": \"2026-09-06T06:04:24.016707518Z\", \"source\": \"ollama\", \"scope\": \"final_turn\", \"latency_ms\": 20490.25, \"completed_at\": \"2026-09-06T06:04:24.018348+00:00\"}}\n\n",
+  "direction_response": {
+    "reply": "clear the workspace\n\n- [ ] Gather supplies\n- [ ] Clear everything from the desk\n- [ ] Put away items that are out of place",
+    "restart": false,
+    "tool_events": [],
+    "model": "llama3.2",
+    "session": {
+      "session_id": "393c9a2b36a6464d9d80d88c754fb145",
+      "epoch": 0,
+      "restarted_at": 1788674641.6640282,
+      "grounding_strikes": 0
+    },
+    "metrics": {
+      "token_count": 37,
+      "tokens_per_second": 19.82,
+      "model_duration_ms": 5351.8,
+      "provider_completed_at": "2026-09-06T06:04:29.398658941Z",
+      "source": "ollama",
+      "scope": "final_turn",
+      "latency_ms": 5375.71,
+      "completed_at": "2026-09-06T06:04:29.400697+00:00"
+    }
+  },
+  "clarity_response": {
+    "reply": "Get a notebook\n\n- [ ] Buy a notebook\n- [ ] Choose a storage location for notebook\n- [ ] Set up a system for organizing notebook contents",
+    "restart": false,
+    "tool_events": [
+      "recall({'first_action': 'recall query \"small home project notebook\"', 'checklist': ['[ ] Decide on notebook size and type', '[ ] Choose a storage location for notebook', '[ ] Set up a system for organizing notebook contents']})"
+    ],
+    "model": "llama3.2",
+    "session": {
+      "session_id": "393c9a2b36a6464d9d80d88c754fb145",
+      "epoch": 0,
+      "restarted_at": 1788674641.6640282,
+      "grounding_strikes": 0
+    },
+    "metrics": {
+      "token_count": 41,
+      "tokens_per_second": 18.39,
+      "model_duration_ms": 3470.97,
+      "provider_completed_at": "2026-09-06T06:04:38.256377688Z",
+      "source": "ollama",
+      "scope": "final_turn",
+      "latency_ms": 8840.05,
+      "completed_at": "2026-09-06T06:04:38.260365+00:00"
+    }
+  }
+}

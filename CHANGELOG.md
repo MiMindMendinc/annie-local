@@ -1,10 +1,28 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 candidate — unreleased
+
+- Removed setup-screen taglines, kept product name/state and Model offline visible, and changed the local-route badge to “Local only · isolation not verified” without changing its warning state or verification policy.
+
+- Simplified product copy, replaced leftover Research Session labels, and made the connection heading actionable while retaining truthful diagnostics.
+
+- Added the server-driven operator repair hero, offline composer gating, conservative local-route badge wording, 44px controls, reduced-motion overrides, and visual-viewport sizing. Physical phone and accessibility evidence remain outstanding; no release tag was created.
+
+### Guarded streaming and plan contracts
+
+- Fixed real llama3.2 Direction/Clarity failures by sending the validated Plan JSON schema to Ollama. Free-form chat, grounding checks, and planning write-tool rejection retain their existing behavior.
+- Normalized model-generated list prefixes so plans render one unchecked marker per item; marker-only entries are rejected.
+- Recorded real local-model chat, planning, recovery, and memory-preservation checks with exact source/model details in `docs/RELEASE_READINESS.md`.
+
+- Added admitted text deltas before provider completion, partial-expression holdback, provisional text-only rendering, and final grounding before committing replies. Real HTTP timing/cancellation evidence covers llama3.2 and llama3.1:8b; physical and working target-browser acceptance remain open.
+- Prevented late completions and late voice responses from rendering or starting speech after Stop, and kept terminal SSE completion independent of connection close.
+- Fixed Tab escaping the settings dialog, with forward/reverse wrapping and Escape focus return verified in cloud Chrome.
+- Replaced the repeat-grounding signal's jokey harm wording with a plain reset message; trigger rules, audit, restart, and saved-knowledge behavior remain covered.
+- Added validated model-generated plans (first action at most 240 characters, 3-7 checklist items), fail-closed write-tool rejection, and mock-server contract evaluations.
 
 ### First-run model recovery
 
-- Added actionable health diagnostics, canonical tag resolution used by inference, an authenticated installed-model picker, explicit missing-model save confirmation, and cross-platform setup/doctor repair commands. Real-Ollama release evidence is still required.
+- Added actionable health diagnostics, canonical tag resolution used by inference, an authenticated installed-model picker, explicit missing-model save confirmation, and cross-platform setup/doctor repair commands. Physical target-device release evidence is still required.
 
 ### Today companion workspace
 

@@ -72,7 +72,55 @@
     throw lastError || new Error("request failed");
   }
 
+  async function streamChat(message, signal, onEvent) {
+    const checkAbort = () => {
+      if (signal?.aborted) throw new DOMException("Request stopped", "AbortError");
+    };
+    checkAbort();
+    const response = await fetch("/api/chat/stream", { method: "POST", headers: authHeaders(), body: JSON.stringify({message, mode: "chat"}), signal });
+    checkAbort();
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.detail?.runtime_status?.model?.repair?.detail || "Model stream unavailable. Retry health.");
+    }
+    if (!response.body) throw new Error("Streaming is unavailable in this browser.");
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let result = null;
+    try {
+      while (true) {
+        const {value, done} = await reader.read();
+        checkAbort();
+        buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
+        let boundary;
+        while ((boundary = buffer.indexOf("\n\n")) >= 0) {
+          checkAbort();
+          const frame = buffer.slice(0, boundary);
+          buffer = buffer.slice(boundary + 2);
+          const event = frame.split("\n").find(line => line.startsWith("event: "))?.slice(7);
+          const raw = frame.split("\n").filter(line => line.startsWith("data: ")).map(line => line.slice(6)).join("\n");
+          if (!raw) continue;
+          const data = JSON.parse(raw);
+          if (event === "error") throw new Error(data.message || "Model stream failed.");
+          if (event === "done") result = data;
+          onEvent?.(event, data);
+          if (result) {
+            checkAbort();
+            return result;
+          }
+        }
+        if (done) break;
+      }
+      throw new Error("Model stream ended before completion.");
+    } finally {
+      await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+  }
+
   global.AnnieApi = {
+    streamChat,
     health: () => request("/api/health"),
     models: (name = "") => request(`/api/models?name=${encodeURIComponent(name)}`),
     getSettings: () => request("/api/settings"),

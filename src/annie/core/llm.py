@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -108,6 +110,9 @@ class OllamaBackend:
         *,
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.7,
+        on_progress: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        on_content: Callable[[str], Awaitable[None]] | None = None,
+        response_format: dict[str, Any] | None = None,
     ) -> ModelTurn:
         if not hasattr(self, "_resolved_model"):
             status = await self.health()
@@ -119,11 +124,63 @@ class OllamaBackend:
         payload: dict[str, Any] = {
             "model": self._resolved_model,
             "messages": [message.to_payload() for message in messages],
-            "stream": False,
+            "stream": on_progress is not None or on_content is not None,
             "options": {"temperature": temperature},
         }
         if tools:
             payload["tools"] = tools
+        if response_format is not None:
+            payload["format"] = response_format
+
+        if on_progress is not None or on_content is not None:
+            try:
+                async with (
+                    httpx.AsyncClient(timeout=self.timeout, trust_env=trust_environment_proxy(self.base_url)) as client,
+                    client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response,
+                ):
+                    response.raise_for_status()
+                    parts, calls = [], []
+                    raw = {}
+                    completed = False
+                    size = 0
+                    async for line in response.aiter_lines():
+                        if not line.strip():
+                            continue
+                        raw = json.loads(line)
+                        if not isinstance(raw, dict):
+                            raise LLMBackendError("Invalid streamed model event")
+                        if raw.get("error"):
+                            raise LLMBackendError("Ollama reported a generation error")
+                        if not isinstance(raw.get("done", False), bool):
+                            raise LLMBackendError("Invalid streamed completion flag")
+                        message = raw.get("message", {})
+                        if not isinstance(message, dict):
+                            raise LLMBackendError("Invalid streamed model message")
+                        content = message.get("content", "")
+                        if not isinstance(content, str):
+                            raise LLMBackendError("Invalid streamed model content")
+                        size += len(content)
+                        if size > 200_000:
+                            raise LLMBackendError("Model response exceeds the supported size")
+                        parts.append(content)
+                        tool_calls = message.get("tool_calls") or []
+                        if not isinstance(tool_calls, list) or any(not isinstance(call, dict) for call in tool_calls):
+                            raise LLMBackendError("Invalid streamed tool calls")
+                        calls.extend(tool_calls)
+                        # Raw text stays inside the engine; only its display guard
+                        # may forward a prefix to the API/browser callback.
+                        if content and on_content is not None:
+                            await on_content(content)
+                        if on_progress is not None:
+                            await on_progress({"phase": "generating", "characters_received": size})
+                        if raw.get("done"):
+                            completed = True
+                            break
+                    if not completed:
+                        raise LLMBackendError("Ollama stream ended before completion")
+                    return ModelTurn(content="".join(parts).strip(), tool_calls=calls, raw=raw)
+            except (httpx.HTTPError, ValueError, TypeError) as exc:
+                raise LLMBackendError("Ollama streaming request failed") from exc
 
         try:
 

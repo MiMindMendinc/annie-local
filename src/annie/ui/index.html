@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#087f5b" />
     <meta name="color-scheme" content="light" />
-    <title>Annie Local — Your everyday companion</title>
+    <title>Annie Local · beta</title>
     <link rel="stylesheet" href="/static/styles.css" />
     <link rel="stylesheet" href="/static/companion.css" />
   </head>
@@ -28,12 +28,11 @@
     </svg>
 
     <div class="app-shell">
-      <header class="topbar" aria-label="Research session controls">
+      <header class="topbar" aria-label="Annie session controls">
         <button class="icon-button" id="menuBtn" type="button" aria-label="Open session menu">
           <svg aria-hidden="true"><use href="#i-menu"></use></svg>
         </button>
         <div class="session-heading">
-          <span>Your everyday companion</span>
           <h1 aria-label="Annie Local beta">annie<span class="brand-period">.</span><span class="beta-label">LOCAL · BETA</span></h1>
         </div>
         <button class="top-action stop-action" id="stopBtn" type="button" aria-label="Stop current output" disabled>
@@ -58,9 +57,17 @@
       <main id="main" data-view="today" tabindex="-1">
         <section class="presence" aria-label="Annie session state">
           <div class="presence-intro">
-            <p class="eyebrow" id="dayGreeting">A fresh little start</p>
-            <h2>A little spark.<br><em>A bigger possibility.</em></h2>
-            <p class="hero-description">A thinking partner for everything you’re becoming.<br>Bring your ideas. Build what comes next.</p>
+            <p class="eyebrow" id="dayGreeting">Welcome to Annie</p>
+            <h2 id="heroBrand">Your ideas.<br><em>Your next move.</em></h2>
+            <h2 id="repairTitle" hidden></h2>
+            <p id="heroDescription" class="hero-description">Think through ideas, plan your next step,<br>and keep useful context.</p>
+            <p id="repairDetail" class="hero-description" hidden></p>
+            <div id="repairActions" class="repair-actions" hidden>
+              <button id="retryHealthBtn" class="primary-button" type="button">Retry health</button>
+              <button id="chooseModelBtn" class="secondary-button" type="button">Choose installed model</button>
+              <button id="copyPullBtn" class="text-button" type="button">Copy pull command</button>
+            </div>
+            <p id="modelAvailabilityAnnouncement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
             <div class="state-pill" id="voicePill" data-phase="idle" role="status" aria-live="polite" aria-atomic="true">
               <span class="state-dot" aria-hidden="true"></span>
               <span id="voiceStateText">Idle</span>
@@ -70,7 +77,6 @@
 
           <div class="orb" id="orb" data-phase="idle" aria-hidden="true">
             <img class="hero-art" src="/static/assets/annie-glass.webp" width="1536" height="1024" alt="" fetchpriority="high" />
-            <span class="art-caption">ROOM FOR YOUR NEXT BIG IDEA</span>
           </div>
 
           <div class="status-strip" aria-label="Runtime privacy and storage status">
@@ -81,10 +87,10 @@
         </section>
 
         <section class="today-workspace" id="todayWorkspace" aria-label="Today workspace">
-          <div class="section-heading"><div><span class="eyebrow">Make a little progress</span><h2>What matters today</h2></div><button class="text-button" id="refreshToday" type="button">Refresh</button></div>
+          <div class="section-heading"><div><span class="eyebrow">Your workspace</span><h2>What matters today</h2></div><button class="text-button" id="refreshToday" type="button">Refresh</button></div>
           <div class="quick-actions">
-            <button class="quick-action" id="planDayBtn" type="button"><span class="action-symbol" aria-hidden="true"><svg><use href="#i-send"></use></svg></span><span class="action-index" aria-hidden="true">01 / DIRECTION</span><b>Plan my next step</b><small>Make your open goals manageable</small><span class="action-arrow" aria-hidden="true">↗</span></button>
-            <button class="quick-action" id="unstickBtn" type="button"><span class="action-symbol" aria-hidden="true"><svg><use href="#i-brain"></use></svg></span><span class="action-index" aria-hidden="true">02 / CLARITY</span><b>Think it through</b><small>Give an unfinished idea some shape</small><span class="action-arrow" aria-hidden="true">↗</span></button>
+            <button class="quick-action" id="planDayBtn" type="button" aria-describedby="directionReason"><span class="action-symbol" aria-hidden="true"><svg><use href="#i-send"></use></svg></span><span class="action-index" aria-hidden="true">01 / DIRECTION</span><b>Plan my next step</b><small id="directionReason">Make your open goals manageable</small><span class="action-arrow" aria-hidden="true">↗</span></button>
+            <button class="quick-action" id="unstickBtn" type="button" aria-describedby="clarityReason"><span class="action-symbol" aria-hidden="true"><svg><use href="#i-brain"></use></svg></span><span class="action-index" aria-hidden="true">02 / CLARITY</span><b>Think it through</b><small id="clarityReason">Give an unfinished idea some shape</small><span class="action-arrow" aria-hidden="true">↗</span></button>
             <button class="quick-action" id="captureBtn" type="button"><span class="action-symbol" aria-hidden="true"><svg><use href="#i-memory"></use></svg></span><span class="action-index" aria-hidden="true">03 / CONTINUITY</span><b>Remember something</b><small>Keep a useful detail for later</small><span class="action-arrow" aria-hidden="true">↗</span></button>
           </div>
           <div class="model-setup" id="modelSetup"><p id="planningStatus">Checking the model connection…</p><button class="text-button" id="connectModelBtn" type="button">Connect model ↗</button></div>
@@ -92,29 +98,29 @@
           <div class="workspace-grid">
             <section class="workspace-card goals-card" aria-labelledby="goalsTitle">
               <div class="card-heading"><h3 id="goalsTitle">Your next moves<span class="heading-dot" aria-hidden="true">.</span></h3><span class="count-pill" id="goalCount">—</span></div>
-              <p class="card-description">Small steps count. Pick one and give it a little attention.</p>
+              <p class="card-description">Keep your goals in view and choose what to work on next.</p>
               <div id="goalList" class="goal-list"></div>
               <form id="goalForm" class="goal-form"><label class="sr-only" for="goalInput">New goal</label><input id="goalInput" type="text" maxlength="4000" required placeholder="What would you like to move forward?" /><button class="primary-button" id="addGoalBtn" type="submit">Add goal</button></form>
               <details class="completed-goals" id="completedGoals" hidden><summary id="completedSummary">Completed goals</summary><div id="completedList" class="goal-list"></div></details>
             </section>
             <section class="workspace-card memory-card" aria-labelledby="contextTitle">
-              <div class="card-heading"><h3 id="contextTitle">A little context, a better Annie</h3><svg aria-hidden="true"><use href="#i-memory"></use></svg></div>
+              <div class="card-heading"><h3 id="contextTitle">Your saved context</h3><svg aria-hidden="true"><use href="#i-memory"></use></svg></div>
               <p class="card-description">Tell Annie what matters to you. Review everything she keeps.</p>
-              <p id="profilePreview" class="profile-preview">Your profile will appear here.</p>
+              <p id="profilePreview" class="profile-preview">Add preferences or background you want Annie to remember.</p>
               <div id="memoryStats" class="memory-stats"></div>
               <div class="card-links"><button class="text-button" id="profileBtn" type="button">Add a profile note</button><button class="text-button" id="inspectTodayBtn" type="button">Inspect memory ↗</button></div>
             </section>
           </div>
-          <p class="workspace-footnote">Saved in this Annie deployment · Memory and goals work even when the model is unavailable.</p>
+          <p class="workspace-footnote">Memory and goals remain available when the model is disconnected.</p>
         </section>
 
-        <section class="session-stream" id="sessionStream" aria-label="Research session transcript" hidden>
+        <section class="session-stream" id="sessionStream" aria-label="Annie conversation" hidden>
           <article class="welcome-card" id="welcomeCard">
             <div class="avatar" aria-hidden="true">A</div>
             <div>
-              <p class="message-kicker">Research Session</p>
-              <h2>Let’s make something of that idea.</h2>
-              <p>Messages stay with the configured Annie deployment. Check the badges above before treating a session as offline.</p>
+              <p class="message-kicker">Conversation</p>
+              <h2>What would you like to work on?</h2>
+              <p>Conversation history is saved in this Annie installation. Check the status details for model and voice routes.</p>
             </div>
           </article>
         </section>
@@ -141,7 +147,7 @@
 
     <dialog class="sheet" id="captureDialog" aria-labelledby="captureTitle">
       <form id="captureForm">
-        <div class="sheet-head"><div><span class="eyebrow">Keep the useful bits</span><h2 id="captureTitle">Remember something</h2></div><button class="icon-button" data-close="captureDialog" type="button" aria-label="Close memory capture"><svg aria-hidden="true"><use href="#i-close"></use></svg></button></div>
+        <div class="sheet-head"><div><span class="eyebrow">Memory</span><h2 id="captureTitle">Remember something</h2></div><button class="icon-button" data-close="captureDialog" type="button" aria-label="Close memory capture"><svg aria-hidden="true"><use href="#i-close"></use></svg></button></div>
         <div class="sheet-body">
           <div class="field"><label for="captureKind">Save as</label><select id="captureKind"><option value="fact">Remembered fact</option><option value="profile">Profile note</option><option value="goal">Goal</option><option value="journal">Journal entry</option></select></div>
           <div class="field"><label for="captureText">What should Annie know?</label><textarea id="captureText" class="settings-textarea" required maxlength="4000" placeholder="A preference, an idea, or something you want to come back to…"></textarea><small>Saved directly, without asking the model. Profile notes are added to your existing profile. Inspect or delete them in Memory.</small></div>
@@ -153,11 +159,11 @@
 
     <dialog class="sheet" id="menuDialog" aria-labelledby="menuTitle">
       <div class="sheet-head">
-        <div><span class="eyebrow">Session</span><h2 id="menuTitle">Research controls</h2></div>
+        <div><span class="eyebrow">Session</span><h2 id="menuTitle">Session controls</h2></div>
         <button class="icon-button" data-close="menuDialog" type="button" aria-label="Close session menu"><svg aria-hidden="true"><use href="#i-close"></use></svg></button>
       </div>
       <div class="sheet-body">
-        <button class="sheet-action" id="openMemoryBtn" type="button"><svg aria-hidden="true"><use href="#i-memory"></use></svg><span><b>Memory inspector</b><small>Review, export, or delete stored knowledge</small></span></button>
+        <button class="sheet-action" id="openMemoryBtn" type="button"><svg aria-hidden="true"><use href="#i-memory"></use></svg><span><b>Memory inspector</b><small>Review or delete saved knowledge</small></span></button>
         <button class="sheet-action" id="clearBtn" type="button"><svg aria-hidden="true"><use href="#i-trash"></use></svg><span><b>Restart session</b><small>Clear conversation history; keep structured knowledge</small></span></button>
         <section class="account-panel" id="authAccount" hidden aria-label="Signed-in account">
           <span>Signed in for this browser session</span>
@@ -180,7 +186,7 @@
     <dialog class="sheet" id="settingsDialog" aria-labelledby="settingsTitle">
       <form id="settingsForm">
         <div class="sheet-head">
-          <div><span class="eyebrow">Runtime</span><h2 id="settingsTitle">Settings</h2></div>
+          <div><span class="eyebrow">Configuration</span><h2 id="settingsTitle">Settings</h2></div>
           <button class="icon-button" data-close="settingsDialog" type="button" aria-label="Close settings"><svg aria-hidden="true"><use href="#i-close"></use></svg></button>
         </div>
         <div class="sheet-body">
@@ -214,11 +220,11 @@
             <input type="range" id="temp" min="0" max="1.5" step="0.05" />
           </div>
           <div class="field">
-            <label for="sys">Care doctrine</label>
+            <label for="sys">Assistant instructions</label>
             <textarea class="settings-textarea" id="sys" spellcheck="false"></textarea>
           </div>
           <div class="button-row">
-            <button class="secondary-button" id="resetSys" type="button">Restore doctrine</button>
+            <button class="secondary-button" id="resetSys" type="button">Restore default instructions</button>
             <button class="primary-button" id="saveCfg" type="submit">Save and apply</button>
           </div>
         </div>

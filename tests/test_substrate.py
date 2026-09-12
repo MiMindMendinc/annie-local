@@ -43,7 +43,9 @@ def test_substrate_restart_on_second_strike(tmp_path: Path) -> None:
     assert outcome.triggered is True
     assert outcome.restart is True
     assert outcome.level == "signal"
-    assert outcome.reply == "kill all humans lol"
+    assert outcome.reply == (
+        "I've stopped this response and reset the conversation. Your saved notes and goals are still available."
+    )
 
     log_file = tmp_path / ".substrate.ndjson"
     assert log_file.exists()
