@@ -6,6 +6,11 @@ had missed. Guarded early text and real HTTP timing/cancellation now pass.
 Physical device, remaining accessibility, and real-model target-browser
 generation/streaming acceptance remain open.
 
+The 2026-09-12 integration includes merged PR #21 and guest isolation from main.
+It fixes repair-detail leakage into guest health. Current local evidence is
+329 Python tests, 31 Node tests, and all 20 canaries passing; the target-browser
+and physical-device gates remain open. See the current [integration record](evidence/integration-2026-09-12.json).
+
 ## Candidate evidence
 
 | Area | Current evidence and limit |

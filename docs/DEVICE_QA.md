@@ -3,6 +3,12 @@
 Status: candidate work, not a WCAG conformance certification or an Excellent release.
 Checks below must be recorded on the actual target devices before release.
 
+The 2026-09-12 integration includes current main and fixes guest-health exposure
+of operator repair details. Its automated checks pass; the supported cloud
+browser blocks the loopback page (`net::ERR_BLOCKED_BY_CLIENT`). This adds no
+physical-device or real-model browser evidence. Test the latest
+`feat/operator-dead-state` head shown on PR #19, and record that exact commit.
+
 | Viewport | Required check | Evidence status |
 | --- | --- | --- |
 | 390 × 844 | Safari, keyboard open/close, draft visible, no horizontal scroll | Pending physical device |

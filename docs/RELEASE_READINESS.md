@@ -6,7 +6,34 @@ accessibility, and successful generation/streaming in a working target browser
 remain open. This report does not certify the whole project as finished or
 establish public hosting readiness.
 
-## Current follow-up — 2026-09-07
+## Current integration — 2026-09-12
+
+The complete candidate now includes main through `b5ae267` (merged PR #21),
+the request Host/Origin boundary, the exact Replit startup origin, and the
+isolated guest demo from PR #23. The stacked branches were updated in order
+without rewriting their history.
+
+Integration reproduced a guest privacy regression: model repair diagnostics
+would include the configured model and backend endpoint in guest health.
+Guest model health now projects only coarse readiness and locality fields.
+Ready, missing-model, and empty-inventory cases verify the same boundary.
+Operator repair diagnostics remain available in normal local mode.
+
+Current local verification: **329 Python tests, 31 Node tests, all 20 grounding
+canaries and their 27 supporting tests passed**, with no failures or skips.
+Ruff lint/format, the medium/high Bandit gate, the production dependency audit,
+and wheel/sdist builds passed. Eight request-guard, streaming, and guest source
+or asset files match the source bytes in both distributions. One upstream
+Starlette/AnyIO deprecation warning remains. CI and Security now also run for
+the two stacked PR base branches. See [the integration record](evidence/integration-2026-09-12.json).
+
+The supported cloud browser rejected this candidate's loopback page with
+`net::ERR_BLOCKED_BY_CLIENT`. No new browser, real-model, physical Safari,
+screen-reader, or live Replit pass is claimed. All target-device and
+provisional-display acceptance gates below remain open; the stack stays draft.
+The September 6–7 real-model evidence remains historical at its recorded source.
+
+## Streaming follow-up — 2026-09-07
 
 - Guarded text prefixes now flow through the API into a provisional browser reply.
   Whole-response validation remains the commit boundary. See [STREAMING_DESIGN.md](STREAMING_DESIGN.md).

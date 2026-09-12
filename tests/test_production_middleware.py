@@ -19,7 +19,7 @@ def test_security_headers_present(tmp_path) -> None:
         knowledge_path=str(tmp_path / "knowledge.json"),
         settings_path=str(tmp_path / "settings.json"),
     )
-    with TestClient(create_app(config)) as client:
+    with TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client:
         response = client.get("/api/health")
     assert response.status_code == 200
     assert response.headers.get("X-Content-Type-Options") == "nosniff"
@@ -38,7 +38,7 @@ def test_untrusted_request_id_is_not_reflected(tmp_path) -> None:
         settings_path=str(tmp_path / "settings.json"),
     )
     supplied = "attacker-controlled-" + ("x" * 200)
-    with TestClient(create_app(config)) as client:
+    with TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client:
         response = client.get("/api/live", headers={"X-Request-Id": supplied})
 
     assert response.status_code == 200
@@ -53,7 +53,7 @@ def test_rate_limit_headers(tmp_path) -> None:
         settings_path=str(tmp_path / "settings.json"),
     )
     with (
-        TestClient(create_app(config)) as client,
+        TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client,
         patch("annie.core.chat.OllamaBackend.chat", new_callable=AsyncMock) as mock_chat,
     ):
         mock_chat.return_value = ModelTurn(content="ok")
@@ -69,7 +69,7 @@ def test_chat_sanitizes_input(tmp_path) -> None:
         settings_path=str(tmp_path / "settings.json"),
     )
     with (
-        TestClient(create_app(config)) as client,
+        TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client,
         patch("annie.core.chat.OllamaBackend.chat", new_callable=AsyncMock) as mock_chat,
     ):
         mock_chat.return_value = ModelTurn(content="Hello.")
@@ -87,7 +87,7 @@ def test_auth_routes_have_a_strict_shared_rate_limit(tmp_path) -> None:
     limited = replace(get_settings(), auth_rate_limit_per_minute=1)
     with (
         patch("annie.middleware.rate_limit.get_settings", return_value=limited),
-        TestClient(create_app(config)) as client,
+        TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client,
     ):
         first = client.post("/api/auth/login", json={"email": "user@example.com", "password": "password-1"})
         second = client.post("/api/auth/register", json={"email": "user@example.com", "password": "password-1"})
@@ -107,7 +107,7 @@ def test_rotating_bogus_bearer_tokens_cannot_bypass_ip_limit(tmp_path) -> None:
     limited = replace(get_settings(), rate_limit_per_minute=1, rate_limit_burst=0)
     with (
         patch("annie.middleware.rate_limit.get_settings", return_value=limited),
-        TestClient(create_app(config)) as client,
+        TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client,
     ):
         first = client.get("/api/config", headers={"Authorization": "Bearer bogus-one"})
         second = client.get("/api/config", headers={"Authorization": "Bearer bogus-two"})

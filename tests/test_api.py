@@ -16,7 +16,7 @@ def test_index_loads(tmp_path) -> None:
         knowledge_path=str(tmp_path / "knowledge.json"),
         settings_path=str(tmp_path / "settings.json"),
     )
-    with TestClient(create_app(config)) as client:
+    with TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client:
         response = client.get("/")
     assert response.status_code == 200
     assert "Annie session controls" in response.text
@@ -29,7 +29,7 @@ def test_health_endpoint(tmp_path) -> None:
         settings_path=str(tmp_path / "settings.json"),
     )
     with (
-        TestClient(create_app(config)) as client,
+        TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client,
         patch("annie.core.llm.OllamaBackend.health", new_callable=AsyncMock) as mock_health,
         patch("annie.api.routers.core.get_voice_status", new_callable=AsyncMock) as mock_voice,
     ):
@@ -57,7 +57,7 @@ def test_liveness_endpoint_does_not_depend_on_optional_backends(tmp_path) -> Non
         knowledge_path=str(tmp_path / "knowledge.json"),
         settings_path=str(tmp_path / "settings.json"),
     )
-    with TestClient(create_app(config)) as client:
+    with TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client:
         response = client.get("/api/live")
 
     assert response.status_code == 200
@@ -71,7 +71,7 @@ def test_settings_roundtrip(tmp_path) -> None:
         knowledge_path=str(tmp_path / "knowledge.json"),
         settings_path=str(tmp_path / "settings.json"),
     )
-    with TestClient(create_app(config)) as client:
+    with TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client:
         response = client.get("/api/settings")
         assert response.status_code == 200
         assert "model" in response.json()
@@ -87,7 +87,7 @@ def test_knowledge_empty(tmp_path) -> None:
         memory_path=str(tmp_path / "memory.jsonl"),
         settings_path=str(tmp_path / "settings.json"),
     )
-    with TestClient(create_app(config)) as client:
+    with TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client:
         response = client.get("/api/knowledge")
     assert response.status_code == 200
     assert response.json()["profile"] == ""
@@ -100,7 +100,7 @@ def test_chat_with_mocked_llm(tmp_path) -> None:
         settings_path=str(tmp_path / "settings.json"),
     )
     with (
-        TestClient(create_app(config)) as client,
+        TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client,
         patch("annie.core.chat.OllamaBackend.chat", new_callable=AsyncMock) as mock_chat,
     ):
         mock_chat.return_value = ModelTurn(
@@ -130,7 +130,7 @@ def test_session_restart(tmp_path) -> None:
         knowledge_path=str(tmp_path / "knowledge.json"),
         settings_path=str(tmp_path / "settings.json"),
     )
-    with TestClient(create_app(config)) as client:
+    with TestClient(create_app(config), base_url="http://127.0.0.1:8787") as client:
         response = client.post("/api/session/restart")
     assert response.status_code == 200
     assert response.json()["ok"] is True
