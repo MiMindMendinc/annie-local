@@ -1,6 +1,6 @@
 # Annie Local Status
 
-**v0.4.0 candidate — unreleased.** Work remains in the draft stack #17 → #18 → #19.
+**v0.4.0 candidate — unreleased.** Includes the work from PRs #17 → #18 → #19.
 Real local-model testing found and corrected planning failures that mocked tests
 had missed. Guarded early text and real HTTP timing/cancellation now pass.
 Physical device, remaining accessibility, and real-model target-browser
@@ -37,7 +37,9 @@ Complete [DEVICE_QA.md](DEVICE_QA.md), including physical Safari, assistive
 technology, successful real-model browser streaming/Stop/Esc, and target-device
 captures. The [grounding-compatible implementation](STREAMING_DESIGN.md), HTTP
 proof, and alternate-model recovery are available. Keep the
-candidate unmerged and untagged until the acceptance requirements are met.
+candidate untagged until the release acceptance requirements are met. The owner
+requested integration after the remaining checks were disclosed; merging the
+code does not constitute a pass on those checks.
 
 ## Runtime boundaries
 

@@ -118,7 +118,9 @@ data. It downloads no models and does not change existing Annie settings or
 memory. To test the exact alternate scenario, use an Ollama inventory containing
 only `llama3.1:8b`, and add `--model llama3.1:8b --alternate-only`.
 
-Finish the target-device checks in [DEVICE_QA.md](DEVICE_QA.md) before merge.
+The owner authorized integrating this documented design after the verification
+limits were disclosed on 2026-09-12. Finish the target-device checks in
+[DEVICE_QA.md](DEVICE_QA.md) before declaring release readiness.
 
 Implementation references: [Ollama streaming](https://docs.ollama.com/capabilities/streaming)
 and the `regex` package's [partial matching and timeout support](https://pypi.org/project/regex/).

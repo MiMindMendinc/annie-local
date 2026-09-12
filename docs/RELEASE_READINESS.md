@@ -1,10 +1,20 @@
 # v0.4.0 candidate readiness
 
-**Unreleased; the PR stack remains draft.** The follow-up below implements early
+**Unreleased candidate; integration authorized.** The follow-up below implements early
 text delivery with grounding and adds real HTTP proof. Physical-device,
 accessibility, and successful generation/streaming in a working target browser
 remain open. This report does not certify the whole project as finished or
 establish public hosting readiness.
+
+## Integration decision — 2026-09-12
+
+After reviewing the verified results and outstanding checks, the owner requested
+merging the PRs. Integration of the tested candidate and its documented
+provisional-display design is authorized. Physical-device, assistive-technology,
+and real-model target-browser acceptance remain release follow-ups. No missing
+test is marked as passed, no independent approval is implied, and no release tag
+is authorized by this record. Earlier pre-merge hold statements below describe
+the historical decision at that verification date.
 
 ## Current integration — 2026-09-12
 
@@ -30,7 +40,7 @@ the two stacked PR base branches. See [the integration record](evidence/integrat
 The supported cloud browser rejected this candidate's loopback page with
 `net::ERR_BLOCKED_BY_CLIENT`. No new browser, real-model, physical Safari,
 screen-reader, or live Replit pass is claimed. All target-device and
-provisional-display acceptance gates below remain open; the stack stays draft.
+target-browser acceptance checks below remain open as release requirements.
 The September 6–7 real-model evidence remains historical at its recorded source.
 
 ## Streaming follow-up — 2026-09-07
@@ -54,7 +64,7 @@ The September 6–7 real-model evidence remains historical at its recorded sourc
 - The old repeat-trigger signal wording was replaced with a plain reset message;
   trigger logic, audit, restart, and knowledge preservation remain tested.
 
-**Still blocks the requested merge:** physical Safari/iPhone, the remaining
+**Historical merge hold at the September 7 verification:** physical Safari/iPhone, the remaining
 accessibility checks, and successful real-model browser chat/planning plus
 first-text/Stop/Esc acceptance. The cloud preview's inference backend failed to
 load; its ready display is not a successful generation result. Review the full
@@ -169,7 +179,7 @@ and `settings_path`, leaving existing user data untouched.
 - Real-model browser chat/planning, first-text delivery, and Stop/Esc acceptance.
   The guarded implementation and actual HTTP timing/cancellation evidence now
   exist; the restricted cloud browser setup could not load its inference backend.
-- Review the complete #17 → #18 → #19 stack and evidence before merge and tag.
+- Complete the target-device acceptance review before tagging a release.
 
 The historical 2026-09-06 run had no browser pass. The 2026-09-07 cloud browser
 observations are recorded separately above. Optional public multi-user operations
