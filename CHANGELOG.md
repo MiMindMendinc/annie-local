@@ -2,6 +2,8 @@
 
 ## 0.4.0 candidate — unreleased
 
+- Retired the legacy demo GIF with unsupported isolation claims and documented the existing repair/ready screenshots with their browser, inference, and device-verification limits.
+
 - Removed setup-screen taglines, kept product name/state and Model offline visible, and changed the local-route badge to “Local only · isolation not verified” without changing its warning state or verification policy.
 
 - Simplified product copy, replaced leftover Research Session labels, and made the connection heading actionable while retaining truthful diagnostics.
