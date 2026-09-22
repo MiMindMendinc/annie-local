@@ -27,7 +27,7 @@ Annie’s visual identity pairs original emerald-glass artwork with vivid green 
 
 ![Today workspace in repair mode, with Ollama unavailable](docs/assets/repair-workspace.jpg)
 
-Today workspace in repair mode. The screenshot shows the unavailable-model state. Real-model API checks are recorded in the [readiness report](docs/RELEASE_READINESS.md); a ready-state browser capture is still required.
+Today workspace in repair mode. The screenshot shows the unavailable-model state. Real-model API checks are recorded in the [readiness report](docs/RELEASE_READINESS.md); ready-state browser acceptance on the physical target device is still required. See [showcase images and their evidence limits](docs/assets/README.md) for the existing desktop captures.
 
 *Actual running page with synthetic test notes and Ollama stopped. Memory and goal controls remain usable; planning becomes available when the configured model is ready.*
 
