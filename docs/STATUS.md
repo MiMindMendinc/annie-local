@@ -37,7 +37,7 @@ Complete [DEVICE_QA.md](DEVICE_QA.md), including physical Safari, assistive
 technology, successful real-model browser streaming/Stop/Esc, and target-device
 captures. The [grounding-compatible implementation](STREAMING_DESIGN.md), HTTP
 proof, and alternate-model recovery are available. Keep the
-candidate untagged until the release acceptance requirements are met. The owner
+candidate untagged until the release acceptance requirements are met. Dated hold record: [v0.4.0-rc-hold-2026-10-06.md](evidence/v0.4.0-rc-hold-2026-10-06.md) (no v0.4.0-rc tag until physical-device / a11y / real-model browser gates pass). The owner
 requested integration after the remaining checks were disclosed; merging the
 code does not constitute a pass on those checks.
 
