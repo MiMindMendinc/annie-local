@@ -40,7 +40,7 @@ dependencies = [
   "pydantic>=2.7.0",
   "email-validator>=2.1.0",
   "bleach>=6.1.0",
-  "PyJWT>=2.13.0,<3",
+  "PyJWT>=2.15.0,<3",
   "bcrypt>=4.0.0",
   "regex>=2026.9.3",
 ]
