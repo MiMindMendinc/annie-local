@@ -1,6 +1,6 @@
 # v0.4.0 candidate readiness
 
-**Unreleased candidate; integration authorized.** The follow-up below implements early
+**Unreleased candidate; integration authorized.** Re-verified automated + repair/unavailable paths on tip `1a156db` (2026-10-07 executable-gap closeout); physical-device and real-model target-browser gates remain open — see [DEVICE_QA](DEVICE_QA.md) / [evidence](evidence/executable-gap-closeout-2026-10-07.json). The follow-up below implements early
 text delivery with grounding and adds real HTTP proof. Physical-device,
 accessibility, and successful generation/streaming in a working target browser
 remain open. This report does not certify the whole project as finished or

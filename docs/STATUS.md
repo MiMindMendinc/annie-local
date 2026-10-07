@@ -1,6 +1,8 @@
 # Annie Local Status
 
 **v0.4.0 candidate — unreleased.** Includes the work from PRs #17 → #18 → #19.
+Executable-gap re-verify 2026-10-07 on tip `1a156db` (329 Py / 31 Node / 20 canaries): repair/Host-Origin/memory paths TESTED LOCALLY without Ollama; real-model browser + physical Safari/AT remain open — see [DEVICE_QA](DEVICE_QA.md) and [closeout evidence](evidence/executable-gap-closeout-2026-10-07.json). No v0.4.0-rc tag.
+
 Real local-model testing found and corrected planning failures that mocked tests
 had missed. Guarded early text and real HTTP timing/cancellation now pass.
 Physical device, remaining accessibility, and real-model target-browser
