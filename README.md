@@ -106,7 +106,7 @@ annie setup     # guided install if something is missing
 - **Voice** — `annie launch` auto-starts local WOPR on `:8123` when possible; browser fallback is labeled locality unverified
 - **Session control** — clear conversation, restart epoch, export/wipe memory
 - **FastAPI backend** — routers → services → repositories
-- **Production middleware** — JWT, CORS, rate limiting, security headers, structured logging
+- **Compose-reference middleware** — JWT, CORS, rate limiting, security headers, structured logging (optional Compose path; public hosting gates remain open)
 - **PostgreSQL + authenticated Redis** — optional Compose path
 - **S3-compatible service foundation** — present in code; attachment API/UI is not enabled in this candidate
 
