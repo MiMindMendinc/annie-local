@@ -1,0 +1,97 @@
+{
+  "recorded_at_utc": "2026-10-07T04:22:45.820604+00:00",
+  "recorded_at_america_new_york": "2026-10-07T00:22:00-04:00",
+  "tip_sha": "1a156db436c8bfc8594350bd02029ffca6e45ca0",
+  "purpose": "Executable-gap closeout re-verify (showcase track); no v0.4.0-rc claim",
+  "environment": {
+    "os": "Linux x86_64",
+    "python": "3.13.5",
+    "ollama": "NOT_INSTALLED",
+    "bind": "127.0.0.1:8787",
+    "synthetic_data_only": true
+  },
+  "checks": {
+    "pytest": {
+      "passed": 329,
+      "failed": 0,
+      "skipped": 0,
+      "label": "TESTED LOCALLY"
+    },
+    "node_ui": {
+      "passed": 31,
+      "failed": 0,
+      "label": "TESTED LOCALLY"
+    },
+    "grounding_canaries": {
+      "passed": 20,
+      "label": "TESTED LOCALLY"
+    },
+    "canary_supporting_tests": {
+      "passed": 27,
+      "label": "TESTED LOCALLY"
+    },
+    "ruff_lint_format": "passed",
+    "gap_subset_demo_repair_guard_stream_ui_contract": {
+      "passed": 134,
+      "label": "TESTED LOCALLY"
+    }
+  },
+  "local_api_proof_no_ollama": {
+    "health_repair": "availability=unavailable repair.code=endpoint_down; operator diagnostics present",
+    "host_allowlist": "unknown Host -> HTTP 400",
+    "origin_null": "Origin: null -> HTTP 403",
+    "knowledge_crud": "POST/GET/DELETE item + DELETE wipe; mode 0600 files under ~/.annie",
+    "chat_unavailable": "POST /api/chat -> HTTP 502 Model unavailable",
+    "credential_scan_health": "no password/secret/token keys in health JSON",
+    "label": "TESTED LOCALLY"
+  },
+  "ui_repair_capture": {
+    "path_handoff": "/workspace/showcase-handoff/annie/screenshots/repair-unavailable-20261007.png",
+    "viewport": "1363x936 Chromium headless Playwright",
+    "label": "repair/unavailable \u2014 NOT real-model; NOT physical Safari"
+  },
+  "blocked": {
+    "real_model_chat_planning_stream_stop": "BLOCKED \u2014 no annie-selectable model on this box (Ollama not installed, Docker down, on-disk LLaDA GGUFs are NOT selectable by annie). Do NOT download models in this closeout. Exact next step: install+start Ollama; ollama pull llama3.2 (or llama3.1 / qwen2.5 / mistral-nemo); verify ollama list + curl http://127.0.0.1:11434/api/tags + annie /api/models (non-empty model_names, installed true); then ready-mode browser chat/planning + first-text/Stop/Esc on target setup. See showcase-handoff/annie/LOCAL_MODEL_INVENTORY.md.",
+    "physical_safari_viewports_at": "OPEN/BLOCKED \u2014 needs Lyle phone pass (showcase-handoff/annie/PHYSICAL_DEVICE_TEST_SHEET.md)."
+  },
+  "honest_vocabulary": [
+    "TESTED LOCALLY",
+    "CI VERIFIED on tip historically",
+    "BLOCKED items named above"
+  ],
+  "no_tag": "Do not claim v0.4.0-rc without physical-device evidence",
+  "authority_note": "T.R/Einstein 2026-10-07: no model download without Pete authorization; repair/unavailable paths + docs/evidence + physical sheet are in scope.",
+  "supplemental_reverify": {
+    "recorded_at_america_new_york": "2026-10-07T00:24:00-04:00",
+    "bind": "127.0.0.1:8788",
+    "isolated_data": "/tmp/annie-gap-closeout-synth",
+    "label": "TESTED LOCALLY",
+    "checks": {
+      "knowledge_survives_process_restart": "profile/fact/goal retained after kill+relaunch with same paths",
+      "session_restart_keeps_knowledge": "POST /api/session/restart epoch+1; knowledge unchanged",
+      "host_origin": "Host evil.example -> 400; Origin: null -> 403",
+      "chat_stream_unavailable": "POST /api/chat and /api/chat/stream -> HTTP 502 repair payload",
+      "guest_demo_lock_live": "ANNIE_DEMO_LOCK=true on :8792; health projects coarse fields only (no base_url/repair cmds); /api/knowledge -> 404; guest HTML title Annie Local \u00b7 Guest demo",
+      "settings_focus_trap": "Tab cycles inside #settingsDialog (0 escapes); Escape returns focus to Choose installed model",
+      "skip_link": "cold Tab lands on Skip to workspace (#main)",
+      "send_mic_disabled_repair": "Send message and Start browser voice input disabled while unavailable",
+      "direction_clarity_skip_tab": "disabled+aria-disabled; 0 Tab hits across 40 presses",
+      "reduced_motion_css": "emulate_media reduce => glass animation/transition/transform none",
+      "composer_draft_input_still_focusable": "input remains tabbable for notes while model offline (by design)"
+    },
+    "screenshots_handoff": [
+      "screenshots/01-repair-unavailable-desktop-LABEL-repair-no-model.png",
+      "screenshots/03-repair-390x844-LABEL-emulated-chromium-NOT-physical-safari.png",
+      "screenshots/05-repair-today-workspace-LABEL-repair-no-model.png",
+      "screenshots/07-settings-model-picker-LABEL-repair-no-model.png"
+    ],
+    "not_claimed": [
+      "physical Safari / iPhone",
+      "VoiceOver / AT acceptance",
+      "real-model chat/planning/first-text/Stop-Esc",
+      "network isolation",
+      "docker compose / container build (docker binary absent)",
+      "espeak-ng / WOPR speech self-test (NOT RUN \u2014 package may be absent)"
+    ]
+  }
+}

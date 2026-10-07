@@ -13,7 +13,28 @@ physical-device or real-model browser evidence. Test the latest
 | --- | --- | --- |
 | 390 × 844 | Safari, keyboard open/close, draft visible, no horizontal scroll | Pending physical device |
 | 428 × 926 | Safari, safe area, composer and dialog controls reachable | Pending physical device |
-| 1363 × 936 | Desktop repair/ready display, offline goal, draft/model recovery, settings focus | Cloud Chrome checked 2026-09-07; generation blocked by preview runtime |
+| 1363 × 936 | Desktop repair/ready display, offline goal, draft/model recovery, settings focus | Cloud Chrome 2026-09-07 (generation blocked); **repair re-verified** Linux Chromium 2026-10-07 @ `1a156db` — ready/generation still **BLOCKED** (no Ollama on box) |
+
+## Executable-gap closeout — 2026-10-07
+
+**Tip:** `main` @ `1a156db436c8bfc8594350bd02029ffca6e45ca0` (post #26).  
+**Vocabulary:** TESTED LOCALLY | CI VERIFIED (historical tip green) | NOT RUN | BLOCKED.  
+**No `v0.4.0-rc` claim** from this session.
+
+| Gap | Result | Evidence |
+| --- | --- | --- |
+| Install / startup | TESTED LOCALLY | Editable install present; `annie doctor` reports Ollama missing; `annie launch --no-browser` serves `127.0.0.1:8787`; `/` HTTP 200 with skip-link + repair hero markers |
+| Repair mode (API + desktop UI) | TESTED LOCALLY | `/api/health` → `availability=unavailable`, `repair.code=endpoint_down`; chat → HTTP 502; knowledge add/get/delete/wipe while offline; Playwright repair capture (send/mic disabled, memory usable) |
+| Cancel / stream recovery | CI VERIFIED + TESTED LOCALLY (automated) | Node UI cancel/late-reply tests + Python stream suite green (134 gap-subset tests); real-model browser Stop/Esc still **BLOCKED** |
+| Guest / operator Host-Origin | TESTED LOCALLY | Unknown Host → 400; `Origin: null` → 403; live `ANNIE_DEMO_LOCK=true` guest health coarse-only (no endpoint/repair cmds) + `/api/knowledge` 404; demo_lock suite also green |
+| Memory export / delete | TESTED LOCALLY | `/api/knowledge` GET/POST/DELETE item + wipe; `~/.annie/*` mode 0600; no credential/env dump in health |
+| A11y basics (automated / CSS contract) | TESTED LOCALLY | Skip link cold-Tab; settings dialog Tab trap + Esc return (desktop Chromium); send/mic disabled; Direction/Clarity skip Tab when offline; reduced-motion CSS none on glass. Physical Safari / VoiceOver / 200% / contrast remain **OPEN** below |
+| Real-model browser chat / planning / first-text | **BLOCKED** | No annie-selectable model (Ollama missing, Docker down, on-disk LLaDA GGUFs **not** annie-selectable). Do not pull models in this closeout. Next step: install+start Ollama → `ollama pull llama3.2` (alts: llama3.1/qwen2.5/mistral-nemo) → verify `ollama list` + `:11434/api/tags` + annie `/api/models` → ready + stream/cancel on target browser |
+| Physical Safari viewports / AT | **OPEN / BLOCKED** | Use consolidated sheet outside the repo handoff: `showcase-handoff/annie/PHYSICAL_DEVICE_TEST_SHEET.md` (Lyle) |
+
+Full machine record: [executable-gap-closeout-2026-10-07.json](evidence/executable-gap-closeout-2026-10-07.json). Repair desktop capture (unavailable / no real model): [repair-unavailable-20261007.png](assets/repair-unavailable-20261007.png).
+
+Keyboard / AT checkboxes and physical viewport rows below stay unchecked until a recorded phone pass.
 
 ## Follow-up evidence — 2026-09-07
 
