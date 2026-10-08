@@ -29,8 +29,8 @@ physical-device or real-model browser evidence. Test the latest
 | Guest / operator Host-Origin | TESTED LOCALLY | Unknown Host → 400; `Origin: null` → 403; live `ANNIE_DEMO_LOCK=true` guest health coarse-only (no endpoint/repair cmds) + `/api/knowledge` 404; demo_lock suite also green |
 | Memory export / delete | TESTED LOCALLY | `/api/knowledge` GET/POST/DELETE item + wipe; `~/.annie/*` mode 0600; no credential/env dump in health |
 | A11y basics (automated / CSS contract) | TESTED LOCALLY | Skip link cold-Tab; settings dialog Tab trap + Esc return (desktop Chromium); send/mic disabled; Direction/Clarity skip Tab when offline; reduced-motion CSS none on glass. Physical Safari / VoiceOver / 200% / contrast remain **OPEN** below |
-| Real-model browser chat / planning / first-text | **BLOCKED** | No annie-selectable model (Ollama missing, Docker down, on-disk LLaDA GGUFs **not** annie-selectable). Do not pull models in this closeout. Next step: install+start Ollama → `ollama pull llama3.2` (alts: llama3.1/qwen2.5/mistral-nemo) → verify `ollama list` + `:11434/api/tags` + annie `/api/models` → ready + stream/cancel on target browser |
-| Physical Safari viewports / AT | **OPEN / BLOCKED** | Use consolidated sheet outside the repo handoff: `showcase-handoff/annie/PHYSICAL_DEVICE_TEST_SHEET.md` (Lyle) |
+| Real-model browser chat / planning / first-text | **BLOCKED** | No annie-selectable model (Ollama missing, Docker down, on-disk LLaDA GGUFs **not** annie-selectable). Model downloads were out of scope for this re-verify. Next step: install+start Ollama → `ollama pull llama3.2` (alts: llama3.1/qwen2.5/mistral-nemo) → verify `ollama list` + `:11434/api/tags` + annie `/api/models` → ready + stream/cancel on target browser |
+| Physical Safari viewports / AT | **OPEN / BLOCKED** | Needs a recorded pass on a physical iPhone; use the keyboard / AT and viewport checklist below |
 
 Full machine record: [executable-gap-closeout-2026-10-07.json](evidence/executable-gap-closeout-2026-10-07.json). Repair desktop capture (unavailable / no real model): [repair-unavailable-20261007.png](assets/repair-unavailable-20261007.png).
 
