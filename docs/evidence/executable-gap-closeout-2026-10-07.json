@@ -2,7 +2,7 @@
   "recorded_at_utc": "2026-10-07T04:22:45.820604+00:00",
   "recorded_at_america_new_york": "2026-10-07T00:22:00-04:00",
   "tip_sha": "1a156db436c8bfc8594350bd02029ffca6e45ca0",
-  "purpose": "Executable-gap closeout re-verify (showcase track); no v0.4.0-rc claim",
+  "purpose": "Executable-gap re-verify of tip 1a156db; no v0.4.0-rc claim",
   "environment": {
     "os": "Linux x86_64",
     "python": "3.13.5",
@@ -46,21 +46,21 @@
     "label": "TESTED LOCALLY"
   },
   "ui_repair_capture": {
-    "path_handoff": "/workspace/showcase-handoff/annie/screenshots/repair-unavailable-20261007.png",
+    "path": "docs/assets/repair-unavailable-20261007.png",
     "viewport": "1363x936 Chromium headless Playwright",
     "label": "repair/unavailable \u2014 NOT real-model; NOT physical Safari"
   },
   "blocked": {
-    "real_model_chat_planning_stream_stop": "BLOCKED \u2014 no annie-selectable model on this box (Ollama not installed, Docker down, on-disk LLaDA GGUFs are NOT selectable by annie). Do NOT download models in this closeout. Exact next step: install+start Ollama; ollama pull llama3.2 (or llama3.1 / qwen2.5 / mistral-nemo); verify ollama list + curl http://127.0.0.1:11434/api/tags + annie /api/models (non-empty model_names, installed true); then ready-mode browser chat/planning + first-text/Stop/Esc on target setup. See showcase-handoff/annie/LOCAL_MODEL_INVENTORY.md.",
-    "physical_safari_viewports_at": "OPEN/BLOCKED \u2014 needs Lyle phone pass (showcase-handoff/annie/PHYSICAL_DEVICE_TEST_SHEET.md)."
+    "real_model_chat_planning_stream_stop": "BLOCKED \u2014 no annie-selectable model on the test machine at the time (Ollama not installed, Docker down, on-disk LLaDA GGUFs are NOT selectable by annie). Model downloads were out of scope for this re-verify. Next step: install and start Ollama; ollama pull llama3.2 (or llama3.1 / qwen2.5 / mistral-nemo); verify ollama list + curl http://127.0.0.1:11434/api/tags + annie /api/models (non-empty model_names, installed true); then ready-mode browser chat/planning + first-text/Stop/Esc on the target setup.",
+    "physical_safari_viewports_at": "OPEN/BLOCKED \u2014 needs a recorded pass on a physical iPhone (Safari viewports and assistive technology); checklist in docs/DEVICE_QA.md."
   },
   "honest_vocabulary": [
     "TESTED LOCALLY",
     "CI VERIFIED on tip historically",
     "BLOCKED items named above"
   ],
-  "no_tag": "Do not claim v0.4.0-rc without physical-device evidence",
-  "authority_note": "T.R/Einstein 2026-10-07: no model download without Pete authorization; repair/unavailable paths + docs/evidence + physical sheet are in scope.",
+  "no_tag": "v0.4.0-rc is not claimed without physical-device evidence",
+  "scope_note": "Model downloads were out of scope for this re-verify; repair/unavailable paths, docs/evidence and the physical-device checklist were in scope.",
   "supplemental_reverify": {
     "recorded_at_america_new_york": "2026-10-07T00:24:00-04:00",
     "bind": "127.0.0.1:8788",
@@ -79,12 +79,7 @@
       "reduced_motion_css": "emulate_media reduce => glass animation/transition/transform none",
       "composer_draft_input_still_focusable": "input remains tabbable for notes while model offline (by design)"
     },
-    "screenshots_handoff": [
-      "screenshots/01-repair-unavailable-desktop-LABEL-repair-no-model.png",
-      "screenshots/03-repair-390x844-LABEL-emulated-chromium-NOT-physical-safari.png",
-      "screenshots/05-repair-today-workspace-LABEL-repair-no-model.png",
-      "screenshots/07-settings-model-picker-LABEL-repair-no-model.png"
-    ],
+    "screenshots": "Four additional repair-mode captures (desktop, emulated 390x844 Chromium, Today workspace, settings model picker) were reviewed and not committed; all show the no-model repair state in emulated Chromium, not physical Safari.",
     "not_claimed": [
       "physical Safari / iPhone",
       "VoiceOver / AT acceptance",
