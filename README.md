@@ -15,7 +15,7 @@
 
 **Annie Local** brings conversations, personal context, and a practical goal board into one bright workspace. Save what matters, choose a goal, and ask Annie to help you take the next step. The default setup talks to Ollama on your own hardware, binds to `127.0.0.1`, and serves a web UI with no CDN. Runtime badges in the UI show whether model, memory, and voice routes are local, remote, or unverified, and everything Annie remembers is stored in plain files you can inspect, export, or delete.
 
-**Status:** v0.4.0 candidate (unreleased), local-first beta. Not a clinical product.
+**Status:** v0.4.0 candidate (unreleased), local-first beta — see [Status and limits](#status-and-limits).
 
 ## At a glance
 
@@ -26,7 +26,7 @@
 | Tool calling | Remember, recall, goals, journal, and datetime |
 | Optional voice | Local WOPR output; browser voice locality is unverified |
 | Local launch | FastAPI with Ollama on loopback by default |
-| Compose reference | PostgreSQL, Redis, and JWT; public hosting gates remain open |
+| Compose reference | PostgreSQL, Redis, and JWT |
 
 ## Tech stack
 
@@ -44,7 +44,7 @@ Annie’s visual identity pairs original emerald-glass artwork with vivid green 
 
 ![Today workspace in repair mode, with Ollama unavailable](docs/assets/repair-workspace.jpg)
 
-*Actual running page with synthetic test notes and Ollama stopped. Memory and goal controls remain usable; planning becomes available when the configured model is ready.* Real-model API checks are recorded in the [readiness report](docs/RELEASE_READINESS.md); ready-state browser acceptance on the physical target device is still required. See [showcase images and their evidence limits](docs/assets/README.md) for the existing desktop captures.
+*Actual running page with synthetic test notes and Ollama stopped. Memory and goal controls remain usable; planning becomes available when the configured model is ready.* Real-model API checks are recorded in the [readiness report](docs/RELEASE_READINESS.md). See [showcase images and their evidence limits](docs/assets/README.md) for the existing desktop captures.
 
 1. **Make it yours.** Add a profile note: what to call you, what you are working on, and how you like to be helped.
 2. **Pick a next move.** Add a goal directly to the board. Complete it or reopen it with one click.
@@ -88,15 +88,15 @@ If no model is available, **Connect model** opens Settings; memory capture and g
 
 ## Features
 
-- **Today workspace** — bright green companion interface, saved context, goal board, and model-generated next-step plans
+- **Today workspace** — companion interface, saved context, goal board, and model-generated next-step plans
 - **Conversation** — responsive orb, activity states, message metrics, touch-friendly controls
-- **Care engine** — honest, long-term-good doctrine (editable in Settings → cfg)
+- **Care engine** — editable assistant guidance ("doctrine") in Settings → cfg
 - **Adaptive memory** — profile, facts, goals, journal at `~/.annie/knowledge.json`
 - **Tool loop** — remember, recall, goals, journal, datetime via Ollama tools
-- **Voice** — `annie launch` auto-starts local WOPR on `:8123` when possible; browser fallback is labeled locality unverified
+- **Voice** — `annie launch` auto-starts the local WOPR voice bridge on `:8123` when possible; browser fallback is labeled locality unverified
 - **Session control** — clear conversation, restart epoch, export/wipe memory
 - **FastAPI backend** — routers → services → repositories
-- **App middleware** — JWT, CORS, rate limiting, security headers, structured logging (stack features; not a public production-hosting claim — see issue #6)
+- **App middleware** — JWT, CORS, rate limiting, security headers, structured logging
 - **PostgreSQL + authenticated Redis** — optional Compose path
 - **S3-compatible service foundation** — present in code; attachment API/UI is not enabled in this candidate
 - **Streaming and cancellation** — operator repair mode, model selection, and cancellable generation. Admitted text prefixes can appear before generation finishes; possible grounding expressions remain buffered, and final validation precedes saving or speaking the reply. See the [streaming design](docs/STREAMING_DESIGN.md).
@@ -138,7 +138,7 @@ Bind stays on `127.0.0.1` by default.
 
 ## Hardened Compose reference
 
-The Compose profile provides PostgreSQL, authenticated Redis, JWT auth, per-user session state, rate limiting, Ollama, and a worker. It is a controlled showcase / deployment foundation. Public deployment still needs TLS, managed secrets, backups, monitoring, and an external review.
+The Compose profile provides PostgreSQL, authenticated Redis, JWT auth, per-user session state, rate limiting, Ollama, and a worker, as a controlled showcase / deployment foundation.
 
 ```bash
 cp .env.example .env
@@ -175,13 +175,9 @@ annie grounding --verify
 python3 scripts/run_canary_benchmark.py
 ```
 
-## Project status
+## Status and limits
 
-**v0.4.0 candidate — local-first beta; release gates remain open.**
-
-Real HTTP checks cover streaming and cancellation on both tested models. Physical phone, remaining accessibility, and successful real-model browser acceptance remain open. See the [readiness report](docs/RELEASE_READINESS.md) and [device and release QA](docs/DEVICE_QA.md).
-
-Not a therapist, crisis line, compliance-certified clinical tool, or finished public multi-user service. See [docs/PRIVACY_AND_SAFETY.md](docs/PRIVACY_AND_SAFETY.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), and [docs/STATUS.md](docs/STATUS.md).
+**v0.4.0 candidate — local-first beta; release gates remain open.** Real HTTP checks cover streaming and cancellation on both tested models; physical-phone testing, remaining accessibility work, and successful real-model browser acceptance are still open (see the [readiness report](docs/RELEASE_READINESS.md) and [device and release QA](docs/DEVICE_QA.md)). Public multi-user hosting is not supported yet: it still needs TLS, managed secrets, backups, monitoring, and an external review ([issue #6](https://github.com/MiMindMendinc/annie-local/issues/6)). Annie is not a therapist, crisis line, or clinical tool. Details: [privacy and safety](docs/PRIVACY_AND_SAFETY.md), [threat model](docs/THREAT_MODEL.md), [status](docs/STATUS.md).
 
 ## Docs
 
